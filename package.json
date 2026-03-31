@@ -1,0 +1,24 @@
+{
+  "name": "campus-food-ordering-platform",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Raquel9988/Campus-Food-Ordering-Platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Raquel9988/Campus-Food-Ordering-Platform/issues"
+  },
+  "homepage": "https://github.com/Raquel9988/Campus-Food-Ordering-Platform#readme",
+  "devDependencies": {
+    "jest": "^30.3.0"
+  }
+}
