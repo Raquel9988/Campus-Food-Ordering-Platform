@@ -5,7 +5,7 @@ const supabaseKey = 'sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay'
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-const form = document.getElementById('signup-form')
+const form = document.getElementById('login-form')
 const message = document.getElementById('message')
 
 form.addEventListener('submit', async (e) => {
@@ -13,16 +13,11 @@ form.addEventListener('submit', async (e) => {
 
     const email = document.getElementById('email').value.trim()
     const password = document.getElementById('password').value
-    const role = document.getElementById('role').value
 
-    if (!role) {
-        message.textContent = "Please select a role"
-        return
-    }
+    message.textContent = "Logging in..."
 
-    message.textContent = "Registering..."
-
-    const { data, error } = await supabase.auth.signUp({
+    // Login
+    const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
     })
@@ -34,18 +29,23 @@ form.addEventListener('submit', async (e) => {
 
     const user = data.user
 
-    if (!user) {
-        message.textContent = "Check your email to confirm registration"
+    // Get role (FIXED: no .single())
+    const { data: users, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+
+    if (roleError || !users || users.length === 0) {
+        message.textContent = "User role not found"
         return
     }
 
-    await supabase.from('users').insert([
-        {
-            id: user.id,
-            email,
-            role
-        }
-    ])
+    const role = users[0].role
 
-    message.textContent = "Registration successful!"
+    // Redirect based on role
+    if (role === "vendor") {
+        window.location.href = "vendor-dashboard.html"
+    } else {
+        message.textContent = "Access denied (not a vendor)"
+    }
 })

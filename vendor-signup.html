@@ -1,33 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Register</title>
+    <title>Register</title>
 </head>
 <body>
 
-  <h2>Register</h2>
+<h2>Register</h2>
 
-  <form id="signup-form">
-
+<form id="signup-form">
     <input type="email" id="email" placeholder="Enter email" required><br><br>
-
     <input type="password" id="password" placeholder="Enter password" required><br><br>
 
     <label>Select Role:</label><br>
     <select id="role" required>
-      <option value="">-- Select Role --</option>
-      <option value="vendor">Vendor</option>
-      <option value="student">Student</option>
-      <option value="admin">Admin</option>
+        <option value="">-- Select Role --</option>
+        <option value="vendor">Vendor</option>
+        <option value="student">Student</option>
+        <option value="admin">Admin</option>
     </select><br><br>
 
     <button type="submit">Register</button>
+</form>
 
-  </form>
+<p id="message"></p>
 
-  <p id="message"></p>
-
-  <script type="module" src="vendor-signup.js"></script>
+<script type="module" src="vendor-signup.js"></script>
 
 </body>
 </html>
