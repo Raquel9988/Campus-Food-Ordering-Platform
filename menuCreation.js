@@ -14,6 +14,4 @@ menuForm.addEventListener("submit",function (event){
     console.log("Image:",itemImage);
     console.log("Availability:",itemAvailability);
 
-    alert("Form is working. Supabase connection comes next");
-
 });
