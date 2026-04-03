@@ -6,11 +6,27 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const menuForm=document.getElementById("menu-item-form");
 
-//Temporary Vendor ID fro testing purposes.
-const testVendorId="123e4567-e89b-12d3-a456-426614174000";
+const {data:{user},error:userError}=await supabase.auth.getUser();
+if(userError||!user){
+    alert("Error fetching user data. Please log in again.");
+    window.location.href="login.html";
+    throw new Error("User not authenticated");
+}
+const{data:users,error:roleError}=await supabase.from("users").select("role").eq("id",user.id);
+if(roleError||!users||users.length===0){
+    alert("Error fetching user role. Please log in again.");
+    window.location.href="login.html";
+    throw new Error("User role not found");
+}
+if(users[0].role!=="vendor"){
+    alert("Access denied. Only vendors can access this page.");
+    window.location.href="login.html";
+    throw new Error("User is not a vendor");
+}
 
 menuForm.addEventListener("submit",async function (event){ 
     event.preventDefault();
+
     const itemName=document.getElementById("item-name").value;
     const itemDescription=document.getElementById("item-description").value;
     const itemPrice=document.getElementById("item-price").value;
@@ -25,7 +41,7 @@ menuForm.addEventListener("submit",async function (event){
         return;
     }
     const {error}=await supabase.from("menu_items").insert([
-        {  vendor_id: testVendorId,
+        {  vendor_id: user.id,
             name: itemName,
             description: itemDescription,
             price: parseFloat(itemPrice),
