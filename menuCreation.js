@@ -5,6 +5,7 @@ const supabaseKey='sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const menuForm=document.getElementById("menu-item-form");
+const menuItemsContainer=document.getElementById("menu-items-container");
 
 const {data:{user},error:userError}=await supabase.auth.getUser();
 if(userError||!user){
@@ -22,6 +23,36 @@ if(users[0].role!=="vendor"){
     alert("Access denied. Only vendors can access this page.");
     window.location.href="login.html";
     throw new Error("User is not a vendor");
+}
+
+/* Used for Testing purposes only
+const testUserId="123e4567-e89b-12d3-a456-426614174000";
+*/
+
+async function loadMenuItems(){
+    const {data:menuItems,error}=await supabase.from("menu_items").select("*").eq("vendor_id",user.id).order("created_at",{ascending:false});
+    if(error){
+        console.error("Error fetching menu items:",error);
+        menuItemsContainer.innerHTML="<p>Failed to load menu items.</p>";
+        return;
+    }
+    displayMenuItems(menuItems);
+}
+function displayMenuItems(items){
+    if(!items||items.length===0){
+        menuItemsContainer.innerHTML="<p>No menu items found. Please add some!</p>";
+        return;
+    }
+    menuItemsContainer.innerHTML="";
+    items.forEach((item)=>{
+        const itemElement=document.createElement("div");
+        itemElement.classList.add("menu-item-element");
+        itemElement.innerHTML=`<h3><u>${item.name}</u></h3>
+        <p><strong>Description:</strong> ${item.description||"No description available."}</p>
+        <p><strong>Price:</strong> R${item.price.toFixed(2)}</p>
+        <p><strong>Availability:</strong> ${item.is_available?"Available":"Sold Out"}</p>`;
+        menuItemsContainer.appendChild(itemElement);
+    });
 }
 
 menuForm.addEventListener("submit",async function (event){ 
@@ -55,4 +86,6 @@ menuForm.addEventListener("submit",async function (event){
     }
     alert("Menu item added successfully!");
     menuForm.reset();
+    await loadMenuItems();
 });
+loadMenuItems();
