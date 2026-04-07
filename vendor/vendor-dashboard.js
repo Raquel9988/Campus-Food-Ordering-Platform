@@ -1,39 +1,63 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
+// Supabase setup
 const supabaseUrl = 'https://sqbscxfolbckikrzxqhr.supabase.co'
 const supabaseKey = 'sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay'
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Check login
-const { data: { user } } = await supabase.auth.getUser()
+// wait for page to fully load
+window.addEventListener("load", async () => {
 
-if (!user) {
-    window.location.href = "login.html"
-}
+    console.log("Dashboard loaded") // debug
 
-// Get role (FIXED: no .single())
-const { data: users, error } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
+    // Check if user is logged in
+    const { data: { user } } = await supabase.auth.getUser()
 
-if (error || !users || users.length === 0) {
-    window.location.href = "login.html"
-}
+    if (!user) {
+        window.location.href = "../auth/login.html"
+        return
+    }
 
-const role = users[0].role
+    // Get user role from DB
+    const { data: users, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
 
-// Block non-vendors
-if (role !== "vendor") {
-    alert("Access denied")
-    window.location.href = "login.html"
-}
+    if (error || !users || users.length === 0) {
+        window.location.href = "../auth/login.html"
+        return
+    }
 
-// Logout
-const logoutBtn = document.getElementById("logout")
+    const role = users[0].role
 
-logoutBtn.addEventListener("click", async () => {
-    await supabase.auth.signOut()
-    window.location.href = "login.html"
+    // Only allow vendors
+    if (role !== "vendor") {
+        alert("Access denied")
+        window.location.href = "../auth/login.html"
+        return
+    }
+
+    // Show user email
+    const userInfo = document.getElementById("user-info")
+    if (userInfo) {
+        userInfo.textContent = "Logged in as: " + user.email
+    }
+
+    // Logout button 
+    const logoutBtn = document.getElementById("logout")
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+            console.log("Logout clicked") 
+
+            await supabase.auth.signOut()
+
+            window.location.href = "../auth/login.html"
+        })
+    } else {
+        console.log("Logout button not found")
+    }
+
 })

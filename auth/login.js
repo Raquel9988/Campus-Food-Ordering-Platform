@@ -32,7 +32,7 @@ form.addEventListener('submit', async (e) => {
 
     const user = data.user
 
-    // Get user role from database
+    // Get role from database
     const { data: users, error: roleError } = await supabase
         .from('users')
         .select('role')
@@ -45,10 +45,11 @@ form.addEventListener('submit', async (e) => {
 
     const role = users[0].role
 
-    // Redirect based on role (FIXED PATH)
+    // Redirect (ONLY vendor handled for now)
     if (role === "vendor") {
         window.location.href = "../vendor/vendor-dashboard.html"
     } else {
-        message.textContent = "Access denied (not a vendor)"
+        
+        message.textContent = "Login successful, but your dashboard is not ready yet"
     }
 })
