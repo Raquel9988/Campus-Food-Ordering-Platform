@@ -52,12 +52,14 @@ function displayMenuItems(items){
     items.forEach((item)=>{
         const itemElement=document.createElement("div");
         itemElement.classList.add("menu-item-element");
-        itemElement.innerHTML=`<h3><u>${item.name}</u></h3>
-        ${item.image_url?`<img src="${item.image_url}" alt="${item.name}" width="100">`:""}
-        <p><strong>Description:</strong> ${item.description||"No description available."}</p>
-        <p><strong>Price:</strong> R${item.price.toFixed(2)}</p>
-        <p><strong>Availability:</strong> ${item.is_available?"Available":"Sold Out"}</p>
-        <button class="edit-button" data-id="${item.id}">Edit</button>`;
+        itemElement.innerHTML=`
+            <h3><u>${item.name}</u></h3>
+            ${item.image_url?`<img src="${item.image_url}" alt="${item.name}" width="120">`:""}
+            <p><strong>Description:</strong> ${item.description||"No description available."}</p>
+            <p><strong>Price:</strong> R${item.price.toFixed(2)}</p>
+            <p><strong>Availability:</strong> ${item.is_available?"Available":"Sold Out"}</p>
+            <button class="edit-button" data-id="${item.id}">Edit</button>
+        `;
         //Attach Edit Button Event Listener
         const editBtn=itemElement.querySelector(".edit-button");
         editBtn.addEventListener("click",()=>{startEdit(item)});
@@ -70,9 +72,9 @@ function displayMenuItems(items){
 function startEdit(item){
     editingItemId=item.id;
     document.getElementById("item-name").value=item.name;
-    document.getElementById("item-description").value=item.description;
+    document.getElementById("item-description").value=item.description||"";
     document.getElementById("item-price").value=item.price;
-    document.getElementById("item-availability").value=item.is_available;
+    document.getElementById("item-availability").value=item.is_available?"true":"false";
     submitBtn.textContent="Update Item";
     cancelEditBtn.style.display="block";
 }
@@ -91,7 +93,7 @@ menuForm.addEventListener("submit",async function (event){
 
     const itemName=document.getElementById("item-name").value;
     const itemDescription=document.getElementById("item-description").value;
-    const itemPrice=document.getElementById("item-price").value;
+    const itemPrice=parseFloat(document.getElementById("item-price").value);
     const itemAvailability=document.getElementById("item-availability").value==="true";
 
     const imageFile=document.getElementById("item-image").files[0];
@@ -101,7 +103,7 @@ menuForm.addEventListener("submit",async function (event){
         alert("Please enter the item name.");
         return;
     }
-    if(!itemPrice||itemPrice<0){
+    if(isNaN(itemPrice) || itemPrice < 0){
         alert("Please enter a valid price.");
         return;
     }
@@ -124,7 +126,7 @@ menuForm.addEventListener("submit",async function (event){
        const updateData={
         name:itemName,
         description:itemDescription,
-        price:parseFloat(itemPrice),
+        price:itemPrice,
         is_available:itemAvailability,
        };
        if (imageUrl){
@@ -144,16 +146,16 @@ menuForm.addEventListener("submit",async function (event){
             vendor_id:user.id,
             name:itemName,
             description:itemDescription,
-            price:parseFloat(itemPrice),
+            price:itemPrice,
             is_available:itemAvailability,
             image_url:imageUrl,
         }]);
-        if(error){
-            console.error("Error adding menu item:",error);
-            alert("Failed to add menu item. Please try again.");
-            return;
-        }
-        alert("Menu item added successfully!");
+    if(error){
+        console.error("Error adding menu item:",error);
+        alert("Failed to add menu item. Please try again.");
+        return;
+    }
+    alert("Menu item added successfully!");
     }
     menuForm.reset();
     await loadMenuItems();
