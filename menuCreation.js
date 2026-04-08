@@ -41,6 +41,7 @@ async function loadMenuItems(){
     }
     displayMenuItems(menuItems);
 }
+
 //display menu items in the UI
 function displayMenuItems(items){
     if(!items||items.length===0){
@@ -52,6 +53,7 @@ function displayMenuItems(items){
         const itemElement=document.createElement("div");
         itemElement.classList.add("menu-item-element");
         itemElement.innerHTML=`<h3><u>${item.name}</u></h3>
+        ${item.image_url?`<img src="${item.image_url}" alt="${item.name}" width="100">`:""}
         <p><strong>Description:</strong> ${item.description||"No description available."}</p>
         <p><strong>Price:</strong> R${item.price.toFixed(2)}</p>
         <p><strong>Availability:</strong> ${item.is_available?"Available":"Sold Out"}</p>
@@ -92,6 +94,9 @@ menuForm.addEventListener("submit",async function (event){
     const itemPrice=document.getElementById("item-price").value;
     const itemAvailability=document.getElementById("item-availability").value==="true";
 
+    const imageFile=document.getElementById("item-image").files[0];
+    let imageUrl=null;
+
     if(!itemName){
         alert("Please enter the item name.");
         return;
@@ -100,38 +105,55 @@ menuForm.addEventListener("submit",async function (event){
         alert("Please enter a valid price.");
         return;
     }
-    if (editingItemId){
-        const {error}=await supabase.from("menu_items").update({
-            name: itemName,
-            description: itemDescription,
-            price: parseFloat(itemPrice),
-            is_available: itemAvailability,
-        }).eq("id",editingItemId).eq("vendor_id",user.id);
-        if(error){
-            console.error("Error updating menu item:",error);
-            alert("Failed to update menu item. Please try again.");
+
+    //image upload
+    if (imageFile){
+        const fileName=`${user.id}_${Date.now()}_${imageFile.name}`;
+        const {error:uploadError}=await supabase.storage.from("menu-images").upload(fileName,imageFile);
+        if(uploadError){
+            console.error("Image upload failed:",uploadError);
+            alert("Failed to upload image. Please try again.");
             return;
         }
-        alert("Item updated successfully!");
-        editingItemId=null;
-        submitBtn.textContent="Add Item";
-        cancelEditBtn.style.display="none";
+        const {data}=supabase.storage.from("menu-images").getPublicUrl(fileName);
+        imageUrl=data.publicUrl;
+    }
+
+
+    if (editingItemId){
+       const updateData={
+        name:itemName,
+        description:itemDescription,
+        price:parseFloat(itemPrice),
+        is_available:itemAvailability,
+       };
+       if (imageUrl){
+        updateData.image_url=imageUrl;
+       }
+       const {error}=await supabase.from("menu_items").update(updateData).eq("id",editingItemId).eq("vendor_id",user.id);
+
+       if(error){
+        console.error("Error updating menu item:",error);
+        alert("Failed to update menu item. Please try again.");
+        return;
+       }
+       alert("Menu item updated successfully!");
     }
     else{
-        const {error}=await supabase.from("menu_items").insert([
-            {   vendor_id: user.id,
-                name: itemName,
-                description: itemDescription,
-                price: parseFloat(itemPrice),
-                is_available: itemAvailability,
-            }
-        ]);
+        const {error}=await supabase.from("menu_items").insert([{
+            vendor_id:user.id,
+            name:itemName,
+            description:itemDescription,
+            price:parseFloat(itemPrice),
+            is_available:itemAvailability,
+            image_url:imageUrl,
+        }]);
         if(error){
             console.error("Error adding menu item:",error);
             alert("Failed to add menu item. Please try again.");
             return;
         }
-    alert("Menu item added successfully!");
+        alert("Menu item added successfully!");
     }
     menuForm.reset();
     await loadMenuItems();
