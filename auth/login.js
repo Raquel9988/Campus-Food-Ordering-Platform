@@ -17,39 +17,76 @@ form.addEventListener('submit', async (e) => {
     const email = document.getElementById('email').value.trim()
     const password = document.getElementById('password').value
 
-    message.textContent = "Logging in..."
+    message.textContent = 'Logging in...'
 
     // Login user
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email,
         password
     })
 
-    if (error) {
-        message.textContent = error.message
+    if (loginError) {
+        message.textContent = loginError.message
         return
     }
 
-    const user = data.user
+    const user = loginData.user
 
-    // Get role from database
+    // Get role from users table
     const { data: users, error: roleError } = await supabase
         .from('users')
         .select('role')
         .eq('id', user.id)
 
     if (roleError || !users || users.length === 0) {
-        message.textContent = "User role not found"
+        message.textContent = 'User role not found'
         return
     }
 
     const role = users[0].role
 
-    // Redirect (ONLY vendor handled for now)
-    if (role === "vendor") {
-        window.location.href = "../vendor/vendor-dashboard.html"
-    } else {
-        
-        message.textContent = "Login successful, but your dashboard is not ready yet"
+    if (role === 'vendor') {
+        // Check vendor status
+        const { data: vendors, error: vendorError } = await supabase
+            .from('vendors')
+            .select('status')
+            .eq('user_id', user.id)
+
+        if (vendorError || !vendors || vendors.length === 0) {
+            message.textContent = 'Vendor profile not found'
+            return
+        }
+
+        const status = vendors[0].status
+
+        if (status === 'pending') {
+            message.textContent = 'Your vendor account is waiting for admin approval'
+            return
+        }
+
+        if (status === 'suspended') {
+            message.textContent = 'Your vendor account has been suspended'
+            return
+        }
+
+        if (status === 'approved') {
+            window.location.href = '../vendor/vendor-dashboard.html'
+            return
+        }
+
+        message.textContent = 'Unknown vendor status'
+        return
     }
+
+    if (role === 'student') {
+        message.textContent = 'Student dashboard is not ready yet'
+        return
+    }
+
+    if (role === 'admin') {
+        message.textContent = 'Admin dashboard is not ready yet'
+        return
+    }
+
+    message.textContent = 'Unknown user role'
 })

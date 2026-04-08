@@ -3,68 +3,106 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // Supabase setup
 const supabaseUrl = 'https://sqbscxfolbckikrzxqhr.supabase.co'
 const supabaseKey = 'sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay'
-
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Get elements
-const form = document.getElementById('signup-form')
-const message = document.getElementById('message')
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('signup-form')
+    const roleSelect = document.getElementById('role')
+    const businessNameGroup = document.getElementById('business-name-group')
+    const businessNameInput = document.getElementById('business-name')
+    const message = document.getElementById('message')
 
-// Handle form submit
-form.addEventListener('submit', async (e) => {
-    e.preventDefault()
+    console.log('register.js loaded')
 
-    const email = document.getElementById('email').value.trim()
-    const password = document.getElementById('password').value
-    const role = document.getElementById('role').value
+    // Show/hide business name field based on selected role
+    roleSelect.addEventListener('change', () => {
+        const role = roleSelect.value
+        console.log('Selected role:', role)
 
-    // Check role selected
-    if (!role) {
-        message.textContent = "Please select a role"
-        return
-    }
-
-    message.textContent = "Registering..."
-
-    // Create auth user
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password
+        if (role === 'vendor') {
+            businessNameGroup.style.display = 'block'
+            businessNameInput.required = true
+        } else {
+            businessNameGroup.style.display = 'none'
+            businessNameInput.required = false
+            businessNameInput.value = ''
+        }
     })
 
-    if (error) {
-        message.textContent = error.message
-        return
-    }
+    // Handle form submit
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault()
 
-    const user = data.user
+        const email = document.getElementById('email').value.trim()
+        const password = document.getElementById('password').value
+        const role = roleSelect.value
+        const businessName = businessNameInput.value.trim()
 
-    // If email confirmation required
-    if (!user) {
-        message.textContent = "Check your email to confirm registration"
-        return
-    }
+        if (!role) {
+            message.textContent = 'Please select a role'
+            return
+        }
 
-    // tore user role in DB
-    const { error: insertError } = await supabase
-        .from('users')
-        .insert([
-            {
-                id: user.id,
-                email: email,
-                role: role
+        if (role === 'vendor' && !businessName) {
+            message.textContent = 'Please enter the business name'
+            return
+        }
+
+        message.textContent = 'Registering...'
+
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password
+        })
+
+        if (signUpError) {
+            message.textContent = signUpError.message
+            return
+        }
+
+        const user = signUpData.user
+
+        if (!user) {
+            message.textContent = 'Check your email to confirm registration'
+            return
+        }
+
+        const { error: userInsertError } = await supabase
+            .from('users')
+            .insert([
+                {
+                    id: user.id,
+                    email: email,
+                    role: role
+                }
+            ])
+
+        if (userInsertError) {
+            message.textContent = userInsertError.message
+            return
+        }
+
+        if (role === 'vendor') {
+            const { error: vendorInsertError } = await supabase
+                .from('vendors')
+                .insert([
+                    {
+                        user_id: user.id,
+                        business_name: businessName,
+                        status: 'pending'
+                    }
+                ])
+
+            if (vendorInsertError) {
+                message.textContent = vendorInsertError.message
+                return
             }
-        ])
+        }
 
-    if (insertError) {
-        message.textContent = insertError.message
-        return
-    }
+        message.textContent = 'Registration successful!'
 
-    message.textContent = "Registration successful!"
-
-    // OPTIONAL: redirect to login after registration
-    setTimeout(() => {
-        window.location.href = "login.html"
-    }, 1500)
+        setTimeout(() => {
+            window.location.href = 'login.html'
+        }, 1500)
+    })
 })
