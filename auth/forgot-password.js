@@ -58,9 +58,9 @@ form.addEventListener('submit', async (e) => {
         }
     }
 
-    // Send reset email
+    // ✅ FIXED: Use your deployed Netlify URL
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'http://localhost:5500/reset-password.html'
+        redirectTo: 'https://f7e717.netlify.app/reset-password.html'
     })
 
     if (resetError) {
