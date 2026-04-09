@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+    <link rel="stylesheet" href="register.css">
+</head>
+<body>
+
+    <h2>Register</h2>
+
+    <form id="signup-form">
+        <input type="email" id="email" placeholder="Enter email" required>
+        <br><br>
+
+        <input type="password" id="password" placeholder="Enter password" required>
+        <br><br>
+
+        <label for="role">Select Role:</label>
+        <select id="role" required>
+            <option value="">-- Select Role --</option>
+            <option value="vendor">Vendor</option>
+            <option value="student">Student</option>
+        </select>
+        <br><br>
+
+        <div id="business-name-group" style="display: none;">
+            <input type="text" id="business-name" placeholder="Enter business name">
+            <br><br>
+        </div>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p id="message"></p>
+
+    <script type="module" src="register.js"></script>
+
+</body>
+</html>
