@@ -9,13 +9,18 @@ const supabase = createClient(
 const form = document.getElementById('reset-form')
 const message = document.getElementById('message')
 
-// Check session from email link
+// ✅ Handle session from email link properly
 window.addEventListener('load', async () => {
+    // This extracts token from URL automatically
     const { data, error } = await supabase.auth.getSession()
 
-    if (!data.session) {
+    if (error || !data.session) {
         message.textContent = 'Invalid or expired reset link'
+        form.style.display = 'none'
+        return
     }
+
+    message.textContent = 'Enter your new password'
 })
 
 // Handle password update
@@ -30,6 +35,11 @@ form.addEventListener('submit', async (e) => {
         return
     }
 
+    if (newPassword.length < 6) {
+        message.textContent = 'Password must be at least 6 characters'
+        return
+    }
+
     message.textContent = 'Updating password...'
 
     const { error } = await supabase.auth.updateUser({
@@ -41,7 +51,7 @@ form.addEventListener('submit', async (e) => {
         return
     }
 
-    message.textContent = 'Password updated successfully!'
+    message.textContent = 'Password updated successfully! Redirecting...'
 
     setTimeout(() => {
         window.location.href = 'login.html'
