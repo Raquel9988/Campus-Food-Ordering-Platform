@@ -3,11 +3,20 @@ body {
     background-color: #f7f7f7;
     margin: 0;
     min-height: 100vh;
+
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 
+/* Title */
+h2 {
+    margin-bottom: 30px;
+    color: #222;
+}
+
+/* Form */
 form {
     background-color: white;
     padding: 30px;
@@ -18,22 +27,13 @@ form {
     box-sizing: border-box;
 }
 
-h2 {
-    position: absolute;
-    top: 110px;
-    text-align: center;
-    width: 100%;
-    margin: 0;
-    color: #222;
-}
-
+/* Inputs */
 input {
     width: 100%;
     padding: 12px;
-    margin: 0;
+    margin-bottom: 15px;
     border: 1px solid #ccc;
     border-radius: 6px;
-    box-sizing: border-box;
     font-size: 14px;
 }
 
@@ -42,6 +42,7 @@ input:focus {
     border-color: #888;
 }
 
+/* Button */
 button {
     width: 100%;
     padding: 12px;
@@ -58,31 +59,21 @@ button:hover {
     background-color: #2f2f2f;
 }
 
+/* Message */
 #message {
-    position: absolute;
-    top: calc(50% + 180px);
-    width: 100%;
+    margin-top: 15px;
     text-align: center;
     font-weight: bold;
     color: #333;
 }
 
+/* Paragraphs */
 p {
-    position: absolute;
-    width: 100%;
+    margin-top: 15px;
     text-align: center;
-    color: #333;
 }
 
-p:nth-of-type(1) {
-    top: calc(50% + 140px);
-    font-weight: bold;
-}
-
-p:nth-of-type(2) {
-    top: calc(50% + 220px);
-}
-
+/* Links */
 a {
     color: #444;
     font-weight: bold;

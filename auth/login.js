@@ -1,12 +1,12 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
 // Supabase setup
-const supabaseUrl = 'https://sqbscxfolbckikrzxqhr.supabase.co'
-const supabaseKey = 'sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay'
+const supabase = createClient(
+    'https://sqbscxfolbckikrzxqhr.supabase.co',
+    'sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay'
+)
 
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-// DOM elements
+// Elements
 const form = document.getElementById('login-form')
 const message = document.getElementById('message')
 
@@ -19,7 +19,7 @@ form.addEventListener('submit', async (e) => {
 
     message.textContent = 'Logging in...'
 
-    // Login user
+    // Login
     const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -32,27 +32,37 @@ form.addEventListener('submit', async (e) => {
 
     const user = loginData.user
 
-    // Get role from users table
+    // Get role
     const { data: users, error: roleError } = await supabase
         .from('users')
         .select('role')
         .eq('id', user.id)
 
-    if (roleError || !users || users.length === 0) {
+    if (roleError) {
+        message.textContent = 'Error fetching role'
+        return
+    }
+
+    if (!users || users.length === 0) {
         message.textContent = 'User role not found'
         return
     }
 
     const role = users[0].role
 
+    // Vendor logic
     if (role === 'vendor') {
-        // Check vendor status
         const { data: vendors, error: vendorError } = await supabase
             .from('vendors')
             .select('status')
             .eq('user_id', user.id)
 
-        if (vendorError || !vendors || vendors.length === 0) {
+        if (vendorError) {
+            message.textContent = 'Error fetching vendor data'
+            return
+        }
+
+        if (!vendors || vendors.length === 0) {
             message.textContent = 'Vendor profile not found'
             return
         }
@@ -60,12 +70,12 @@ form.addEventListener('submit', async (e) => {
         const status = vendors[0].status
 
         if (status === 'pending') {
-            message.textContent = 'Your vendor account is waiting for admin approval'
+            message.textContent = 'Your account is waiting for admin approval'
             return
         }
 
         if (status === 'suspended') {
-            message.textContent = 'Your vendor account has been suspended'
+            message.textContent = 'Your account has been suspended'
             return
         }
 
@@ -79,12 +89,12 @@ form.addEventListener('submit', async (e) => {
     }
 
     if (role === 'student') {
-        message.textContent = 'Student dashboard is not ready yet'
+        message.textContent = 'Student dashboard not ready yet'
         return
     }
 
     if (role === 'admin') {
-        message.textContent = 'Admin dashboard is not ready yet'
+        message.textContent = 'Admin dashboard not ready yet'
         return
     }
 
