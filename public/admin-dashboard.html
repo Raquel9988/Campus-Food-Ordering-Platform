@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Controls</title>
+    <link rel="stylesheet" href="../src/css/admin-dashboard.css">
+</head>
+
+<body>
+
+    <div class="top-bar">
+        <div>
+            <h1>Admin Controls</h1>
+            <p>Manage vendor approval and suspension.</p>
+        </div>
+        <button class="logout-btn" id="logout-btn">Logout</button>
+    </div>
+
+    <p id="message"></p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Business Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Updated At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="vendor-table-body">
+            <tr>
+                <td colspan="6" class="loading">Loading vendors...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script type="module" src="../src/js/admin/admin-dashboard.js"></script>
+
+</body>
+
+</html>
