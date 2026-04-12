@@ -4,22 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Vendor Dashboard</title>
+
+    <link rel="stylesheet" href="vendor-dashboard.css">
 </head>
 
 <body>
 
-    <main class="container">
+    <header>
+        <h1>Vendor Dashboard</h1>
+        <div>
+            <p id="user-info"></p>
+            <button id="logout">Logout</button>
+        </div>
+    </header>
 
-        <h1>Vendor Menu Management</h1>
-        <p class="subtitle">Add and manage your food items here.</p>
+    <main>
 
-        <!-- USER INFO + LOGOUT -->
-        <p id="user-info"></p>
-        <button id="logout">Logout</button>
+        <h2>Menu Management</h2>
+        <p>Add and manage your food items here.</p>
 
-        <hr>
-
-        <!-- MENU FORM -->
         <section class="form-section">
             <h2>Add Menu Items</h2>
 
@@ -53,17 +56,12 @@
                     </select>
                 </fieldset>
 
-                <br>
-
                 <button type="submit" id="submit-btn">Add Item</button>
                 <button type="button" id="cancel-edit-btn" style="display:none;">Cancel</button>
 
             </form>
         </section>
 
-        <hr>
-
-        <!-- MENU ITEMS DISPLAY -->
         <section class="menu-items-section">
             <h2>Your Menu Items</h2>
 
@@ -74,7 +72,6 @@
 
     </main>
 
-    <!-- IMPORTANT: SCRIPT ORDER -->
     <script type="module" src="vendor-dashboard.js"></script>
     <script type="module" src="menuCreation.js"></script>
 
