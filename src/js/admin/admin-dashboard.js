@@ -1,25 +1,44 @@
 import { supabase } from '../supabaseClient.js'
-import { requireAdmin } from '../routeGuards.js'
+import { getCurrentSessionUser, getUserById } from '../authHelpers.js'
 
 const message = document.getElementById('message')
 const vendorTableBody = document.getElementById('vendor-table-body')
 const logoutBtn = document.getElementById('logout-btn')
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const adminUser = await requireAdmin('student-login.html')
+    try {
+        const authUser = await getCurrentSessionUser()
 
-    if (!adminUser) return
+        if (!authUser) {
+            window.location.href = 'admin-login.html'
+            return
+        }
 
-    setupLogout()
-    await loadVendors()
+        const userRow = await getUserById(authUser.id)
+
+        if (!userRow || userRow.role !== 'admin') {
+            alert('Access denied. Only admins can access this page.')
+            window.location.href = 'admin-login.html'
+            return
+        }
+
+        setupLogout()
+        await loadVendors()
+    } catch (error) {
+        message.textContent = error.message || 'Failed to load admin dashboard.'
+    }
 })
 
 function setupLogout() {
-    if (!logoutBtn) return
-
     logoutBtn.addEventListener('click', async () => {
-        await supabase.auth.signOut()
-        window.location.href = 'student-login.html'
+        const { error } = await supabase.auth.signOut()
+
+        if (error) {
+            message.textContent = error.message
+            return
+        }
+
+        window.location.href = 'admin-login.html'
     })
 }
 
@@ -28,7 +47,7 @@ async function loadVendors() {
 
     vendorTableBody.innerHTML = `
         <tr>
-            <td colspan="6" class="loading">Loading vendors...</td>
+            <td colspan="6">Loading vendors...</td>
         </tr>
     `
 
@@ -64,6 +83,7 @@ async function loadVendors() {
         }
 
         const userMap = {}
+
         users.forEach(user => {
             userMap[user.id] = user.email
         })
@@ -90,7 +110,11 @@ function renderVendors(vendors, userMap) {
         row.innerHTML = `
             <td>${escapeHtml(vendor.business_name)}</td>
             <td>${escapeHtml(email)}</td>
-            <td class="${vendor.status}">${vendor.status}</td>
+            <td>
+                <span class="${vendor.status === 'approved' ? 'status-approved' : vendor.status === 'pending' ? 'status-pending' : 'status-suspended'}">
+                    ${escapeHtml(vendor.status)}
+                </span>
+            </td>
             <td>${formatDate(vendor.created_at)}</td>
             <td>${formatDate(vendor.updated_at)}</td>
             <td>${getActionButtons(vendor)}</td>
@@ -153,10 +177,10 @@ async function updateVendorStatus(vendorId, newStatus) {
             throw new Error(error.message)
         }
 
-        message.textContent = `Vendor ${newStatus} successfully`
+        message.textContent = `Vendor ${newStatus} successfully.`
         await loadVendors()
     } catch (error) {
-        message.textContent = error.message || 'Failed to update vendor status'
+        message.textContent = error.message || 'Failed to update vendor status.'
     }
 }
 

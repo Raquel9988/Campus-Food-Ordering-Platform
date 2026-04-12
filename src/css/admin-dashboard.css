@@ -1,93 +1,106 @@
 body {
+    margin: 0;
     font-family: Arial, sans-serif;
-    margin: 30px;
-    background-color: #f7f7f7;
+    background: #f8fafc;
+    color: #1f2937;
 }
 
-h1 {
-    margin-bottom: 10px;
-}
-
-p {
-    margin-bottom: 20px;
-}
-
-#message {
-    margin: 15px 0;
-    font-weight: bold;
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 20px 48px;
 }
 
 .top-bar {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 16px;
     margin-bottom: 20px;
 }
 
-button {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+h1 {
+    margin: 0;
+    color: #111827;
 }
 
-.logout-btn {
-    background-color: #444;
-    color: white;
+.subtitle {
+    margin-top: 8px;
+    color: #6b7280;
 }
 
-.approve-btn {
-    background-color: #28a745;
-    color: white;
-    margin-right: 8px;
+.message {
+    min-height: 24px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    color: #374151;
 }
 
-.suspend-btn {
-    background-color: #dc3545;
-    color: white;
-}
-
-.disabled-btn {
-    background-color: #999;
-    color: white;
-    cursor: not-allowed;
+.table-section {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    overflow-x: auto;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: white;
+    min-width: 820px;
 }
 
 th,
 td {
-    border: 1px solid #ddd;
-    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 14px 12px;
     text-align: left;
+    vertical-align: top;
 }
 
 th {
-    background-color: #f0f0f0;
+    background: #f9fafb;
+    font-size: 0.95rem;
 }
 
-.status {
-    font-weight: bold;
-    text-transform: capitalize;
+button,
+.logout-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #111827;
+    color: #ffffff;
 }
 
-.pending {
-    color: orange;
+button:hover,
+.logout-btn:hover {
+    opacity: 0.92;
 }
 
-.approved {
-    color: green;
+.status-approved {
+    color: #166534;
+    font-weight: 700;
 }
 
-.suspended {
-    color: red;
+.status-pending {
+    color: #b45309;
+    font-weight: 700;
 }
 
-.loading {
-    color: #555;
-    font-style: italic;
+.status-suspended {
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+@media (max-width: 700px) {
+    .top-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .logout-btn {
+        width: 100%;
+    }
 }
