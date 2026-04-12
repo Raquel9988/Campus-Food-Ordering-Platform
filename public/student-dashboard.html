@@ -4,9 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
+    <link rel="stylesheet" href="../src/css/student-dashboard.css">
 </head>
 <body>
-    <h1>Student Dashboard</h1>
-    <p>Student dashboard coming soon.</p>
+    <main class="dashboard-container">
+        <section class="dashboard-card">
+            <h1>Student Dashboard</h1>
+            <p class="subtitle">You are signed in successfully as a student.</p>
+
+            <div class="actions">
+                <a href="student-login.html" class="secondary-link">Back to Login</a>
+                <button id="logout-btn">Logout</button>
+            </div>
+
+            <p id="message"></p>
+        </section>
+    </main>
+
+    <script type="module">
+        import { supabase } from '../src/js/supabaseClient.js'
+
+        const logoutBtn = document.getElementById('logout-btn')
+        const message = document.getElementById('message')
+
+        logoutBtn.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signOut()
+
+            if (error) {
+                message.textContent = error.message
+                return
+            }
+
+            window.location.href = 'student-login.html'
+        })
+    </script>
 </body>
 </html>
