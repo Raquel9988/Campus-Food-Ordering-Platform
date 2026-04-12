@@ -1,25 +1,82 @@
-<!doctype html>
-<html>
-  <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Vendor Dashboard</title>
-    <link rel="stylesheet" href="vendor-dashboard.css" />
-  </head>
-  <body>
-    <header>
-      <h1>Campus Food Platform - Vendor</h1>
-      <div id="user-info"></div>
-      <button id="logout">Logout</button>
-    </header>
+</head>
 
-    <main>
-      <h2>Welcome Vendor 🎉</h2>
-      <p>You are logged in successfully.</p>
+<body>
 
-      <nav class="dashboard-nav">
-        <a href="menuCreation.html" class="nav-btn">📋 Manage Menu</a>
-      </nav>
+    <main class="container">
+
+        <h1>Vendor Menu Management</h1>
+        <p class="subtitle">Add and manage your food items here.</p>
+
+        <!-- USER INFO + LOGOUT -->
+        <p id="user-info"></p>
+        <button id="logout">Logout</button>
+
+        <hr>
+
+        <!-- MENU FORM -->
+        <section class="form-section">
+            <h2>Add Menu Items</h2>
+
+            <form id="menu-item-form">
+
+                <fieldset class="form-group">
+                    <label for="item-name">Item Name</label>
+                    <input type="text" id="item-name" placeholder="Enter Item Name" required/>
+                </fieldset>
+
+                <fieldset class="form-group">
+                    <label for="item-description">Description</label>
+                    <textarea id="item-description" placeholder="Enter Item Description" required></textarea>
+                </fieldset>
+
+                <fieldset class="form-group">
+                    <label for="item-price">Price (R)</label>
+                    <input type="number" id="item-price" min="0" step="0.01" placeholder="Enter Price" required/>
+                </fieldset>
+
+                <fieldset class="form-group">
+                    <label for="item-image">Upload Photo</label>
+                    <input type="file" id="item-image" accept="image/*"/>
+                </fieldset>
+
+                <fieldset class="form-group">
+                    <label for="item-availability">Availability</label>
+                    <select id="item-availability">
+                        <option value="true">Available</option>
+                        <option value="false">Sold Out</option>
+                    </select>
+                </fieldset>
+
+                <br>
+
+                <button type="submit" id="submit-btn">Add Item</button>
+                <button type="button" id="cancel-edit-btn" style="display:none;">Cancel</button>
+
+            </form>
+        </section>
+
+        <hr>
+
+        <!-- MENU ITEMS DISPLAY -->
+        <section class="menu-items-section">
+            <h2>Your Menu Items</h2>
+
+            <section id="menu-items-container">
+                <p>Your added menu items will appear here.</p>
+            </section>
+        </section>
+
     </main>
 
+    <!-- IMPORTANT: SCRIPT ORDER -->
     <script type="module" src="vendor-dashboard.js"></script>
-  </body>
+    <script type="module" src="menuCreation.js"></script>
+
+</body>
 </html>
