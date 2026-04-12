@@ -1,31 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login</title>
-    <link rel="stylesheet" href="../src/css/admin-login.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="../src/css/admin-login.css">
 </head>
-
 <body>
-    <h2>Admin Login</h2>
+  <h2>Admin Login</h2>
+  <button id="google-login-btn">Continue with Google</button>
+  <p id="message"></p>
 
-    <form id="login-form">
-        <input type="email" id="email" placeholder="Enter admin email" required>
-        <br><br>
-
-        <input type="password" id="password" placeholder="Enter password" required>
-        <br><br>
-
-        <button type="submit">Login</button>
-    </form>
-
-    <p id="message"></p>
-    <p>
-        <a href="forgot-password.html">Forgot Password?</a>
-    </p>
-    <script type="module" src="../src/js/auth/admin-login.js"></script>
+  <script type="module" src="../src/js/auth/admin-login.js"></script>
 </body>
-
 </html>
