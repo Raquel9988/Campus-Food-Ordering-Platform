@@ -1,18 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vendor Onboarding</title>
+  <link rel="stylesheet" href="../src/css/vendor-onboarding.css">
 </head>
+
 <body>
-  <h2>Vendor Onboarding</h2>
-  <form id="vendor-form">
-    <input type="text" id="business-name" placeholder="Enter business name" required>
-    <button type="submit">Complete Setup</button>
-  </form>
-  <p id="message"></p>
+  <main class="auth-container">
+    <section class="auth-card">
+      <h1>Vendor Onboarding</h1>
+      <p class="subtitle">Complete your vendor profile to request access.</p>
+
+      <form id="vendor-form">
+        <label for="business-name">Business Name</label>
+        <input type="text" id="business-name" placeholder="Enter your business name" required>
+
+        <button type="submit">Complete Setup</button>
+      </form>
+
+      <p id="message" class="message"></p>
+    </section>
+  </main>
 
   <script type="module" src="../src/js/auth/vendor-onboarding.js"></script>
 </body>
+
 </html>

@@ -1,85 +1,60 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f7f7f7;
     margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #f3f8f4, #e8f3ea);
     min-height: 100vh;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
 }
 
-/* Title */
-h2 {
-    margin-bottom: 30px;
-    color: #222;
+.auth-container {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
 }
 
-/* Form */
-form {
-    background-color: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+.auth-card {
     width: 100%;
-    max-width: 400px;
-    box-sizing: border-box;
+    max-width: 420px;
+    background: #ffffff;
+    padding: 32px 28px;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    text-align: center;
 }
 
-/* Inputs */
-input {
+h1 {
+    margin: 0 0 12px;
+    font-size: 2rem;
+    color: #14532d;
+}
+
+.subtitle {
+    margin: 0 0 24px;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+.google-btn {
     width: 100%;
-    padding: 12px 0;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-input:focus {
-    outline: none;
-    border-color: #888;
-}
-
-/* Button */
-button {
-    width: 100%;
-    padding: 12px;
-    background-color: #444;
-    color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 1rem;
+    font-weight: 700;
+    background: #166534;
+    color: #ffffff;
     cursor: pointer;
-    font-size: 15px;
-    font-weight: bold;
+    transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-button:hover {
-    background-color: #2f2f2f;
+.google-btn:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
 }
 
-/* Message */
-#message {
-    margin-top: 15px;
-    text-align: center;
-    font-weight: bold;
-    color: #333;
-}
-
-/* Paragraphs */
-p {
-    margin-top: 15px;
-    text-align: center;
-}
-
-/* Links */
-a {
-    color: #444;
-    font-weight: bold;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
+.message {
+    margin-top: 18px;
+    min-height: 20px;
+    color: #374151;
+    font-weight: 600;
 }
