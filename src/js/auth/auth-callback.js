@@ -1,12 +1,17 @@
-import { getCurrentSessionUser, getUserById, createUserProfile, getVendorProfile } from '../authHelpers.js'
+import {
+    getCurrentSessionUser,
+    getUserById,
+    createUserProfile,
+    getVendorProfileByUserId
+} from '../authHelpers.js'
 
 const message = document.getElementById('message')
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const user = await getCurrentSessionUser()
+        const authUser = await getCurrentSessionUser()
 
-        if (!user) {
+        if (!authUser) {
             message.textContent = 'No active session found.'
             return
         }
@@ -14,15 +19,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const params = new URLSearchParams(window.location.search)
         const requestedRole = params.get('role')
 
-        let userRow = await getUserById(user.id)
+        if (!requestedRole || !['student', 'vendor', 'admin'].includes(requestedRole)) {
+            message.textContent = 'Invalid role.'
+            return
+        }
+
+        let userRow = await getUserById(authUser.id)
 
         if (!userRow) {
             await createUserProfile({
-                id: user.id,
-                email: user.email,
+                id: authUser.id,
+                email: authUser.email,
                 role: requestedRole
             })
-            userRow = await getUserById(user.id)
+
+            userRow = await getUserById(authUser.id)
+        }
+
+        if (requestedRole !== userRow.role) {
+            message.textContent = `This account is registered as ${userRow.role}, not ${requestedRole}.`
+            return
         }
 
         if (userRow.role === 'student') {
@@ -31,15 +47,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (userRow.role === 'vendor') {
-            const vendor = await getVendorProfile(user.id)
+            const vendor = await getVendorProfileByUserId(authUser.id)
 
             if (!vendor) {
                 window.location.href = 'vendor-onboarding.html'
-                return
-            }
-
-            if (vendor.status === 'approved') {
-                window.location.href = 'vendor-dashboard.html'
                 return
             }
 
@@ -52,6 +63,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 message.textContent = 'Your vendor account has been suspended.'
                 return
             }
+
+            if (vendor.status === 'approved') {
+                window.location.href = 'vendor-dashboard.html'
+                return
+            }
+
+            message.textContent = 'Unknown vendor status.'
+            return
         }
 
         if (userRow.role === 'admin') {
@@ -59,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return
         }
 
-        message.textContent = 'Unknown role.'
+        message.textContent = 'Unknown user role.'
     } catch (error) {
         message.textContent = error.message || 'Authentication failed.'
     }
