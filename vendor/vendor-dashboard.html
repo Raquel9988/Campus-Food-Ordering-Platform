@@ -1,19 +1,25 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Vendor Dashboard</title>
-</head>
-<body>
+    <link rel="stylesheet" href="vendor-dashboard.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Campus Food Platform - Vendor</h1>
+      <div id="user-info"></div>
+      <button id="logout">Logout</button>
+    </header>
 
-<h1>Welcome Vendor 🎉</h1>
+    <main>
+      <h2>Welcome Vendor 🎉</h2>
+      <p>You are logged in successfully.</p>
 
-<p>You are logged in successfully.</p>
+      <nav class="dashboard-nav">
+        <a href="menuCreation.html" class="nav-btn">📋 Manage Menu</a>
+      </nav>
+    </main>
 
-<p id="user-info"></p>
-
-<button id="logout">Logout</button>
-
-<script type="module" src="vendor-dashboard.js"></script>
-
-</body>
+    <script type="module" src="vendor-dashboard.js"></script>
+  </body>
 </html>
