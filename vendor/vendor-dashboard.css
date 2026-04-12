@@ -1,14 +1,17 @@
+/* RESET */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-s body {
+
+/* BODY (NO CENTERING!) */
+body {
   font-family: Arial, sans-serif;
   background-color: #f7f7f7;
-  min-height: 100vh;
 }
 
+/* HEADER */
 header {
   background-color: #444;
   color: white;
@@ -18,60 +21,71 @@ header {
   align-items: center;
 }
 
-header h1 {
-  font-size: 1.4rem;
-}
-
-#user-info {
-  font-size: 0.9rem;
-}
-
-#logout {
-  background-color: #ff4444;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-#logout:hover {
-  background-color: #cc0000;
-}
-
+/* MAIN CONTAINER */
 main {
   max-width: 900px;
   margin: 30px auto;
   padding: 0 20px;
 }
 
-main h2 {
-  margin-bottom: 10px;
-  color: #333;
+/* FORM */
+form {
+  background-color: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  margin-bottom: 30px;
 }
 
-main p {
-  margin-bottom: 20px;
-  color: #666;
+/* INPUTS */
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
-.dashboard-nav {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.nav-btn {
-  display: inline-block;
+/* BUTTONS */
+button {
+  padding: 10px 15px;
   background-color: #444;
   color: white;
-  padding: 15px 25px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 1rem;
-  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 10px;
 }
 
-.nav-btn:hover {
+button:hover {
   background-color: #2f2f2f;
+}
+
+/* MENU ITEMS */
+#menu-items-container section {
+  background-color: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* IMAGES */
+img {
+  margin: 10px 0;
+  border-radius: 6px;
+}
+
+/* TEXT */
+h2 {
+  margin-bottom: 15px;
+  color: #222;
+}
+
+p {
+  margin-bottom: 10px;
+  color: #555;
 }
