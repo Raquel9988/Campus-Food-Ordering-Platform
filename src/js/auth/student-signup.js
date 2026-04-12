@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient.js'
-import { createUserProfile, createVendorProfile } from '../authHelpers.js'
+import { createUserProfile } from '../authHelpers.js'
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('signup-form')
@@ -10,9 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const email = document.getElementById('email').value.trim()
         const password = document.getElementById('password').value
-        const businessName = document.getElementById('business-name').value.trim()
 
-        if (!email || !password || !businessName) {
+        if (!email || !password) {
             message.textContent = 'Please fill in all fields'
             return
         }
@@ -22,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return
         }
 
-        message.textContent = 'Registering vendor...'
+        message.textContent = 'Registering...'
 
         try {
             const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -44,21 +43,16 @@ document.addEventListener('DOMContentLoaded', () => {
             await createUserProfile({
                 id: user.id,
                 email,
-                role: 'vendor'
+                role: 'student'
             })
 
-            await createVendorProfile({
-                userId: user.id,
-                businessName
-            })
-
-            message.textContent = 'Vendor registration successful! Waiting for admin approval.'
+            message.textContent = 'Registration successful! Redirecting...'
 
             setTimeout(() => {
-                window.location.href = 'vendor-login.html'
+                window.location.href = 'student-login.html'
             }, 1500)
         } catch (error) {
-            message.textContent = error.message || 'Vendor registration failed'
+            message.textContent = error.message || 'Registration failed'
         }
     })
 })

@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor Dashboard</title>
-    <link rel="stylesheet" href="../src/css/vendor-dashboard.css">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="../src/css/student-dashboard.css">
 </head>
 <body>
     <main class="dashboard-container">
         <section class="dashboard-card">
-            <h1>Vendor Dashboard</h1>
-            <p class="subtitle">Welcome to your vendor dashboard.</p>
+            <h1>Student Dashboard</h1>
+            <p class="subtitle">You are signed in successfully as a student.</p>
 
             <div class="actions">
-                <a href="menu-management.html" class="primary-link">Go to Menu Management</a>
+                <a href="student-login.html" class="secondary-link">Back to Login</a>
                 <button id="logout-btn">Logout</button>
             </div>
 
@@ -35,7 +35,7 @@
                 return
             }
 
-            window.location.href = 'vendor-login.html'
+            window.location.href = 'student-login.html'
         })
     </script>
 </body>
