@@ -8,11 +8,60 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 // DOM elements
 const message = document.getElementById('message')
 const vendorTableBody = document.getElementById('vendor-table-body')
+const logoutBtn = document.getElementById('logout-btn')
 
-// Load vendors immediately
+// Run when page loads
 document.addEventListener('DOMContentLoaded', async () => {
+    const isAdmin = await checkAdminAccess()
+
+    if (!isAdmin) {
+        return
+    }
+
     await loadVendors()
 })
+
+// Check current logged-in user and confirm admin role
+async function checkAdminAccess() {
+    message.textContent = 'Checking admin access...'
+
+    const { data: authData, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !authData.user) {
+        message.textContent = 'Please log in first.'
+        setTimeout(() => {
+            window.location.href = '../auth/login.html'
+        }, 1200)
+        return false
+    }
+
+    const userId = authData.user.id
+
+    const { data: users, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .single()
+
+    if (userError || !users) {
+        message.textContent = 'Unable to verify user role.'
+        setTimeout(() => {
+            window.location.href = '../auth/login.html'
+        }, 1200)
+        return false
+    }
+
+    if (users.role !== 'admin') {
+        message.textContent = 'Access denied. Admins only.'
+        setTimeout(() => {
+            window.location.href = '../auth/login.html'
+        }, 1200)
+        return false
+    }
+
+    message.textContent = 'Welcome, admin.'
+    return true
+}
 
 // Load vendors + user emails
 async function loadVendors() {
@@ -32,6 +81,11 @@ async function loadVendors() {
 
     if (vendorError) {
         message.textContent = vendorError.message
+        vendorTableBody.innerHTML = `
+            <tr>
+                <td colspan="6">Failed to load vendors</td>
+            </tr>
+        `
         return
     }
 
@@ -41,6 +95,7 @@ async function loadVendors() {
                 <td colspan="6">No vendors found</td>
             </tr>
         `
+        message.textContent = 'No vendors found.'
         return
     }
 
@@ -54,6 +109,11 @@ async function loadVendors() {
 
     if (usersError) {
         message.textContent = usersError.message
+        vendorTableBody.innerHTML = `
+            <tr>
+                <td colspan="6">Failed to load vendor emails</td>
+            </tr>
+        `
         return
     }
 
@@ -77,9 +137,9 @@ function renderVendors(vendors, userMap) {
         const row = document.createElement('tr')
 
         row.innerHTML = `
-            <td>${vendor.business_name}</td>
-            <td>${email}</td>
-            <td class="${vendor.status}">${vendor.status}</td>
+            <td>${escapeHtml(vendor.business_name || 'N/A')}</td>
+            <td>${escapeHtml(email)}</td>
+            <td class="${escapeHtml(vendor.status)}">${escapeHtml(vendor.status)}</td>
             <td>${formatDate(vendor.created_at)}</td>
             <td>${formatDate(vendor.updated_at)}</td>
             <td>
@@ -138,6 +198,13 @@ function attachButtonEvents() {
 
 // Update vendor status
 async function updateStatus(vendorId, newStatus) {
+    // Check admin again before sensitive action
+    const isAdmin = await checkAdminAccess()
+
+    if (!isAdmin) {
+        return
+    }
+
     message.textContent = `Updating to ${newStatus}...`
 
     const { error } = await supabase
@@ -157,8 +224,30 @@ async function updateStatus(vendorId, newStatus) {
     await loadVendors()
 }
 
+// Logout
+logoutBtn.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+        message.textContent = error.message
+        return
+    }
+
+    window.location.href = '../auth/login.html'
+})
+
 // Format dates
 function formatDate(date) {
     if (!date) return 'N/A'
     return new Date(date).toLocaleString()
+}
+
+// Escape HTML
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;')
 }

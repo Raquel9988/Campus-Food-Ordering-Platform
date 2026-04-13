@@ -95,7 +95,7 @@ form.addEventListener("submit", async (e) => {
   }
 
   if (role === "admin") {
-    message.textContent = "Admin dashboard not ready yet";
+    window.location.href = "../adminControls/admin-controls.html";
     return;
   }
 
