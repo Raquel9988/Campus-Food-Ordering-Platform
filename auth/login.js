@@ -1,25 +1,38 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Supabase setup
+
+export function validateLogin(email, password) {
+  if (!email || !password) {
+    return false;
+  }
+  return true;
+}
+
+
 const supabase = createClient(
   "https://sqbscxfolbckikrzxqhr.supabase.co",
   "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay",
 );
 
-// Elements
+
 const form = document.getElementById("login-form");
 const message = document.getElementById("message");
 
-// Handle login
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
+  if (!validateLogin(email, password)) {
+    message.textContent = "Please fill in all fields";
+    return;
+  }
+
   message.textContent = "Logging in...";
 
-  // Login
+ 
   const { data: loginData, error: loginError } =
     await supabase.auth.signInWithPassword({
       email,
@@ -33,7 +46,7 @@ form.addEventListener("submit", async (e) => {
 
   const user = loginData.user;
 
-  // Get role
+ 
   const { data: users, error: roleError } = await supabase
     .from("users")
     .select("role")
@@ -51,7 +64,7 @@ form.addEventListener("submit", async (e) => {
 
   const role = users[0].role;
 
-  // Vendor logic
+
   if (role === "vendor") {
     const { data: vendors, error: vendorError } = await supabase
       .from("vendors")
@@ -89,10 +102,12 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
+
   if (role === "student") {
     window.location.href = "../student/student-dashboard.html";
     return;
   }
+
 
   if (role === "admin") {
     window.location.href = "../adminControls/admin-controls.html";
