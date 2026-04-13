@@ -6,119 +6,151 @@ const supabaseKey = "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("signup-form");
-  const roleSelect = document.getElementById("role");
-  const businessNameGroup = document.getElementById("business-name-group");
-  const businessNameInput = document.getElementById("business-name");
-  const message = document.getElementById("message");
+    const form = document.getElementById("signup-form");
+    const roleSelect = document.getElementById("role");
+    const businessNameGroup = document.getElementById("business-name-group");
+    const businessNameInput = document.getElementById("business-name");
+    const message = document.getElementById("message");
+    const passwordInput = document.getElementById("password");
 
-  console.log("register.js loaded");
+    console.log("register.js loaded");
 
-  // Show/hide business name field based on selected role
-  roleSelect.addEventListener("change", () => {
-    const role = roleSelect.value;
-    console.log("Selected role:", role);
+    // Live password validation - shows error as user types
+    passwordInput.addEventListener("input", () => {
+        if (passwordInput.value.length > 0 && passwordInput.value.length < 6) {
+            message.textContent = "Password must be at least 6 characters";
+            message.style.color = "red";
+        } else if (passwordInput.value.length >= 6) {
+            message.textContent = "";
+        }
+    });
 
-    if (role === "vendor") {
-      businessNameGroup.style.display = "block";
-      businessNameInput.required = true;
-    } else {
-      businessNameGroup.style.display = "none";
-      businessNameInput.required = false;
-      businessNameInput.value = "";
-    }
-  });
+    // Show/hide business name field based on selected role
+    roleSelect.addEventListener("change", () => {
+        const role = roleSelect.value;
+        console.log("Selected role:", role);
 
-  // Handle form submit
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+        if (role === "vendor") {
+            businessNameGroup.style.display = "block";
+            businessNameInput.required = true;
+        } else {
+            businessNameGroup.style.display = "none";
+            businessNameInput.required = false;
+            businessNameInput.value = "";
+        }
+    });
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const role = roleSelect.value;
-    const businessName = businessNameInput.value.trim();
+    // Handle form submit
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-    if (!role) {
-      message.textContent = "Please select a role";
-      return;
-    }
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const role = roleSelect.value;
+        const businessName = businessNameInput.value.trim();
 
-    if (role === "vendor" && !businessName) {
-      message.textContent = "Please enter the business name";
-      return;
-    }
+        // Clear previous messages
+        message.style.color = "red";
 
-    // Validate password strength before sending to Supabase
-    if (password.length < 6) {
-      message.textContent = "Password must be at least 6 characters";
-      return;
-    }
+        // Validation checks
+        if (!email) {
+            message.textContent = "Please enter your email";
+            return;
+        }
 
-    message.textContent = "Registering...";
+        if (!email.includes("@") || !email.includes(".")) {
+            message.textContent = "Please enter a valid email address";
+            return;
+        }
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
-      {
-        email,
-        password,
-      },
-    );
+        if (!password) {
+            message.textContent = "Please enter a password";
+            return;
+        }
 
-    if (signUpError) {
-      // Show user-friendly error messages
-      if (signUpError.message.includes("already registered")) {
-        message.textContent =
-          "This email is already registered. Try logging in.";
-      } else if (signUpError.message.includes("valid email")) {
-        message.textContent = "Please enter a valid email address";
-      } else if (signUpError.message.includes("password")) {
-        message.textContent = "Password must be at least 6 characters";
-      } else {
-        message.textContent = signUpError.message;
-      }
-      return;
-    }
+        if (password.length < 6) {
+            message.textContent = "Password must be at least 6 characters";
+            return;
+        }
 
-    const user = signUpData.user;
+        if (!role) {
+            message.textContent = "Please select a role";
+            return;
+        }
 
-    if (!user) {
-      message.textContent = "Check your email to confirm registration";
-      return;
-    }
+        if (role === "vendor" && !businessName) {
+            message.textContent = "Please enter the business name";
+            return;
+        }
 
-    const { error: userInsertError } = await supabase.from("users").insert([
-      {
-        id: user.id,
-        email: email,
-        role: role,
-      },
-    ]);
+        message.style.color = "black";
+        message.textContent = "Registering...";
 
-    if (userInsertError) {
-      message.textContent = userInsertError.message;
-      return;
-    }
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+        });
 
-    if (role === "vendor") {
-      const { error: vendorInsertError } = await supabase
-        .from("vendors")
-        .insert([
-          {
-            user_id: user.id,
-            business_name: businessName,
-            status: "pending",
-          },
+        if (signUpError) {
+            message.style.color = "red";
+            // Show user-friendly error messages
+            if (signUpError.message.includes("already registered") || signUpError.message.includes("already been registered")) {
+                message.textContent = "This email is already registered. Try logging in.";
+            } else if (signUpError.message.includes("valid email") || signUpError.message.includes("invalid email")) {
+                message.textContent = "Please enter a valid email address";
+            } else if (signUpError.message.includes("password") || signUpError.message.includes("Password")) {
+                message.textContent = "Password must be at least 6 characters";
+            } else {
+                message.textContent = signUpError.message;
+            }
+            return;
+        }
+
+        const user = signUpData.user;
+
+        if (!user) {
+            message.style.color = "orange";
+            message.textContent = "Check your email to confirm registration";
+            return;
+        }
+
+        const { error: userInsertError } = await supabase.from("users").insert([
+            {
+                id: user.id,
+                email: email,
+                role: role,
+            },
         ]);
 
-      if (vendorInsertError) {
-        message.textContent = vendorInsertError.message;
-        return;
-      }
-    }
+        if (userInsertError) {
+            message.style.color = "red";
+            message.textContent = "Registration error: " + userInsertError.message;
+            return;
+        }
 
-    message.textContent = "Registration successful!";
+        if (role === "vendor") {
+            const { error: vendorInsertError } = await supabase
+                .from("vendors")
+                .insert([
+                    {
+                        user_id: user.id,
+                        business_name: businessName,
+                        status: "pending",
+                    },
+                ]);
 
-    setTimeout(() => {
-      window.location.href = "login.html";
-    }, 1500);
-  });
+            if (vendorInsertError) {
+                message.style.color = "red";
+                message.textContent = "Vendor registration error: " + vendorInsertError.message;
+                return;
+            }
+        }
+
+        message.style.color = "green";
+        message.textContent = "Registration successful!";
+
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 1500);
+    });
 });
