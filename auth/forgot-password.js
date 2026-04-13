@@ -55,7 +55,7 @@ form.addEventListener('submit', async (e) => {
         }
 
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'https://darling-belekoy-f7e717.netlify.app/auth/reset-password.html'
+            redirectTo: 'https://campus-food-ordering.pages.dev/auth/reset-password.html'
         })
 
         if (resetError) throw resetError
