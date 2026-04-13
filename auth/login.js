@@ -1,5 +1,5 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
+import { getRedirectPath } from "./redirectUtils.js";
 
 export function validateLogin(email, password) {
   if (!email || !password) {
@@ -8,16 +8,13 @@ export function validateLogin(email, password) {
   return true;
 }
 
-
 const supabase = createClient(
   "https://sqbscxfolbckikrzxqhr.supabase.co",
-  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay",
+  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
 );
-
 
 const form = document.getElementById("login-form");
 const message = document.getElementById("message");
-
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -32,7 +29,6 @@ form.addEventListener("submit", async (e) => {
 
   message.textContent = "Logging in...";
 
- 
   const { data: loginData, error: loginError } =
     await supabase.auth.signInWithPassword({
       email,
@@ -46,7 +42,6 @@ form.addEventListener("submit", async (e) => {
 
   const user = loginData.user;
 
- 
   const { data: users, error: roleError } = await supabase
     .from("users")
     .select("role")
@@ -64,6 +59,7 @@ form.addEventListener("submit", async (e) => {
 
   const role = users[0].role;
 
+  let status = null;
 
   if (role === "vendor") {
     const { data: vendors, error: vendorError } = await supabase
@@ -81,38 +77,25 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
-    const status = vendors[0].status;
+    status = vendors[0].status;
+  }
 
-    if (status === "pending") {
-      message.textContent = "Your account is waiting for admin approval";
-      return;
-    }
+  const redirect = getRedirectPath(role, status);
 
-    if (status === "suspended") {
-      message.textContent = "Your account has been suspended";
-      return;
-    }
-
-    if (status === "approved") {
-      window.location.href = "../vendor/vendor-dashboard.html";
-      return;
-    }
-
-    message.textContent = "Unknown vendor status";
+  if (redirect === "PENDING") {
+    message.textContent = "Your account is waiting for admin approval";
     return;
   }
 
-
-  if (role === "student") {
-    window.location.href = "../student/student-dashboard.html";
+  if (redirect === "SUSPENDED") {
+    message.textContent = "Your account has been suspended";
     return;
   }
 
-
-  if (role === "admin") {
-    window.location.href = "../adminControls/admin-controls.html";
+  if (redirect === "UNKNOWN") {
+    message.textContent = "Unknown user role";
     return;
   }
 
-  message.textContent = "Unknown user role";
+  window.location.href = redirect;
 });
