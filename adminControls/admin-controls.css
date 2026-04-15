@@ -1,93 +1,158 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: Arial, sans-serif;
-    margin: 30px;
-    background-color: #f7f7f7;
-}
-
-h1 {
-    margin-bottom: 10px;
-}
-
-p {
-    margin-bottom: 20px;
-}
-
-#message {
-    margin: 15px 0;
-    font-weight: bold;
+    background: #f5f7f4;
+    color: #1f2937;
+    padding: 24px;
 }
 
 .top-bar {
+    background: #14532d;
+    color: white;
+    padding: 22px 26px;
+    border-radius: 18px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+    box-shadow: 0 14px 30px rgba(20, 83, 45, 0.18);
 }
 
-button {
-    padding: 8px 14px;
+.top-bar h1 {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.top-bar p {
+    color: #dcfce7;
+    font-size: 14px;
+}
+.top-bar a{
+    color: #f0fdf4;
+    transition: all 0.2s ease;
+}
+.top-bar a:hover{
+    scale: calc(1.05);
+}
+.logout-btn,
+.back-link {
+    padding: 12px 16px;
+    border-radius: 10px;
     border: none;
-    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 700;
     cursor: pointer;
+    transition: 0.2s ease;
 }
 
 .logout-btn {
-    background-color: #444;
-    color: white;
+    background: white;
+    color: #14532d;
 }
 
-.approve-btn {
-    background-color: #28a745;
-    color: white;
-    margin-right: 8px;
+.logout-btn:hover {
+    background: #f0fdf4;
 }
 
-.suspend-btn {
-    background-color: #dc3545;
-    color: white;
-}
-
-.disabled-btn {
-    background-color: #999;
-    color: white;
-    cursor: not-allowed;
+#message {
+    margin-bottom: 16px;
+    font-weight: 700;
+    color: #374151;
+    min-height: 20px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: white;
+    background: white;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+thead {
+    background: #14532d;
+    color: white;
 }
 
 th,
 td {
-    border: 1px solid #ddd;
-    padding: 12px;
+    padding: 14px 16px;
     text-align: left;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-th {
-    background-color: #f0f0f0;
+tbody tr:hover {
+    background: #f9fafb;
 }
 
-.status {
-    font-weight: bold;
-    text-transform: capitalize;
+button {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+}
+
+button[data-action="approve"] {
+    background: #dcfce7;
+    color: #166534;
+}
+
+button[data-action="approve"]:hover {
+    background: #bbf7d0;
+}
+
+button[data-action="suspend"] {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+button[data-action="suspend"]:hover {
+    background: #fecaca;
 }
 
 .pending {
-    color: orange;
+    color: #b45309;
+    font-weight: 700;
+    text-transform: capitalize;
 }
 
 .approved {
-    color: green;
+    color: #166534;
+    font-weight: 700;
+    text-transform: capitalize;
 }
 
 .suspended {
-    color: red;
+    color: #b91c1c;
+    font-weight: 700;
+    text-transform: capitalize;
 }
 
 .loading {
-    color: #555;
-    font-style: italic;
+    text-align: center;
+    color: #6b7280;
+}
+
+@media (max-width: 900px) {
+    body {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 850px;
+    }
 }

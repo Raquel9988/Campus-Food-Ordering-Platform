@@ -1,85 +1,93 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f7f7f7;
-    margin: 0;
-    min-height: 100vh;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #f5f7f4, #e8f5e9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  color: #1f2937;
 }
 
-/* Title */
 h2 {
-    margin-bottom: 30px;
-    color: #222;
+  margin-bottom: 20px;
+  color: #14532d;
+  font-size: 30px;
 }
 
-/* Form */
 form {
-    background-color: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    width: 100%;
-    max-width: 400px;
-    box-sizing: border-box;
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  padding: 30px 26px;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
 }
 
-/* Inputs */
 input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 15px;
+  background: #f9fafb;
+  outline: none;
+  transition: 0.2s ease;
 }
 
 input:focus {
-    outline: none;
-    border-color: #888;
+  border-color: #22c55e;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
 }
 
-/* Button */
 button {
-    width: 100%;
-    padding: 12px;
-    background-color: #444;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: bold;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #14532d;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
 }
 
 button:hover {
-    background-color: #2f2f2f;
+  background: #166534;
+  transform: translateY(-1px);
 }
 
-/* Message */
 #message {
-    margin-top: 15px;
-    text-align: center;
-    font-weight: bold;
-    color: #333;
+  margin-top: 16px;
+  min-height: 22px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-/* Paragraphs */
 p {
-    margin-top: 15px;
-    text-align: center;
+  margin-top: 14px;
+  font-size: 14px;
+  color: #6b7280;
 }
 
-/* Links */
 a {
-    color: #444;
-    font-weight: bold;
-    text-decoration: none;
+  color: #166534;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }

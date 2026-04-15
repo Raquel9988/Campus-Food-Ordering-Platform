@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Master Admin Approval</title>
+    <link rel="stylesheet" href="master-admin.css" />
+</head>
+
+<body>
+    <div class="top-bar">
+        <div>
+            <h1>Master Admin Controls</h1>
+            <p>Approve or suspend admin accounts.</p>
+        </div>
+
+        <div class="top-actions">
+            <a href="admin-controls.html" class="back-link">Vendor Controls</a>
+            <button id="logout-btn" class="logout-btn">Logout</button>
+        </div>
+    </div>
+
+    <p id="message"></p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Master Admin</th>
+                <th>Approved By</th>
+                <th>Created At</th>
+                <th>Updated At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="admin-table-body">
+            <tr>
+                <td colspan="7">Loading admins...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script type="module" src="master-admin.js"></script>
+</body>
+
+</html>

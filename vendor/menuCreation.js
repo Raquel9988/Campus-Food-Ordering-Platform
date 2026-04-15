@@ -1,16 +1,11 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+const supabase = createClient(
+  "https://sqbscxfolbckikrzxqhr.supabase.co",
+  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
+);
+
 window.addEventListener("load", async () => {
-
-    //Supabase Setup
-
-  const supabase = createClient(
-    "https://sqbscxfolbckikrzxqhr.supabase.co",
-    "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
-  );
-
-  // Elements
-
   const menuForm = document.getElementById("menu-item-form");
   const menuItemsContainer = document.getElementById("menu-items-container");
   const submitBtn = document.getElementById("submit-btn");
@@ -18,42 +13,23 @@ window.addEventListener("load", async () => {
 
   let editingItemId = null;
 
-  // AUTH CHECK
-  
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const authResult = await getApprovedVendorAuth();
 
-  if (userError || !user) {
+  if (!authResult.ok) {
+    alert(authResult.message);
     window.location.href = "../auth/login.html";
     return;
   }
 
-  const { data: users, error: roleError } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id);
+  const { user, vendor } = authResult;
 
-  if (roleError || !users || users.length === 0) {
-    window.location.href = "../auth/login.html";
-    return;
-  }
+  await loadMenuItems();
 
-  if (users[0].role !== "vendor") {
-    alert("Access denied");
-    window.location.href = "../auth/login.html";
-    return;
-  }
-
- 
-  //LOAD MENU ITEMS
-  
   async function loadMenuItems() {
     const { data: menuItems, error } = await supabase
       .from("menu_items")
       .select("*")
-      .eq("vendor_id", user.id)
+      .eq("vendor_id", vendor.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -62,16 +38,12 @@ window.addEventListener("load", async () => {
       return;
     }
 
-    displayMenuItems(menuItems);
+    displayMenuItems(menuItems || []);
   }
 
-  
-  //DISPLAY ITEMS
-  
   function displayMenuItems(items) {
-    if (!items || items.length === 0) {
-      menuItemsContainer.innerHTML =
-        "<p>No menu items found. Please add some!</p>";
+    if (items.length === 0) {
+      menuItemsContainer.innerHTML = "<p>No menu items found. Please add some!</p>";
       return;
     }
 
@@ -81,30 +53,23 @@ window.addEventListener("load", async () => {
       const itemElement = document.createElement("section");
 
       itemElement.innerHTML = `
-        <h3><u>${item.name}</u></h3>
-        ${
-          item.image_url
-            ? `<img src="${item.image_url}" alt="${item.name}" width="120">`
-            : ""
+        <h3><u>${escapeHtml(item.name)}</u></h3>
+        ${item.image_url
+          ? `<img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" width="120">`
+          : ""
         }
-        <p><strong>Description:</strong> ${
-          item.description || "No description available."
-        }</p>
-        <p><strong>Price:</strong> R${item.price.toFixed(2)}</p>
-        <p><strong>Availability:</strong> ${
-          item.is_available ? "Available" : "Sold Out"
-        }</p>
+        <p><strong>Description:</strong> ${escapeHtml(item.description || "No description available.")}</p>
+        <p><strong>Price:</strong> R${Number(item.price).toFixed(2)}</p>
+        <p><strong>Availability:</strong> ${item.is_available ? "Available" : "Sold Out"}</p>
 
         <button class="edit-btn">Edit</button>
         <button class="delete-btn">Delete</button>
       `;
 
-      // EDIT BUTTON
       itemElement.querySelector(".edit-btn").addEventListener("click", () => {
         startEdit(item);
       });
 
-      // DELETE BUTTON 
       itemElement.querySelector(".delete-btn").addEventListener("click", async () => {
         const confirmDelete = confirm("Are you sure you want to delete this item?");
         if (!confirmDelete) return;
@@ -113,10 +78,10 @@ window.addEventListener("load", async () => {
           .from("menu_items")
           .delete()
           .eq("id", item.id)
-          .eq("vendor_id", user.id);
+          .eq("vendor_id", vendor.id);
 
         if (error) {
-          alert("Failed to delete item");
+          alert("Failed to delete item.");
           return;
         }
 
@@ -127,23 +92,18 @@ window.addEventListener("load", async () => {
     });
   }
 
-  //START EDIT//
   function startEdit(item) {
     editingItemId = item.id;
 
     document.getElementById("item-name").value = item.name;
     document.getElementById("item-description").value = item.description || "";
     document.getElementById("item-price").value = item.price;
-    document.getElementById("item-availability").value = item.is_available
-      ? "true"
-      : "false";
+    document.getElementById("item-availability").value = item.is_available ? "true" : "false";
 
     submitBtn.textContent = "Update Item";
     cancelEditBtn.style.display = "inline-block";
   }
 
-  
-  //CANCEL EDIT //
   cancelEditBtn.addEventListener("click", () => {
     editingItemId = null;
     menuForm.reset();
@@ -151,101 +111,88 @@ window.addEventListener("load", async () => {
     cancelEditBtn.style.display = "none";
   });
 
-
-  //FORM SUBMIT//
-  
   menuForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const itemName = document.getElementById("item-name").value;
-    const itemDescription = document.getElementById("item-description").value;
-    const itemPrice = parseFloat(
-      document.getElementById("item-price").value
-    );
-    const itemAvailability =
-      document.getElementById("item-availability").value === "true";
-
+    const itemName = document.getElementById("item-name").value.trim();
+    const itemDescription = document.getElementById("item-description").value.trim();
+    const itemPrice = parseFloat(document.getElementById("item-price").value);
+    const itemAvailability = document.getElementById("item-availability").value === "true";
     const imageFile = document.getElementById("item-image").files[0];
+
     let imageUrl = null;
 
-    // VALIDATION//
     if (!itemName) {
-      alert("Enter item name");
+      alert("Enter item name.");
       return;
     }
 
     if (isNaN(itemPrice) || itemPrice < 0) {
-      alert("Enter valid price");
+      alert("Enter a valid price.");
       return;
     }
 
-    // IMAGE UPLOAD//
     if (imageFile) {
-      const fileName = `${user.id}_${Date.now()}_${imageFile.name}`;
+      const fileName = `${vendor.id}_${Date.now()}_${imageFile.name}`;
 
       const { error: uploadError } = await supabase.storage
         .from("menu-images")
         .upload(fileName, imageFile);
 
       if (uploadError) {
-        alert("Image upload failed");
+        alert("Image upload failed.");
         return;
       }
 
-      const { data } = supabase.storage
-        .from("menu-images")
-        .getPublicUrl(fileName);
-
+      const { data } = supabase.storage.from("menu-images").getPublicUrl(fileName);
       imageUrl = data.publicUrl;
     }
 
-    // UPDATE //
     if (editingItemId) {
       const updateData = {
         name: itemName,
         description: itemDescription,
         price: itemPrice,
         is_available: itemAvailability,
+        updated_at: new Date().toISOString(),
       };
 
-      if (imageUrl) updateData.image_url = imageUrl;
+      if (imageUrl) {
+        updateData.image_url = imageUrl;
+      }
 
       const { error } = await supabase
         .from("menu_items")
         .update(updateData)
         .eq("id", editingItemId)
-        .eq("vendor_id", user.id);
+        .eq("vendor_id", vendor.id);
 
       if (error) {
-        alert("Update failed");
+        alert("Update failed.");
         return;
       }
 
-      alert("Item updated!");
-    }
-
-    // INSERT//
-    else {
+      alert("Item updated.");
+    } else {
       const { error } = await supabase.from("menu_items").insert([
         {
-          vendor_id: user.id,
+          vendor_id: vendor.id,
           name: itemName,
           description: itemDescription,
           price: itemPrice,
           is_available: itemAvailability,
-          image_url: imageUrl || null,
+          image_url: imageUrl,
         },
       ]);
 
       if (error) {
-        alert("Insert failed");
+        alert("Insert failed.");
         return;
       }
 
-      alert("Item added!");
+      alert("Item added.");
     }
 
-    // RESET + RELOAD//
     editingItemId = null;
     menuForm.reset();
     cancelEditBtn.style.display = "none";
@@ -254,9 +201,64 @@ window.addEventListener("load", async () => {
     await loadMenuItems();
   });
 
- 
-  //INITIAL LOAD//
-  
-  loadMenuItems();
+  async function getApprovedVendorAuth() {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
+    if (authError || !user) {
+      return { ok: false, message: "Please log in first." };
+    }
+
+    const { data: appUser, error: userError } = await supabase
+      .from("users")
+      .select("id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !appUser) {
+      return { ok: false, message: "Unable to verify user profile." };
+    }
+
+    if (appUser.role !== "vendor") {
+      return { ok: false, message: "Access denied. Vendors only." };
+    }
+
+    const { data: vendor, error: vendorError } = await supabase
+      .from("vendors")
+      .select("id, business_name, status")
+      .eq("user_id", user.id)
+      .single();
+
+    if (vendorError || !vendor) {
+      return { ok: false, message: "Vendor profile not found." };
+    }
+
+    if (vendor.status === "pending") {
+      await supabase.auth.signOut();
+      return { ok: false, message: "Your vendor account is still pending approval." };
+    }
+
+    if (vendor.status === "suspended") {
+      await supabase.auth.signOut();
+      return { ok: false, message: "Your vendor account has been suspended." };
+    }
+
+    if (vendor.status !== "approved") {
+      await supabase.auth.signOut();
+      return { ok: false, message: "Unknown vendor status." };
+    }
+
+    return { ok: true, user, vendor };
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 });

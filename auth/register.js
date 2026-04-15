@@ -1,156 +1,233 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Supabase setup
-const supabaseUrl = "https://sqbscxfolbckikrzxqhr.supabase.co";
-const supabaseKey = "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay";
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(
+    "https://sqbscxfolbckikrzxqhr.supabase.co",
+    "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
+);
 
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("signup-form");
-    const roleSelect = document.getElementById("role");
-    const businessNameGroup = document.getElementById("business-name-group");
-    const businessNameInput = document.getElementById("business-name");
-    const message = document.getElementById("message");
-    const passwordInput = document.getElementById("password");
+const form = document.getElementById("signup-form");
+const roleSelect = document.getElementById("role");
+const businessNameGroup = document.getElementById("business-name-group");
+const businessNameInput = document.getElementById("business-name");
+const message = document.getElementById("message");
 
-    console.log("register.js loaded");
+const REGISTRATION_KEY = "campus_food_registration";
 
-    // Live password validation - shows error as user types
-    passwordInput.addEventListener("input", () => {
-        if (passwordInput.value.length > 0 && passwordInput.value.length < 6) {
-            message.textContent = "Password must be at least 6 characters";
-            message.style.color = "red";
-        } else if (passwordInput.value.length >= 6) {
-            message.textContent = "";
-        }
+roleSelect.addEventListener("change", () => {
+    const role = roleSelect.value;
+
+    if (role === "vendor") {
+        businessNameGroup.style.display = "block";
+        businessNameInput.required = true;
+    } else {
+        businessNameGroup.style.display = "none";
+        businessNameInput.required = false;
+        businessNameInput.value = "";
+    }
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+    await completeRegistrationIfAuthenticated();
+});
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const role = roleSelect.value;
+    const businessName = businessNameInput.value.trim();
+
+    message.style.color = "red";
+
+    if (!email) {
+        message.textContent = "Please enter your email.";
+        return;
+    }
+
+    if (!role) {
+        message.textContent = "Please select a role.";
+        return;
+    }
+
+    if (role === "vendor" && !businessName) {
+        message.textContent = "Please enter the business name.";
+        return;
+    }
+
+    const registrationData = {
+        email,
+        role,
+        businessName: role === "vendor" ? businessName : "",
+    };
+
+    localStorage.setItem(REGISTRATION_KEY, JSON.stringify(registrationData));
+
+    message.style.color = "black";
+    message.textContent = "Sending registration link...";
+
+    const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+            shouldCreateUser: true,
+            emailRedirectTo: window.location.href,
+            data: {
+                requested_role: role,
+                business_name: role === "vendor" ? businessName : null,
+            },
+        },
     });
 
-    // Show/hide business name field based on selected role
-    roleSelect.addEventListener("change", () => {
-        const role = roleSelect.value;
-        console.log("Selected role:", role);
-
-        if (role === "vendor") {
-            businessNameGroup.style.display = "block";
-            businessNameInput.required = true;
-        } else {
-            businessNameGroup.style.display = "none";
-            businessNameInput.required = false;
-            businessNameInput.value = "";
-        }
-    });
-
-    // Handle form submit
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
-        const role = roleSelect.value;
-        const businessName = businessNameInput.value.trim();
-
-        // Clear previous messages
+    if (error) {
         message.style.color = "red";
+        message.textContent = error.message || "Failed to send registration link.";
+        return;
+    }
 
-        // Validation checks
-        if (!email) {
-            message.textContent = "Please enter your email";
-            return;
-        }
+    message.style.color = "green";
+    message.textContent = "Registration link sent. Check your email to continue.";
+});
 
-        if (!email.includes("@") || !email.includes(".")) {
-            message.textContent = "Please enter a valid email address";
-            return;
-        }
+async function completeRegistrationIfAuthenticated() {
+    const {
+        data: { user },
+        error: userError,
+    } = await supabase.auth.getUser();
 
-        if (!password) {
-            message.textContent = "Please enter a password";
-            return;
-        }
+    if (userError || !user) {
+        return;
+    }
 
-        if (password.length < 6) {
-            message.textContent = "Password must be at least 6 characters";
-            return;
-        }
+    const saved = localStorage.getItem(REGISTRATION_KEY);
+    if (!saved) {
+        return;
+    }
 
-        if (!role) {
-            message.textContent = "Please select a role";
-            return;
-        }
+    let registration;
+    try {
+        registration = JSON.parse(saved);
+    } catch {
+        localStorage.removeItem(REGISTRATION_KEY);
+        return;
+    }
 
-        if (role === "vendor" && !businessName) {
-            message.textContent = "Please enter the business name";
-            return;
-        }
+    if (!registration?.email || registration.email !== user.email?.toLowerCase()) {
+        return;
+    }
 
-        message.style.color = "black";
-        message.textContent = "Registering...";
+    message.style.color = "black";
+    message.textContent = "Completing registration...";
 
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-        });
+    const { data: existingUser, error: existingUserError } = await supabase
+        .from("users")
+        .select("id, role")
+        .eq("id", user.id)
+        .maybeSingle();
 
-        if (signUpError) {
-            message.style.color = "red";
-            // Show user-friendly error messages
-            if (signUpError.message.includes("already registered") || signUpError.message.includes("already been registered")) {
-                message.textContent = "This email is already registered. Try logging in.";
-            } else if (signUpError.message.includes("valid email") || signUpError.message.includes("invalid email")) {
-                message.textContent = "Please enter a valid email address";
-            } else if (signUpError.message.includes("password") || signUpError.message.includes("Password")) {
-                message.textContent = "Password must be at least 6 characters";
-            } else {
-                message.textContent = signUpError.message;
-            }
-            return;
-        }
+    if (existingUserError) {
+        message.style.color = "red";
+        message.textContent = "Could not verify your profile.";
+        return;
+    }
 
-        const user = signUpData.user;
-
-        if (!user) {
-            message.style.color = "orange";
-            message.textContent = "Check your email to confirm registration";
-            return;
-        }
-
-        const { error: userInsertError } = await supabase.from("users").insert([
+    if (!existingUser) {
+        const { error: insertUserError } = await supabase.from("users").insert([
             {
                 id: user.id,
-                email: email,
-                role: role,
+                email: registration.email,
+                role: registration.role,
             },
         ]);
 
-        if (userInsertError) {
+        if (insertUserError) {
             message.style.color = "red";
-            message.textContent = "Registration error: " + userInsertError.message;
+            message.textContent = `Profile creation failed: ${insertUserError.message}`;
+            return;
+        }
+    }
+
+    if (registration.role === "vendor") {
+        const { data: existingVendor, error: vendorCheckError } = await supabase
+            .from("vendors")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (vendorCheckError) {
+            message.style.color = "red";
+            message.textContent = "Could not verify vendor profile.";
             return;
         }
 
-        if (role === "vendor") {
-            const { error: vendorInsertError } = await supabase
-                .from("vendors")
-                .insert([
-                    {
-                        user_id: user.id,
-                        business_name: businessName,
-                        status: "pending",
-                    },
-                ]);
+        if (!existingVendor) {
+            const { error: vendorInsertError } = await supabase.from("vendors").insert([
+                {
+                    user_id: user.id,
+                    business_name: registration.businessName,
+                    status: "pending",
+                },
+            ]);
 
             if (vendorInsertError) {
                 message.style.color = "red";
-                message.textContent = "Vendor registration error: " + vendorInsertError.message;
+                message.textContent = `Vendor registration failed: ${vendorInsertError.message}`;
                 return;
             }
         }
+    }
 
-        message.style.color = "green";
-        message.textContent = "Registration successful!";
+    if (registration.role === "admin") {
+        const { data: existingAdmin, error: adminCheckError } = await supabase
+            .from("admins")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
 
+        if (adminCheckError) {
+            message.style.color = "red";
+            message.textContent = "Could not verify admin profile.";
+            return;
+        }
+
+        if (!existingAdmin) {
+            const { error: adminInsertError } = await supabase.from("admins").insert([
+                {
+                    user_id: user.id,
+                    status: "pending",
+                    is_master: false,
+                },
+            ]);
+
+            if (adminInsertError) {
+                message.style.color = "red";
+                message.textContent = `Admin registration failed: ${adminInsertError.message}`;
+                return;
+            }
+        }
+    }
+
+    localStorage.removeItem(REGISTRATION_KEY);
+
+    message.style.color = "green";
+    if (registration.role === "student") {
+        message.textContent = "Registration complete. Redirecting to student dashboard...";
+        setTimeout(() => {
+            window.location.href = "../student/student-dashboard.html";
+        }, 1200);
+        return;
+    }
+
+    if (registration.role === "vendor") {
+        message.textContent = "Vendor registration complete. Await admin approval before menu access.";
         setTimeout(() => {
             window.location.href = "login.html";
-        }, 1500);
-    });
-});
+        }, 1800);
+        return;
+    }
+
+    if (registration.role === "admin") {
+        message.textContent = "Admin registration complete. Await master admin approval.";
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 1800);
+    }
+}
