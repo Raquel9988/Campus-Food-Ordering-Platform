@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Orders Dashboard</title>
+    <link rel="stylesheet" href="orders.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>Orders Dashboard</h1>
+            <button id="refresh-btn" class="refresh-btn" title="Refresh orders">
+                🔄 Refresh
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Loading State -->
+        <div id="loading-container" class="loading-container hidden">
+            <div class="spinner"></div>
+            <p>Loading orders...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-container" class="error-container hidden">
+            <div class="error-message">
+                <p id="error-text"></p>
+                <button id="retry-btn" class="retry-btn">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state hidden">
+            <p>No orders yet. Check back soon!</p>
+        </div>
+
+        <!-- Orders Grid -->
+        <div id="orders-container" class="orders-grid">
+            <!-- Orders will be inserted here by JavaScript -->
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script type="module" src="orders.js"></script>
+</body>
+</html>
