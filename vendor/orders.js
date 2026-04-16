@@ -182,37 +182,38 @@ async function fetchOrders(vendorId) {
     if (!vendorId) return []
 
     try {
-        // Fetch orders for this vendor, ordered by most recent first
+        // Fetch orders for this vendor (no total_price in DB)
         const { data: orders, error: ordersError } = await supabase
             .from('orders')
-            .select('id, student_id, status, total_price, created_at')
+            .select('id, student_id, status, created_at')
             .eq('vendor_id', vendorId)
             .order('created_at', { ascending: false })
 
-        if (ordersError) {
-            throw new Error(`Failed to fetch orders: ${ordersError.message}`)
-        }
+        if (ordersError) throw new Error(`Failed to fetch orders: ${ordersError.message}`)
+        if (!orders || orders.length === 0) return []
 
-        if (!orders || orders.length === 0) {
-            return []
-        }
-
-        // Fetch order details for each order
+        // Enrich each order with items and student email
         const enrichedOrders = await Promise.all(
             orders.map(async (order) => {
                 try {
-                    // Fetch order items with menu item details
+                    // Fetch order items (using 'price' column)
                     const { data: orderItems, error: itemsError } = await supabase
                         .from('order_items')
-                        .select('id, menu_item_id, quantity, price_at_time')
+                        .select('id, menu_item_id, quantity, price')
                         .eq('order_id', order.id)
 
                     if (itemsError) {
                         console.warn(`Failed to fetch items for order ${order.id}:`, itemsError)
-                        return { ...order, items: [] }
+                        return { ...order, items: [], total_price: 0 }
                     }
 
-                    // Fetch menu item names for each order item
+                    // Calculate total price from items
+                    const totalPrice = (orderItems || []).reduce(
+                        (sum, item) => sum + (item.price * item.quantity),
+                        0
+                    )
+
+                    // Fetch menu item names
                     const itemsWithNames = await Promise.all(
                         (orderItems || []).map(async (item) => {
                             const { data: menuItem, error: menuError } = await supabase
@@ -220,19 +221,11 @@ async function fetchOrders(vendorId) {
                                 .select('name')
                                 .eq('id', item.menu_item_id)
                                 .single()
-
                             if (menuError || !menuItem) {
                                 console.warn(`Menu item ${item.menu_item_id} not found`)
-                                return {
-                                    ...item,
-                                    name: 'Item not found'
-                                }
+                                return { ...item, name: 'Item not found' }
                             }
-
-                            return {
-                                ...item,
-                                name: menuItem.name
-                            }
+                            return { ...item, name: menuItem.name }
                         })
                     )
 
@@ -243,18 +236,15 @@ async function fetchOrders(vendorId) {
                         .eq('id', order.student_id)
                         .single()
 
-                    if (studentError || !student) {
-                        console.warn(`Student ${order.student_id} not found`)
-                    }
-
                     return {
                         ...order,
                         items: itemsWithNames,
-                        studentEmail: student?.email || 'Unknown'
+                        studentEmail: student?.email || 'Unknown',
+                        total_price: totalPrice   // computed, not from DB
                     }
                 } catch (error) {
                     console.error(`Error enriching order ${order.id}:`, error)
-                    return { ...order, items: [], studentEmail: 'Unknown' }
+                    return { ...order, items: [], studentEmail: 'Unknown', total_price: 0 }
                 }
             })
         )
