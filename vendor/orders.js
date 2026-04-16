@@ -61,7 +61,7 @@ function formatDate(dateString) {
  */
 function formatCurrency(amount) {
     if (!amount) return 'R0.00'
-    return `R$${parseFloat(amount).toFixed(2)}`
+    return `R${parseFloat(amount).toFixed(2)}`
 }
 
 /**
