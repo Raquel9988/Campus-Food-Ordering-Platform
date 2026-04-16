@@ -57,11 +57,11 @@ function formatDate(dateString) {
 }
 
 /**
- * Format currency (assumes South African Rand based on codebase pattern)
+ * Format currency 
  */
 function formatCurrency(amount) {
     if (!amount) return 'R0.00'
-    return `R${parseFloat(amount).toFixed(2)}`
+    return `R{parseFloat(amount).toFixed(2)}`
 }
 
 /**
