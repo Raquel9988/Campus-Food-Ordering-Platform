@@ -24,3 +24,16 @@ test("admin redirect", () => {
   expect(getRedirectPath("admin"))
     .toBe("../adminControls/admin-controls.html");
 });
+
+
+
+
+test("unknown role", () => {
+  expect(getRedirectPath("random"))
+    .toBe("UNKNOWN");
+});
+
+test("vendor unknown status", () => {
+  expect(getRedirectPath("vendor", "other"))
+    .toBe("UNKNOWN");
+});

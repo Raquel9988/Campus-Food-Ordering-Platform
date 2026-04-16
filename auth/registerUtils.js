@@ -3,7 +3,10 @@ function validateRegister(email, role, businessName) {
   if (!email.includes("@")) return false;
   if (!role) return false;
 
-  if (role === "vendor" && !businessName) return false;
+  
+  if (role === "vendor" && (!businessName || businessName.trim() === "")) {
+    return false;
+  }
 
   return true;
 }
