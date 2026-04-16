@@ -5,12 +5,10 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "jest --coverage",
-    "lint": "eslint ."
+    "test": "jest --coverage"
   },
   "jest": {
-    "testEnvironment": "node",
-    "transform": {}
+    "testEnvironment": "node"
   },
   "repository": {
     "type": "git",
@@ -24,9 +22,6 @@
   },
   "homepage": "https://github.com/Raquel9988/Campus-Food-Ordering-Platform#readme",
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.2.0",
-    "globals": "^17.5.0",
     "jest": "^30.3.0"
   }
 }
