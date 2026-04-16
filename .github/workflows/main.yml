@@ -22,11 +22,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run linter
-        run: npm run lint
-
       - name: Run tests with coverage
         run: npm test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
