@@ -26,9 +26,13 @@ jobs:
         run: npm test
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       # 🔥 ADD THIS STEP (IMPORTANT)
 =======
 >>>>>>> f216e8f14cb2d39b0e8325b11051b354c3683bcb
+=======
+      # 🔥 ADD THIS STEP (IMPORTANT)
+>>>>>>> b349d8f777a808cd9a75d42d6d214acb822630e8
       - name: Check coverage file exists
         run: ls -R coverage
 
@@ -37,7 +41,11 @@ jobs:
         with:
           files: coverage/lcov.info
 <<<<<<< HEAD
+<<<<<<< HEAD
           fail_ci_if_error: true
 =======
           fail_ci_if_error: true
 >>>>>>> f216e8f14cb2d39b0e8325b11051b354c3683bcb
+=======
+          fail_ci_if_error: true
+>>>>>>> b349d8f777a808cd9a75d42d6d214acb822630e8
