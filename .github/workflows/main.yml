@@ -25,7 +25,10 @@ jobs:
       - name: Run tests with coverage
         run: npm test
 
+<<<<<<< HEAD
       # 🔥 ADD THIS STEP (IMPORTANT)
+=======
+>>>>>>> f216e8f14cb2d39b0e8325b11051b354c3683bcb
       - name: Check coverage file exists
         run: ls -R coverage
 
@@ -33,4 +36,8 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           files: coverage/lcov.info
+<<<<<<< HEAD
           fail_ci_if_error: true
+=======
+          fail_ci_if_error: true
+>>>>>>> f216e8f14cb2d39b0e8325b11051b354c3683bcb

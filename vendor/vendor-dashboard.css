@@ -53,6 +53,22 @@ header h1 {
   background: #f0fdf4;
 }
 
+#orders-dashboard{
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  background: white;
+  color: #14532d;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+#orders-dashboard:hover {
+  transform: translateY(-1px);
+  background: #f0fdf4;
+}
+
+
 main {
   display: grid;
   grid-template-columns: 1fr 1.2fr;

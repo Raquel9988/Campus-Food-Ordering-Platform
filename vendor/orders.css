@@ -1,0 +1,497 @@
+/* ========================================
+   Vendor Orders Dashboard Stylesheet
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    background-color: #f5f7f4;
+    color: #1f2937;
+    line-height: 1.6;
+}
+
+/* ========================================
+   Header
+   ======================================== */
+
+.header {
+    background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+    color: white;
+    padding: 24px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+/* ========================================
+   Buttons
+   ======================================== */
+
+.refresh-btn,
+.retry-btn {
+    background-color: white;
+    color: #14532d;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.refresh-btn:hover,
+.retry-btn:hover {
+    background-color: #f0fdf4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.refresh-btn:active,
+.retry-btn:active {
+    transform: translateY(0);
+}
+
+.refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.order-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+/*Prepare Button*/
+.prep-btn{
+    background-color: #f59e0b;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.prep-btn:hover {
+    background-color: #d97706;
+    transform: translateY(-1px);
+}
+
+/* Ready Button */
+.ready-btn {
+    background-color: #16a34a;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.ready-btn:hover {
+    background-color: #15803d;
+    transform: translateY(-1px);
+}
+
+/* ========================================
+   Container & Layout
+   ======================================== */
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px;
+}
+
+/* ========================================
+   Loading State
+   ======================================== */
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #14532d;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-container p {
+    color: #6b7280;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* ========================================
+   Error State
+   ======================================== */
+
+.error-container {
+    background-color: #fee2e2;
+    border: 1px solid #fca5a5;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.error-message {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+#error-text {
+    color: #991b1b;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.retry-btn {
+    background-color: #dc2626;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.retry-btn:hover {
+    background-color: #b91c1c;
+}
+
+/* ========================================
+   Empty State
+   ======================================== */
+
+.empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    color: #6b7280;
+}
+
+.empty-state p {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+/* ========================================
+   Orders Grid
+   ======================================== */
+
+.orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+/* ========================================
+   Order Card
+   ======================================== */
+
+.order-card {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.order-card:hover {
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Order Header (ID + Status Badge) */
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.order-card h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.status-received {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-preparing {
+    background-color: #fed7aa;
+    color: #92400e;
+}
+
+.status-ready {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-completed {
+    background-color: #e0e7ff;
+    color: #3730a3;
+}
+
+/* Order Info */
+.order-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.order-info p {
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.order-info strong {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.order-value {
+    color: #6b7280;
+    text-align: right;
+    word-break: break-word;
+}
+
+/* Items List */
+.items-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.items-section strong {
+    display: block;
+    color: #1f2937;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.items-list {
+    list-style: none;
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.items-list li {
+    font-size: 14px;
+    color: #4b5563;
+    padding-left: 0;
+}
+
+.item-name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.item-qty {
+    color: #6b7280;
+}
+
+.item-price {
+    color: #059669;
+    font-weight: 600;
+}
+
+/* Total Price */
+.order-total {
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.total-amount {
+    color: #14532d;
+    font-size: 18px;
+}
+
+/* ========================================
+   State Classes
+   ======================================== */
+
+.hidden {
+    display: none;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .header h1 {
+        font-size: 24px;
+    }
+
+    .container {
+        padding: 24px 16px;
+    }
+
+    .orders-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .order-card {
+        padding: 18px;
+    }
+
+    .order-header {
+        flex-direction: column;
+    }
+
+    .status-badge {
+        align-self: flex-start;
+    }
+
+    .order-info p {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .order-value {
+        text-align: left;
+    }
+
+    .error-message {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .retry-btn {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-content {
+        padding: 0 16px;
+    }
+
+    .header h1 {
+        font-size: 20px;
+    }
+
+    .container {
+        padding: 16px 12px;
+    }
+
+    .orders-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .order-card {
+        padding: 16px;
+        gap: 10px;
+    }
+
+    .order-card h3 {
+        font-size: 16px;
+    }
+
+    .status-badge {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+
+    .order-info {
+        font-size: 13px;
+    }
+
+    .items-list li {
+        font-size: 13px;
+    }
+
+    .order-total {
+        font-size: 14px;
+    }
+
+    .total-amount {
+        font-size: 16px;
+    }
+}
