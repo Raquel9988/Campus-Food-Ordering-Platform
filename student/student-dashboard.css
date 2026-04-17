@@ -168,3 +168,27 @@ main > p {
     padding: 22px;
   }
 }
+
+.view-cart-btn {
+  width: 51px;
+  height: 52px;
+  border: none;
+  border-radius: 12px;
+  background: #14532d;   /* same as header theme */
+  cursor: pointer;
+  transition: 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view-cart-btn:hover {
+  background: #166534;
+  transform: translateY(-2px);
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
