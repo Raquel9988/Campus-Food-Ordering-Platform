@@ -256,6 +256,26 @@ async function fetchOrders(vendorId) {
     }
 }
 
+//Update order status in database
+async function updateOrderStatus(orderId, newStatus){
+    const {error}=await supabase
+        .from("orders")
+        .update({
+            status: newStatus
+        })
+        .eq("id", orderId) //Correct order
+        .eq("vendor_id", currentVendorId); //Vendor can onlyupdate own orders
+    if (error){
+        alert("Failed to update order.")
+        return;
+    }
+    alert("Order updated successfully!")
+
+    //Refresh dashboard immediately
+    await loadOrders();
+    
+}
+
 /* ========================================
    UI Rendering
    ======================================== */
@@ -337,7 +357,39 @@ function createOrderCard(order) {
             <span>Total:</span>
             <span class="total-amount">${formatCurrency(order.total_price)}</span>
         </div>
+
+        <div class="order-actions">
+        ${
+            order.status==="received"
+            ? `<button class="prep-btn">Preparing</button>`
+            : ""
+        }
+        ${
+            order.status==="preparing"
+            ? `<button class="ready-btn">Ready for Pickup</button>`
+            : ""
+        }
+        </div>
+
     `
+    //find buttons inside card
+    const prepBtn=card.querySelector(".prep-btn");
+    const readyBtn=card.querySelector(".ready-btn");
+
+    // If PrepBtn exists
+    if(prepBtn){
+        prepBtn.addEventListener("click", async ()=>{
+            // Change status to "Preparing"
+            await updateOrderStatus(order.id, "preparing");
+        });
+    }
+    //If ReadyBtn exists
+    if(readyBtn){
+        readyBtn.addEventListener("click", async ()=>{
+            //Change status to "Ready"
+            await updateOrderStatus(order.id, "ready");
+        });
+    }
 
     return card
 }
