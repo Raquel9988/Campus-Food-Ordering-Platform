@@ -61,7 +61,7 @@ function formatDate(dateString) {
  */
 function formatCurrency(amount) {
     if (!amount) return 'R0.00'
-    return `R{parseFloat(amount).toFixed(2)}`
+    return `R${parseFloat(amount).toFixed(2)}`
 }
 
 /**
@@ -298,7 +298,7 @@ function createOrderCard(order) {
                 `<li>
                     <span class="item-name">${escapeHtml(item.name)}</span>
                     <span class="item-qty">× ${item.quantity}</span>
-                    <span class="item-price">${formatCurrency(item.price_at_time)}</span>
+                    <span class="item-price">${formatCurrency(item.price)}</span>
                 </li>`
         )
         .join('')
