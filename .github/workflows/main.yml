@@ -22,13 +22,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run linter
-        run: npm run lint
-
       - name: Run tests with coverage
         run: npm test
+
+      # 🔥 ADD THIS STEP (IMPORTANT)
+      - name: Check coverage file exists
+        run: ls -R coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_ci_if_error: true

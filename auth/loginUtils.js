@@ -1,5 +1,5 @@
-function validateLogin(email, password) {
-  if (!email || !password) {
+function validateLogin(email) {
+  if (!email) {
     return false;
   }
   return true;
