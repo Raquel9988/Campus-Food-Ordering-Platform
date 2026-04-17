@@ -5,10 +5,12 @@ const supabase = createClient(
   "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
 );
 
+const params = new URLSearchParams(window.location.search);
+const vendorId = params.get("vendorId");
+
 function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
-
   toast.classList.add("show");
 
   setTimeout(() => {
@@ -16,49 +18,48 @@ function showToast(message) {
   }, 2500);
 }
 
-const params = new URLSearchParams(window.location.search);
-const vendorId = params.get("vendorId");
+async function getCartKey() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-let CART_KEY = "campus_cart";
-
-function getCart() {
-  return JSON.parse(localStorage.getItem(CART_KEY)) || {};
+  if (!user) return "campus_cart_guest";
+  return `campus_cart_${user.id}`;
 }
 
-function saveCart(cart) {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+async function getCart() {
+  const key = await getCartKey();
+  return JSON.parse(localStorage.getItem(key)) || {};
 }
 
-function addToCart(vendorId, item) {
-  const cart = getCart();
+async function saveCart(cart) {
+  const key = await getCartKey();
+  localStorage.setItem(key, JSON.stringify(cart));
+}
+
+async function addToCart(vendorId, item) {
+  const cart = await getCart();
 
   if (!cart[vendorId]) {
     cart[vendorId] = { items: [] };
   }
 
   const items = cart[vendorId].items;
-
-  const existing = items.find(i => i.menuItemId === item.menuItemId);
+  const existing = items.find((i) => i.menuItemId === item.menuItemId);
 
   if (existing) {
-    const updatedItems = items.map(item =>
-  item.menuItemId === existing.menuItemId
-    ? { ...item, quantity: item.quantity + 1 }
-    : item
-);
-
-cart[vendorId].items = updatedItems;
+    existing.quantity += 1;
   } else {
     items.push({
       menuItemId: item.menuItemId,
       name: item.name,
-      price: item.price,
-      image_url: item.image_url,
-      quantity: 1
+      price: Number(item.price),
+      image_url: item.image_url || "",
+      quantity: 1,
     });
   }
 
-  saveCart(cart);
+  await saveCart(cart);
 }
 
 async function loadVendorName() {
@@ -68,10 +69,12 @@ async function loadVendorName() {
     .eq("id", vendorId)
     .single();
 
+  const title = document.getElementById("vendor-name");
+
   if (!error && data) {
-    document.getElementById("vendor-name").textContent = data.business_name;
+    title.textContent = data.business_name;
   } else {
-    document.getElementById("vendor-name").textContent = "Vendor Menu";
+    title.textContent = "Vendor Menu";
   }
 }
 
@@ -82,44 +85,50 @@ async function loadMenu() {
   const { data, error } = await supabase
     .from("menu_items")
     .select("id, name, price, description, image_url")
-    .eq("vendor_id", vendorId);
+    .eq("vendor_id", vendorId)
+    .eq("is_available", true);
 
   if (error) {
-    menuList.innerHTML = "Error loading menu.";
+    menuList.innerHTML = `<p class="error-text">Error loading menu.</p>`;
     return;
   }
 
   if (!data || data.length === 0) {
-    menuList.innerHTML = "No menu items.";
+    menuList.innerHTML = `<p class="empty-text">No menu items available.</p>`;
     return;
   }
 
   menuList.innerHTML = "";
 
-  data.forEach(item => {
+  data.forEach((item) => {
     const div = document.createElement("div");
     div.className = "menu-item";
 
+    const imageHtml = item.image_url
+      ? `<img src="${item.image_url}" alt="${item.name}" class="menu-image" />`
+      : `<div class="image-wrapper empty">No image available</div>`;
+
     div.innerHTML = `
-  <div class="image-wrapper">
-    <img src="${item.image_url}" alt="${item.name}" class="menu-image"/>
-  </div>
+      ${
+        item.image_url
+          ? `<div class="image-wrapper">${imageHtml}</div>`
+          : imageHtml
+      }
 
-  <div class="menu-info">
-    <h3>${item.name}</h3>
-    <p class="description">${item.description || ""}</p>
-    <p>R ${Number(item.price).toFixed(2)}</p>
-    <button>Add to Cart 🛒</button>
-  </div>
-`;
-    
+      <div class="menu-info">
+        <h3>${item.name}</h3>
+        <p class="description">${item.description || "No description available."}</p>
+        <p class="menu-price">R ${Number(item.price).toFixed(2)}</p>
+        <button type="button">Add to Cart 🛒</button>
+      </div>
+    `;
 
-    div.querySelector("button").addEventListener("click", () => {
-      addToCart(vendorId, {
+    div.querySelector("button").addEventListener("click", async () => {
+      await addToCart(vendorId, {
         menuItemId: item.id,
         name: item.name,
         price: item.price,
-        image_url: item.image_url
+        image_url: item.image_url,
       });
       showToast("Added to cart!");
     });
@@ -129,22 +138,13 @@ async function loadMenu() {
 }
 
 async function initMenu() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    CART_KEY = `campus_cart_${user.id}`;
-  }
-
   await loadVendorName();
   await loadMenu();
 }
 
 initMenu();
 
-// 🔙 back button
-document.querySelector(".back-btn")?.addEventListener("click", () => {
+document.getElementById("back-btn")?.addEventListener("click", () => {
   window.location.href = "student-dashboard.html";
 });
 

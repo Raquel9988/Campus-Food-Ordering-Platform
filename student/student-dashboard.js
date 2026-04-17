@@ -5,9 +5,6 @@ const supabase = createClient(
   "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
 );
 
-
-const CART_KEY = "campus_cart";
-
 window.addEventListener("load", async () => {
   const userInfo = document.getElementById("user-info");
   const logoutBtn = document.getElementById("logout");
@@ -66,12 +63,11 @@ async function getStudentAuth() {
 
 async function loadVendors() {
   const vendorsList = document.getElementById("vendors-list");
-
   vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
 
   const { data: vendors, error } = await supabase
     .from("vendors")
-    .select("id, business_name, user_id")
+    .select("id, business_name")
     .eq("status", "approved")
     .order("business_name", { ascending: true });
 
@@ -92,66 +88,18 @@ async function loadVendors() {
     const vendorCard = document.createElement("div");
     vendorCard.className = "vendor-card";
 
-    const title = document.createElement("h4");
-    title.textContent = vendor.business_name;
+    vendorCard.innerHTML = `
+      <h4>${vendor.business_name}</h4>
+      <p>Browse this vendor's available menu items.</p>
+      <button>View Menu</button>
+    `;
 
-    const description = document.createElement("p");
-    description.textContent = "Browse this vendor's available menu items.";
-
-    const button = document.createElement("button");
-    button.textContent = "View Menu";
-    button.addEventListener("click", () => {
-      viewMenu(vendor.id);
+    vendorCard.querySelector("button").addEventListener("click", () => {
+      window.location.href = `student-menu.html?vendorId=${vendor.id}`;
     });
-
-    vendorCard.appendChild(title);
-    vendorCard.appendChild(description);
-    vendorCard.appendChild(button);
 
     vendorsList.appendChild(vendorCard);
   });
-}
-
-function viewMenu(vendorId) {
-
-  window.location.href = `student-menu.html?vendorId=${vendorId}`;
-}
-// this loads the cart from localStorage, or returns an empty object if no cart exists
-function getCart() {
-  return JSON.parse(localStorage.getItem(CART_KEY)) || {};
-}
-
-//this saves the cart to localStorage as a JSON string
-function saveCart(cart) {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-}
-
-// this adds an item to the cart for a specific vendor, or increments quantity if it already exists
-function addToCart(vendorId, item) {
-  const cart = getCart(); // load existing cart or start with empty object
-
-  if (!cart[vendorId]) { // if no cart for this vendor yet, create it
-    cart[vendorId] = { items: [] }; // initialize with empty items array
-  }
-
-  const vendorCart = cart[vendorId].items; // get the items array for this vendor
-
-  const existingItem = vendorCart.find( 
-    (i) => i.menuItemId === item.menuItemId
-  );
-
-  if (existingItem) {
-    existingItem.quantity += 1;
-  } else {
-    vendorCart.push({
-      menuItemId: item.menuItemId,
-      name: item.name,
-      price: item.price,
-      quantity: 1,
-    });
-  }
-
-  saveCart(cart);
 }
 
 document.getElementById("view-cart")?.addEventListener("click", () => {
