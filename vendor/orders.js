@@ -256,8 +256,23 @@ async function fetchOrders(vendorId) {
     }
 }
 
+//Check if the status change is valid
+function isValidStatusTransition(currentStatus, newStatus){
+    const validTransitions={
+        received:["preparing"],
+        preparing:["ready"],
+        ready:[]
+    };
+    return validTransitions[currentStatus]?.includes(newStatus);
+}
 //Update order status in database
-async function updateOrderStatus(orderId, newStatus){
+async function updateOrderStatus(orderId, newStatus, currentStatus){
+
+    //Block invalid transitions
+    if(!isValidStatusTransition(currentStatus, newStatus)){
+        alert("Invalid status change.");
+        return;
+    }
     const {error}=await supabase
         .from("orders")
         .update({
@@ -318,7 +333,7 @@ function createOrderCard(order) {
                 `<li>
                     <span class="item-name">${escapeHtml(item.name)}</span>
                     <span class="item-qty">× ${item.quantity}</span>
-                    <span class="item-price">${formatCurrency(item.price_at_time)}</span>
+                    <span class="item-price">${formatCurrency(item.price)}</span>
                 </li>`
         )
         .join('')
@@ -380,14 +395,14 @@ function createOrderCard(order) {
     if(prepBtn){
         prepBtn.addEventListener("click", async ()=>{
             // Change status to "Preparing"
-            await updateOrderStatus(order.id, "preparing");
+            await updateOrderStatus(order.id, "preparing", order.status);
         });
     }
     //If ReadyBtn exists
     if(readyBtn){
         readyBtn.addEventListener("click", async ()=>{
             //Change status to "Ready"
-            await updateOrderStatus(order.id, "ready");
+            await updateOrderStatus(order.id, "ready", order.status);
         });
     }
 
