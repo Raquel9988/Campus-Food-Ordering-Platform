@@ -1,105 +1,111 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Supabase setup
-const supabaseUrl = 'https://sqbscxfolbckikrzxqhr.supabase.co'
-const supabaseKey = 'sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay'
+const supabase = createClient(
+  "https://sqbscxfolbckikrzxqhr.supabase.co",
+  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
+);
 
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-// Wait for page to fully load
 window.addEventListener("load", async () => {
+  const userInfo = document.getElementById("user-info");
+  const logoutBtn = document.getElementById("logout");
 
-    console.log("Student dashboard loaded")
+  const authResult = await getStudentAuth();
 
-    // Check if user is logged in
-    const { data: { user } } = await supabase.auth.getUser()
+  if (!authResult.ok) {
+    alert(authResult.message);
+    window.location.href = "../auth/login.html";
+    return;
+  }
 
-    if (!user) {
-        window.location.href = "../auth/login.html"
-        return
-    }
+  const { user } = authResult;
 
-    // Get user role from DB
-    const { data: users, error } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
+  if (userInfo) {
+    userInfo.textContent = `Logged in as: ${user.email}`;
+  }
 
-    if (error || !users || users.length === 0) {
-        window.location.href = "../auth/login.html"
-        return
-    }
+  await loadVendors();
 
-    const role = users[0].role
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "../auth/login.html";
+    });
+  }
+});
 
-    // Only allow students
-    if (role !== "student") {
-        alert("Access denied - Students only")
-        window.location.href = "../auth/login.html"
-        return
-    }
+async function getStudentAuth() {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-    // Show user email
-    const userInfo = document.getElementById("user-info")
-    if (userInfo) {
-        userInfo.textContent = "Logged in as: " + user.email
-    }
+  if (authError || !user) {
+    return { ok: false, message: "Please log in first." };
+  }
 
-    // Load available vendors
-    await loadVendors()
+  const { data: appUser, error: roleError } = await supabase
+    .from("users")
+    .select("id, role")
+    .eq("id", user.id)
+    .single();
 
-    // Logout button
-    const logoutBtn = document.getElementById("logout")
+  if (roleError || !appUser) {
+    return { ok: false, message: "Unable to verify your account." };
+  }
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
-            console.log("Logout clicked")
+  if (appUser.role !== "student") {
+    await supabase.auth.signOut();
+    return { ok: false, message: "Access denied. Students only." };
+  }
 
-            await supabase.auth.signOut()
+  return { ok: true, user };
+}
 
-            window.location.href = "../auth/login.html"
-        })
-    }
-
-})
-
-// Function to load and display approved vendors
 async function loadVendors() {
-    const vendorsList = document.getElementById("vendors-list")
+  const vendorsList = document.getElementById("vendors-list");
+  vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
 
-    // Get all approved vendors
-    const { data: vendors, error } = await supabase
-        .from('vendors')
-        .select('id, business_name, user_id')
-        .eq('status', 'approved')
+  const { data: vendors, error } = await supabase
+    .from("vendors")
+    .select("id, business_name")
+    .eq("status", "approved")
+    .order("business_name", { ascending: true });
 
-    if (error) {
-        vendorsList.innerHTML = '<p>Error loading vendors</p>'
-        console.error("Error fetching vendors:", error)
-        return
-    }
+  if (error) {
+    console.error("Error fetching vendors:", error);
+    vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
+    return;
+  }
 
-    if (!vendors || vendors.length === 0) {
-        vendorsList.innerHTML = '<p>No vendors available yet</p>'
-        return
-    }
+  if (!vendors || vendors.length === 0) {
+    vendorsList.innerHTML = `<p class="empty-text">No vendors available yet.</p>`;
+    return;
+  }
 
-    // Display vendors
-    vendorsList.innerHTML = ''
+  vendorsList.innerHTML = "";
 
-    vendors.forEach(vendor => {
-        const vendorCard = document.createElement('div')
-        vendorCard.className = 'vendor-card'
-        vendorCard.innerHTML = `
-            <h4>${vendor.business_name}</h4>
-            <button onclick="viewMenu('${vendor.id}')">View Menu</button>
-        `
-        vendorsList.appendChild(vendorCard)
-    })
+  vendors.forEach((vendor) => {
+    const vendorCard = document.createElement("div");
+    vendorCard.className = "vendor-card";
+
+    vendorCard.innerHTML = `
+      <h4>${vendor.business_name}</h4>
+      <p>Browse this vendor's available menu items.</p>
+      <button>View Menu</button>
+    `;
+
+    vendorCard.querySelector("button").addEventListener("click", () => {
+      window.location.href = `student-menu.html?vendorId=${vendor.id}`;
+    });
+
+    vendorsList.appendChild(vendorCard);
+  });
 }
 
-// Function to view a vendor's menu (placeholder for now)
-window.viewMenu = function(vendorId) {
-    alert('Menu viewing coming soon! Vendor ID: ' + vendorId)
-    // Future: redirect to menu page or show menu items
-}
+document.getElementById("view-cart")?.addEventListener("click", () => {
+  window.location.href = "student-cart.html";
+});
+
+document.getElementById("my-orders")?.addEventListener("click", () => {
+  window.location.href = "my-orders.html";
+});
