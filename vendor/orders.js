@@ -11,6 +11,11 @@ const ordersContainer = document.getElementById('orders-container')
 const emptyState = document.getElementById('empty-state')
 const refreshBtn = document.getElementById('refresh-btn')
 const retryBtn = document.getElementById('retry-btn')
+const dashboardBtn=document.getElementById("dashboard-btn")
+
+dashboardBtn.addEventListener("click", ()=>{
+    window.location.href="../vendor/vendor-dashboard.html";
+});
 
 /* ========================================
    State
@@ -276,7 +281,8 @@ async function updateOrderStatus(orderId, newStatus, currentStatus){
     const {error}=await supabase
         .from("orders")
         .update({
-            status: newStatus
+            status: newStatus,
+            updated_at: new Date().toISOString()
         })
         .eq("id", orderId) //Correct order
         .eq("vendor_id", currentVendorId); //Vendor can onlyupdate own orders
@@ -306,13 +312,46 @@ function renderOrders(orders) {
         showEmpty()
         return
     }
-
+    /*
     // Create order cards
     orders.forEach((order) => {
         const orderCard = createOrderCard(order)
         ordersContainer.appendChild(orderCard)
     })
+    */
 
+    //split orders into groups
+    const activeOrders=orders.filter(order=>
+        order.status==="received" || order.status==="preparing"
+    );
+    const readyOrders=orders.filter(order=>
+        order.status==="ready"
+    );
+
+    //active orders heading
+    if(activeOrders.length>0){
+        const activeTitle=document.createElement("h2");
+        activeTitle.className="section-title";
+        activeTitle.textContent="Active Orders";
+        ordersContainer.appendChild(activeTitle);
+
+        activeOrders.forEach(order=>{
+            const card=createOrderCard(order);
+            ordersContainer.appendChild(card);
+        });
+    }
+    //ready orders heading
+    if (readyOrders.length>0){
+        const readyTitle=document.createElement("h2");
+        readyTitle.className="section-title";
+        readyTitle.textContent="Ready for Pickup";
+        ordersContainer.appendChild(readyTitle);
+
+        readyOrders.forEach(order=>{
+            const card=createOrderCard(order);
+            ordersContainer.appendChild(card);
+        });
+    }
     showOrders()
 }
 
