@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - Campus Food Platform</title>
+    <link rel="stylesheet" href="my-orders.css">
+</head>
+<body>
+
+    <header>
+        <h1>My Orders</h1>
+        <div class="header-actions">
+            <button id="refresh-btn" class="refresh-btn">Refresh</button>
+            <button id="back-btn" class="back-btn">← Back to Dashboard</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Loading State -->
+        <div id="loading-container" class="loading-container">
+            <p>Loading your orders...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-container" class="error-container hidden">
+            <p id="error-text">An error occurred.</p>
+            <button id="retry-btn" class="retry-btn">Try Again</button>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state hidden">
+            <h2>No orders yet</h2>
+            <p>You haven't placed any orders yet.</p>
+            <a href="student-dashboard.html" class="browse-btn">Browse Vendors</a>
+        </div>
+
+        <!-- Orders List -->
+        <div id="orders-container" class="orders-container hidden">
+            <!-- Orders will be inserted here by JavaScript -->
+        </div>
+    </main>
+
+    <script type="module" src="my-orders.js"></script>
+
+</body>
+</html>
