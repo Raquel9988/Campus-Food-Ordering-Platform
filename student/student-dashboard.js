@@ -5,6 +5,10 @@ const supabase = createClient(
   "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
 );
 
+/* ========================================
+   PAGE LOAD
+======================================== */
+
 window.addEventListener("load", async () => {
   const userInfo = document.getElementById("user-info");
   const logoutBtn = document.getElementById("logout");
@@ -32,6 +36,10 @@ window.addEventListener("load", async () => {
     });
   }
 });
+
+/* ========================================
+   AUTH CHECK
+======================================== */
 
 async function getStudentAuth() {
   const {
@@ -61,8 +69,13 @@ async function getStudentAuth() {
   return { ok: true, user };
 }
 
+/* ========================================
+   LOAD VENDORS
+======================================== */
+
 async function loadVendors() {
   const vendorsList = document.getElementById("vendors-list");
+
   vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
 
   const { data: vendors, error } = await supabase
@@ -85,13 +98,14 @@ async function loadVendors() {
   vendorsList.innerHTML = "";
 
   vendors.forEach((vendor) => {
-    const vendorCard = document.createElement("div");
+    // ✅ NO div — using article
+    const vendorCard = document.createElement("article");
     vendorCard.className = "vendor-card";
 
     vendorCard.innerHTML = `
       <h4>${vendor.business_name}</h4>
       <p>Browse this vendor's available menu items.</p>
-      <button>View Menu</button>
+      <button type="button">View Menu</button>
     `;
 
     vendorCard.querySelector("button").addEventListener("click", () => {
@@ -101,6 +115,10 @@ async function loadVendors() {
     vendorsList.appendChild(vendorCard);
   });
 }
+
+/* ========================================
+   NAVIGATION
+======================================== */
 
 document.getElementById("view-cart")?.addEventListener("click", () => {
   window.location.href = "student-cart.html";

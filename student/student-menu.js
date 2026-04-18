@@ -8,6 +8,9 @@ const supabase = createClient(
 const params = new URLSearchParams(window.location.search);
 const vendorId = params.get("vendorId");
 
+/* =========================
+   TOAST
+========================= */
 function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
@@ -18,13 +21,12 @@ function showToast(message) {
   }, 2500);
 }
 
+/* =========================
+   CART
+========================= */
 async function getCartKey() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return "campus_cart_guest";
-  return `campus_cart_${user.id}`;
+  const { data: { user } } = await supabase.auth.getUser();
+  return user ? `campus_cart_${user.id}` : "campus_cart_guest";
 }
 
 async function getCart() {
@@ -62,22 +64,23 @@ async function addToCart(vendorId, item) {
   await saveCart(cart);
 }
 
+/* =========================
+   LOAD VENDOR NAME
+========================= */
 async function loadVendorName() {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("vendors")
     .select("business_name")
     .eq("id", vendorId)
     .single();
 
   const title = document.getElementById("vendor-name");
-
-  if (!error && data) {
-    title.textContent = data.business_name;
-  } else {
-    title.textContent = "Vendor Menu";
-  }
+  title.textContent = data?.business_name || "Vendor Menu";
 }
 
+/* =========================
+   LOAD MENU (NO DIV)
+========================= */
 async function loadMenu() {
   const menuList = document.getElementById("menu-list");
   menuList.innerHTML = `<p class="loading-text">Loading menu...</p>`;
@@ -101,29 +104,47 @@ async function loadMenu() {
   menuList.innerHTML = "";
 
   data.forEach((item) => {
-    const div = document.createElement("div");
-    div.className = "menu-item";
 
-    const imageHtml = item.image_url
-      ? `<img src="${item.image_url}" alt="${item.name}" class="menu-image" />`
-      : `<div class="image-wrapper empty">No image available</div>`;
+    // ✅ MAIN CARD
+    const card = document.createElement("article");
+    card.className = "menu-item";
 
-    div.innerHTML = `
-      ${
-        item.image_url
-          ? `<div class="image-wrapper">${imageHtml}</div>`
-          : imageHtml
-      }
+    // ✅ IMAGE
+    const figure = document.createElement("figure");
+    figure.className = item.image_url ? "image-wrapper" : "image-wrapper empty";
 
-      <div class="menu-info">
-        <h3>${item.name}</h3>
-        <p class="description">${item.description || "No description available."}</p>
-        <p class="menu-price">R ${Number(item.price).toFixed(2)}</p>
-        <button type="button">Add to Cart 🛒</button>
-      </div>
-    `;
+    if (item.image_url) {
+      const img = document.createElement("img");
+      img.src = item.image_url;
+      img.alt = item.name;
+      img.className = "menu-image";
+      figure.appendChild(img);
+    } else {
+      const caption = document.createElement("figcaption");
+      caption.textContent = "No image available";
+      figure.appendChild(caption);
+    }
 
-    div.querySelector("button").addEventListener("click", async () => {
+    // ✅ INFO SECTION
+    const info = document.createElement("section");
+    info.className = "menu-info";
+
+    const name = document.createElement("h3");
+    name.textContent = item.name;
+
+    const desc = document.createElement("p");
+    desc.className = "description";
+    desc.textContent = item.description || "No description available.";
+
+    const price = document.createElement("p");
+    price.className = "menu-price";
+    price.textContent = `R ${Number(item.price).toFixed(2)}`;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = "Add to Cart 🛒";
+
+    button.addEventListener("click", async () => {
       await addToCart(vendorId, {
         menuItemId: item.id,
         name: item.name,
@@ -133,10 +154,22 @@ async function loadMenu() {
       showToast("Added to cart!");
     });
 
-    menuList.appendChild(div);
+    // assemble
+    info.appendChild(name);
+    info.appendChild(desc);
+    info.appendChild(price);
+    info.appendChild(button);
+
+    card.appendChild(figure);
+    card.appendChild(info);
+
+    menuList.appendChild(card);
   });
 }
 
+/* =========================
+   INIT
+========================= */
 async function initMenu() {
   await loadVendorName();
   await loadMenu();
@@ -144,6 +177,9 @@ async function initMenu() {
 
 initMenu();
 
+/* =========================
+   NAV
+========================= */
 document.getElementById("back-btn")?.addEventListener("click", () => {
   window.location.href = "student-dashboard.html";
 });
