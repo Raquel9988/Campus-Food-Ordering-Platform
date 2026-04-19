@@ -201,9 +201,9 @@ main > p {
   align-items: center;
 }
 
-/* ✅ VIEW ORDERS BUTTON (NEW) */
+/* ✅ VIEW ORDERS BUTTON */
 .my-orders-btn {
-  position: relative; /* needed for dot */
+  position: relative; /* required for dot positioning */
   padding: 12px 16px;
   border: none;
   border-radius: 10px;
@@ -212,6 +212,10 @@ main > p {
   font-weight: 700;
   cursor: pointer;
   transition: 0.2s ease;
+
+  display: inline-flex;        /* ✅ keeps text + dot aligned nicely */
+  align-items: center;
+  justify-content: center;
 }
 
 .my-orders-btn:hover {
@@ -219,19 +223,23 @@ main > p {
   transform: translateY(-1px);
 }
 
-/* 🔴 DOT ON VIEW ORDERS BUTTON */
+/* 🔴 NOTIFICATION DOT */
 .my-orders-btn .notification-dot {
   position: absolute;
   top: -4px;
   right: -4px;
+
   width: 10px;
   height: 10px;
+
   background: red;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px white;
+
+  box-shadow: 0 0 0 2px white; /* makes it pop on green header */
+  z-index: 10;                 /* ✅ ensures it stays visible */
 }
 
-/* (optional) keep wrapper if still used for cart */
+/* (optional) CART WRAPPER */
 .cart-wrapper {
   position: relative;
   display: inline-block;
