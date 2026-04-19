@@ -25,7 +25,7 @@ const backBtn = document.getElementById("back-btn");
 let currentStudentId = null;
 
 /* ========================================
-   🔥 MARK ORDERS AS SEEN (FIXED)
+   🔥 MARK ORDERS AS SEEN
 ======================================== */
 
 async function markOrdersSeen(userId) {
@@ -86,7 +86,7 @@ function getStatusText(status) {
 }
 
 /* ========================================
-   Toast Notification
+   Toast
 ======================================== */
 
 function showToast(message) {
@@ -153,29 +153,17 @@ async function checkStudentAuth() {
         return null;
     }
 
-    const { data: appUser } = await supabase
-        .from("users")
-        .select("id, role")
-        .eq("id", user.id)
-        .single();
-
-    if (!appUser || appUser.role !== "student") {
-        await supabase.auth.signOut();
-        window.location.href = "../auth/login.html";
-        return null;
-    }
-
     return user.id;
 }
 
 /* ========================================
-   Fetch Orders
+   Fetch Orders (UPDATED)
 ======================================== */
 
 async function fetchOrders(studentId) {
     const { data: orders } = await supabase
         .from("orders")
-        .select("id, vendor_id, status, created_at")
+        .select("id, vendor_id, status, created_at, updated_at") // ✅ added updated_at
         .eq("student_id", studentId)
         .order("created_at", { ascending: false });
 
@@ -226,8 +214,45 @@ async function fetchOrders(studentId) {
 }
 
 /* ========================================
-   Render Orders
+   Render Orders (UPDATED)
 ======================================== */
+
+function createOrderCard(order) {
+    const card = document.createElement("article");
+    card.className = "order-card";
+
+    const itemsHtml = order.items.map(i => `
+        <li>${escapeHtml(i.name)} × ${i.quantity}</li>
+    `).join("");
+
+    // ✅ READY TIME ONLY IF READY
+    const readyTime = order.status === "ready"
+        ? `<p><strong>Ready Time:</strong> ${formatDate(order.updated_at)}</p>`
+        : "";
+
+    card.innerHTML = `
+        <header>
+            <h3>Order #${order.id.substring(0, 6)}</h3>
+            <span class="${getStatusClass(order.status)}">
+                ${getStatusText(order.status)}
+            </span>
+        </header>
+
+        <p><strong>Vendor:</strong> ${escapeHtml(order.vendorName)}</p>
+
+        <p><strong>Order Time:</strong> ${formatDate(order.created_at)}</p>
+
+        ${readyTime}
+
+        <ul>${itemsHtml}</ul>
+
+        <footer>
+            <strong>Total: ${formatCurrency(order.total_price)}</strong>
+        </footer>
+    `;
+
+    return card;
+}
 
 function renderOrders(orders) {
     ordersContainer.innerHTML = "";
@@ -241,36 +266,6 @@ function renderOrders(orders) {
     showOrders();
 }
 
-function createOrderCard(order) {
-    const card = document.createElement("article");
-    card.className = "order-card";
-
-    const itemsHtml = order.items.map(i => `
-        <li>${escapeHtml(i.name)} × ${i.quantity}</li>
-    `).join("");
-
-    card.innerHTML = `
-        <header>
-            <h3>Order #${order.id.substring(0, 6)}</h3>
-            <span class="${getStatusClass(order.status)}">
-                ${getStatusText(order.status)}
-            </span>
-        </header>
-
-        <p><strong>Vendor:</strong> ${escapeHtml(order.vendorName)}</p>
-
-        <p><strong>Time:</strong> ${formatDate(order.created_at)}</p>
-
-        <ul>${itemsHtml}</ul>
-
-        <footer>
-            <strong>Total: ${formatCurrency(order.total_price)}</strong>
-        </footer>
-    `;
-
-    return card;
-}
-
 /* ========================================
    Load Orders
 ======================================== */
@@ -281,7 +276,7 @@ async function loadOrders() {
 }
 
 /* ========================================
-   REAL-TIME (FIXED)
+   REAL-TIME
 ======================================== */
 
 function subscribeToRealtime() {
@@ -320,15 +315,14 @@ retryBtn.onclick = loadOrders;
 backBtn.onclick = () => window.location.href = "student-dashboard.html";
 
 /* ========================================
-   Init (FIXED)
+   Init
 ======================================== */
 
 async function initializePage() {
     currentStudentId = await checkStudentAuth();
     if (!currentStudentId) return;
 
-    await markOrdersSeen(currentStudentId); // 🔥 CRITICAL FIX
-
+    await markOrdersSeen(currentStudentId);
     await loadOrders();
     subscribeToRealtime();
 }
