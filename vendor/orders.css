@@ -46,6 +46,11 @@ body {
     letter-spacing: -0.5px;
 }
 
+.header-actions{
+    display: flex;
+    gap: 10px;
+}
+
 /* ========================================
    Buttons
    ======================================== */
@@ -86,6 +91,23 @@ body {
     display: flex;
     gap: 10px;
     margin-top: 14px;
+}
+
+.nav-btn {
+    background-color: white;
+    color: #14532d;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-btn:hover {
+    opacity: 0.9;
 }
 
 /*Prepare Button*/
@@ -383,6 +405,18 @@ body {
 .total-amount {
     color: #14532d;
     font-size: 18px;
+}
+
+/*Sections Titles*/
+.section-title {
+    grid-column: 1 / -1;
+    font-size: 22px;
+    font-weight: 700;
+    color: #14532d;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #d1fae5;
 }
 
 /* ========================================
