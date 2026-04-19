@@ -15,7 +15,12 @@
     <section id="user-info"></section>
 
     <nav class="header-actions">
-      <button id="my-orders" class="my-orders-btn">My Orders</button>
+      <!-- ✅ CLEAR visible button -->
+      <button id="my-orders" class="my-orders-btn">
+        View Orders
+        <span id="order-notification" class="notification-dot hidden"></span>
+      </button>
+
       <button id="logout">Logout</button>
     </nav>
 
@@ -36,7 +41,6 @@
       <section id="vendors-list">
         <p class="loading-text">Loading vendors...</p>
       </section>
-
     </section>
   </main>
 
