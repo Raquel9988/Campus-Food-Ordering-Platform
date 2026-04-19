@@ -8,7 +8,7 @@ const supabase = createClient(
 
 /* ========================================
    DOM Elements
-   ======================================== */
+======================================== */
 
 const loadingContainer = document.getElementById("loading-container");
 const errorContainer = document.getElementById("error-container");
@@ -21,16 +21,14 @@ const backBtn = document.getElementById("back-btn");
 
 /* ========================================
    State
-   ======================================== */
+======================================== */
 
 let currentStudentId = null;
-let isRefreshing = false;
 
 /* ========================================
    Utility Functions
-   ======================================== */
+======================================== */
 
-// Escape HTML to prevent XSS
 function escapeHtml(text) {
     if (!text) return "";
     return text
@@ -41,60 +39,59 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
-// Format date to readable string
 function formatDate(dateString) {
     if (!dateString) return "N/A";
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-ZA", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        });
-    } catch {
-        return dateString;
-    }
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-ZA", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 }
 
-// Format currency
 function formatCurrency(amount) {
-    if (!amount) return "R0.00";
-    return `R${parseFloat(amount).toFixed(2)}`;
+    return `R${parseFloat(amount || 0).toFixed(2)}`;
 }
 
-// Get status color class
 function getStatusClass(status) {
-    switch (status) {
-        case "received":
-            return "status-received";
-        case "preparing":
-            return "status-preparing";
-        case "ready":
-            return "status-ready";
-        default:
-            return "status-default";
-    }
+    return `status-${status || "default"}`;
 }
 
-// Get status display text
 function getStatusText(status) {
     switch (status) {
-        case "received":
-            return "Order Received";
-        case "preparing":
-            return "Preparing";
-        case "ready":
-            return "Ready for Pickup";
-        default:
-            return status;
+        case "received": return "Order Received";
+        case "preparing": return "Preparing";
+        case "ready": return "Ready for Pickup";
+        default: return status;
     }
 }
 
 /* ========================================
-   UI State Functions
-   ======================================== */
+   Toast Notification
+======================================== */
+
+function showToast(message) {
+    const toast = document.createElement("section"); // ✅ semantic
+    toast.textContent = message;
+
+    toast.style.position = "fixed";
+    toast.style.bottom = "20px";
+    toast.style.right = "20px";
+    toast.style.background = "black";
+    toast.style.color = "white";
+    toast.style.padding = "10px 15px";
+    toast.style.borderRadius = "5px";
+    toast.style.zIndex = "1000";
+
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+/* ========================================
+   UI State
+======================================== */
 
 function showLoading() {
     loadingContainer.classList.remove("hidden");
@@ -126,222 +123,130 @@ function showEmpty() {
 }
 
 /* ========================================
-   Authentication
-   ======================================== */
+   Auth
+======================================== */
 
 async function checkStudentAuth() {
-    try {
-        showLoading();
+    showLoading();
 
-        // Get current user
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
-        if (authError || !user) {
-            window.location.href = "../auth/login.html";
-            return null;
-        }
-
-        // Get user role
-        const { data: appUser, error: userError } = await supabase
-            .from("users")
-            .select("id, role")
-            .eq("id", user.id)
-            .single();
-
-        if (userError || !appUser) {
-            window.location.href = "../auth/login.html";
-            return null;
-        }
-
-        // Check if student
-        if (appUser.role !== "student") {
-            await supabase.auth.signOut();
-            window.location.href = "../auth/login.html";
-            return null;
-        }
-
-        return user.id;
-    } catch (error) {
-        console.error("Auth check error:", error);
-        showError("Authentication error. Please try again.");
+    if (!user) {
+        window.location.href = "../auth/login.html";
         return null;
     }
+
+    const { data: appUser } = await supabase
+        .from("users")
+        .select("id, role")
+        .eq("id", user.id)
+        .single();
+
+    if (!appUser || appUser.role !== "student") {
+        await supabase.auth.signOut();
+        window.location.href = "../auth/login.html";
+        return null;
+    }
+
+    return user.id;
 }
 
 /* ========================================
-   Data Fetching
-   ======================================== */
+   Fetch Orders
+======================================== */
 
 async function fetchOrders(studentId) {
-    if (!studentId) return [];
+    const { data: orders } = await supabase
+        .from("orders")
+        .select("id, vendor_id, status, created_at")
+        .eq("student_id", studentId)
+        .order("created_at", { ascending: false });
 
-    try {
-        // Fetch orders for this student
-        const { data: orders, error: ordersError } = await supabase
-            .from("orders")
-            .select("id, vendor_id, status, created_at")
-            .eq("student_id", studentId)
-            .order("created_at", { ascending: false });
+    if (!orders || orders.length === 0) return [];
 
-        if (ordersError) {
-            throw new Error(`Failed to fetch orders: ${ordersError.message}`);
-        }
+    return await Promise.all(
+        orders.map(async (order) => {
 
-        if (!orders || orders.length === 0) {
-            return [];
-        }
+            const { data: items } = await supabase
+                .from("order_items")
+                .select("menu_item_id, quantity, price")
+                .eq("order_id", order.id);
 
-        // Enrich each order with items and vendor info
-        const enrichedOrders = await Promise.all(
-            orders.map(async (order) => {
-                try {
-                    // Fetch order items
-                    const { data: orderItems, error: itemsError } = await supabase
-                        .from("order_items")
-                        .select("id, menu_item_id, quantity, price")
-                        .eq("order_id", order.id);
+            const total = (items || []).reduce(
+                (sum, i) => sum + (i.price * i.quantity),
+                0
+            );
 
-                    if (itemsError) {
-                        console.warn(`Failed to fetch items for order ${order.id}:`, itemsError);
-                        return { ...order, items: [], total_price: 0, vendorName: "Unknown" };
-                    }
-
-                    // Calculate total price
-                    const totalPrice = (orderItems || []).reduce(
-                        (sum, item) => sum + (item.price * item.quantity),
-                        0
-                    );
-
-                    // Fetch menu item names
-                    const itemsWithNames = await Promise.all(
-                        (orderItems || []).map(async (item) => {
-                            const { data: menuItem } = await supabase
-                                .from("menu_items")
-                                .select("name")
-                                .eq("id", item.menu_item_id)
-                                .single();
-
-                            return {
-                                ...item,
-                                name: menuItem?.name || "Item not found"
-                            };
-                        })
-                    );
-
-                    // Fetch vendor name
-                    const { data: vendor } = await supabase
-                        .from("vendors")
-                        .select("business_name")
-                        .eq("id", order.vendor_id)
+            const itemsWithNames = await Promise.all(
+                (items || []).map(async (item) => {
+                    const { data: menu } = await supabase
+                        .from("menu_items")
+                        .select("name")
+                        .eq("id", item.menu_item_id)
                         .single();
 
                     return {
-                        ...order,
-                        items: itemsWithNames,
-                        total_price: totalPrice,
-                        vendorName: vendor?.business_name || "Unknown Vendor"
+                        ...item,
+                        name: menu?.name || "Item"
                     };
-                } catch (error) {
-                    console.error(`Error enriching order ${order.id}:`, error);
-                    return { ...order, items: [], total_price: 0, vendorName: "Unknown" };
-                }
-            })
-        );
+                })
+            );
 
-        return enrichedOrders;
-    } catch (error) {
-        console.error("Fetch orders error:", error);
-        throw error;
-    }
+            const { data: vendor } = await supabase
+                .from("vendors")
+                .select("business_name")
+                .eq("id", order.vendor_id)
+                .single();
+
+            return {
+                ...order,
+                items: itemsWithNames,
+                total_price: total,
+                vendorName: vendor?.business_name || "Vendor"
+            };
+        })
+    );
 }
 
 /* ========================================
-   UI Rendering
-   ======================================== */
+   Render
+======================================== */
 
 function renderOrders(orders) {
     ordersContainer.innerHTML = "";
 
-    if (!orders || orders.length === 0) {
-        showEmpty();
-        return;
-    }
+    if (!orders.length) return showEmpty();
 
-    // Separate current and past orders
-    const currentOrders = orders.filter(o => o.status !== "ready");
-    const pastOrders = orders.filter(o => o.status === "ready");
-
-    // Render current orders
-    if (currentOrders.length > 0) {
-        const currentSection = document.createElement("section");
-        currentSection.className = "orders-section";
-        currentSection.innerHTML = `<h2>Current Orders</h2>`;
-
-        currentOrders.forEach(order => {
-            currentSection.appendChild(createOrderCard(order));
-        });
-
-        ordersContainer.appendChild(currentSection);
-    }
-
-    // Render past orders
-    if (pastOrders.length > 0) {
-        const pastSection = document.createElement("section");
-        pastSection.className = "orders-section past-orders";
-        pastSection.innerHTML = `<h2>Order History</h2>`;
-
-        pastOrders.forEach(order => {
-            pastSection.appendChild(createOrderCard(order));
-        });
-
-        ordersContainer.appendChild(pastSection);
-    }
+    orders.forEach(order => {
+        ordersContainer.appendChild(createOrderCard(order));
+    });
 
     showOrders();
 }
 
 function createOrderCard(order) {
-    const card = document.createElement("div");
+    const card = document.createElement("article"); // ✅ semantic
     card.className = "order-card";
 
-    const statusClass = getStatusClass(order.status);
-    const statusText = getStatusText(order.status);
-
-    // Build items list
-    const itemsHtml = order.items
-        .map(item => `
-            <li>
-                <span class="item-name">${escapeHtml(item.name)}</span>
-                <span class="item-qty">× ${item.quantity}</span>
-                <span class="item-price">${formatCurrency(item.price)}</span>
-            </li>
-        `)
-        .join("");
+    const itemsHtml = order.items.map(i => `
+        <li>${escapeHtml(i.name)} × ${i.quantity}</li>
+    `).join("");
 
     card.innerHTML = `
-        <div class="order-header">
-            <div class="order-id">
-                <h3>Order #${escapeHtml(order.id.substring(0, 8))}</h3>
-                <span class="order-date">${formatDate(order.created_at)}</span>
-            </div>
-            <span class="status-badge ${statusClass}">${statusText}</span>
-        </div>
+        <header>
+            <h3>Order #${order.id.substring(0, 6)}</h3>
+            <span class="${getStatusClass(order.status)}">
+                ${getStatusText(order.status)}
+            </span>
+        </header>
 
-        <div class="order-vendor">
-            <strong>From:</strong> ${escapeHtml(order.vendorName)}
-        </div>
+        <p><strong>Vendor:</strong> ${escapeHtml(order.vendorName)}</p>
 
-        <div class="order-items">
-            <strong>Items:</strong>
-            <ul class="items-list">
-                ${itemsHtml || "<li>No items</li>"}
-            </ul>
-        </div>
+        <ul>${itemsHtml}</ul>
 
-        <div class="order-total">
-            <span>Total:</span>
-            <span class="total-amount">${formatCurrency(order.total_price)}</span>
-        </div>
+        <footer>
+            <strong>Total: ${formatCurrency(order.total_price)}</strong>
+        </footer>
     `;
 
     return card;
@@ -349,61 +254,62 @@ function createOrderCard(order) {
 
 /* ========================================
    Load Orders
-   ======================================== */
+======================================== */
 
 async function loadOrders() {
-    if (!currentStudentId) {
-        showError("Not authenticated. Please log in.");
-        return;
-    }
-
-    try {
-        isRefreshing = true;
-        refreshBtn.disabled = true;
-        refreshBtn.textContent = "Refreshing...";
-
-        const orders = await fetchOrders(currentStudentId);
-        renderOrders(orders);
-    } catch (error) {
-        console.error("Load orders error:", error);
-        showError(`Error loading orders: ${error.message}`);
-    } finally {
-        isRefreshing = false;
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = "Refresh";
-    }
+    const orders = await fetchOrders(currentStudentId);
+    renderOrders(orders);
 }
 
 /* ========================================
-   Event Listeners
-   ======================================== */
+   REAL-TIME
+======================================== */
 
-refreshBtn.addEventListener("click", loadOrders);
-retryBtn.addEventListener("click", loadOrders);
-backBtn.addEventListener("click", () => {
-    window.location.href = "student-dashboard.html";
-});
+function subscribeToRealtime() {
+    supabase
+        .channel("orders-realtime")
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "orders",
+            },
+            async (payload) => {
+
+                if (payload.new.student_id !== currentStudentId) return;
+
+                await loadOrders();
+
+                if (
+                    payload.old?.status === "preparing" &&
+                    payload.new.status === "ready"
+                ) {
+                    showToast(`Order #${payload.new.id.substring(0,6)} is ready!`);
+                }
+            }
+        )
+        .subscribe();
+}
 
 /* ========================================
-   Page Initialization
-   ======================================== */
+   Events
+======================================== */
+
+refreshBtn.onclick = loadOrders;
+retryBtn.onclick = loadOrders;
+backBtn.onclick = () => window.location.href = "student-dashboard.html";
+
+/* ========================================
+   Init
+======================================== */
 
 async function initializePage() {
-    try {
-        // Check auth and get student ID
-        currentStudentId = await checkStudentAuth();
+    currentStudentId = await checkStudentAuth();
+    if (!currentStudentId) return;
 
-        if (!currentStudentId) {
-            return;
-        }
-
-        // Load orders
-        await loadOrders();
-    } catch (error) {
-        console.error("Page init error:", error);
-        showError("Failed to load page. Please refresh.");
-    }
+    await loadOrders();
+    subscribeToRealtime();
 }
 
-// Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", initializePage);

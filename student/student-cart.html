@@ -1,29 +1,36 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Cart</title>
-    <link rel="stylesheet" href="student-cart.css" />
-  </head>
-  
-  <body>
-    <div id="toast" class="toast"></div>
-    <header>
-      <h1>Your Cart 🛒</h1>
-      <button class="back-btn">← Back</button>
-      
-    </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Cart</title>
+  <link rel="stylesheet" href="student-cart.css" />
+</head>
 
-    <main>
-      <div id="cart-items"></div>
+<body>
 
-      <div id="cart-summary">
-        <h3 id="total">Total: R0</h3>
-        <button id="place-order">Place Order</button>
-      </div>
-    </main>
+  <!-- Toast -->
+  <section id="toast" class="toast"></section>
 
-    <script type="module" src="student-cart.js"></script>
-  </body>
+  <header>
+    <h1>Your Cart 🛒</h1>
+    <button class="back-btn">← Back</button>
+  </header>
+
+  <main>
+
+    <!-- Cart Items -->
+    <section id="cart-items"></section>
+
+    <!-- Cart Summary -->
+    <section id="cart-summary">
+      <h3 id="total">Total: R0</h3>
+      <button id="place-order">Place Order</button>
+    </section>
+
+  </main>
+
+  <script type="module" src="student-cart.js"></script>
+
+</body>
 </html>
