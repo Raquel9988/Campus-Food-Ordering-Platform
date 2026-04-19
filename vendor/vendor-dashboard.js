@@ -8,6 +8,7 @@ const supabase = createClient(
 window.addEventListener("load", async () => {
   const userInfo = document.getElementById("user-info");
   const logoutBtn = document.getElementById("logout");
+  const orderBtn = document.getElementById("orders-dashboard");
 
   const authResult = await getApprovedVendorAuth();
 
@@ -28,6 +29,11 @@ window.addEventListener("load", async () => {
       await supabase.auth.signOut();
       window.location.href = "../auth/login.html";
     });
+  }
+  if (orderBtn){
+    orderBtn.addEventListener("click", async() => {
+      window.location.href="../vendor/orders.html";
+    })
   }
 });
 
