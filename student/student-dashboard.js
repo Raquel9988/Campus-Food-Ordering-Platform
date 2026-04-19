@@ -6,36 +6,25 @@ const supabase = createClient(
 );
 
 /* ========================================
-   PAGE LOAD
+   DOM ELEMENTS
 ======================================== */
 
-window.addEventListener("load", async () => {
-  const userInfo = document.getElementById("user-info");
-  const logoutBtn = document.getElementById("logout");
+const userInfo = document.getElementById("user-info");
+const logoutBtn = document.getElementById("logout");
+const vendorsList = document.getElementById("vendors-list");
+const notificationDot = document.getElementById("order-notification");
 
-  const authResult = await getStudentAuth();
+/* ========================================
+   NOTIFICATION DOT
+======================================== */
 
-  if (!authResult.ok) {
-    alert(authResult.message);
-    window.location.href = "../auth/login.html";
-    return;
-  }
+function showOrderNotification() {
+  notificationDot?.classList.remove("hidden");
+}
 
-  const { user } = authResult;
-
-  if (userInfo) {
-    userInfo.textContent = `Logged in as: ${user.email}`;
-  }
-
-  await loadVendors();
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "../auth/login.html";
-    });
-  }
-});
+function hideOrderNotification() {
+  notificationDot?.classList.add("hidden");
+}
 
 /* ========================================
    AUTH CHECK
@@ -74,8 +63,6 @@ async function getStudentAuth() {
 ======================================== */
 
 async function loadVendors() {
-  const vendorsList = document.getElementById("vendors-list");
-
   vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
 
   const { data: vendors, error } = await supabase
@@ -98,7 +85,6 @@ async function loadVendors() {
   vendorsList.innerHTML = "";
 
   vendors.forEach((vendor) => {
-    // ✅ NO div — using article
     const vendorCard = document.createElement("article");
     vendorCard.className = "vendor-card";
 
@@ -117,13 +103,77 @@ async function loadVendors() {
 }
 
 /* ========================================
+   REAL-TIME NOTIFICATIONS
+======================================== */
+
+function subscribeToOrderNotifications(studentId) {
+  supabase
+    .channel("dashboard-orders")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "orders",
+      },
+      (payload) => {
+        const newRow = payload.new;
+        const oldRow = payload.old;
+
+        // SAFETY: handle null cases
+        if (!newRow || !oldRow) return;
+
+        if (newRow.student_id !== studentId) return;
+
+        // triggers any time it becomes "ready"
+        if (newRow.status === "ready" && oldRow.status !== "ready") {
+          showOrderNotification();
+        }
+      }
+    )
+    .subscribe();
+}
+
+/* ========================================
    NAVIGATION
 ======================================== */
 
-document.getElementById("view-cart")?.addEventListener("click", () => {
-  window.location.href = "student-cart.html";
-});
+function setupNavigation() {
+  document.getElementById("view-cart")?.addEventListener("click", () => {
+    window.location.href = "student-cart.html";
+  });
 
-document.getElementById("my-orders")?.addEventListener("click", () => {
-  window.location.href = "my-orders.html";
+  document.getElementById("my-orders")?.addEventListener("click", () => {
+    hideOrderNotification(); // remove dot
+    window.location.href = "my-orders.html";
+  });
+
+  logoutBtn?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "../auth/login.html";
+  });
+}
+
+/* ========================================
+   INIT
+======================================== */
+
+window.addEventListener("load", async () => {
+  const authResult = await getStudentAuth();
+
+  if (!authResult.ok) {
+    alert(authResult.message);
+    window.location.href = "../auth/login.html";
+    return;
+  }
+
+  const { user } = authResult;
+
+  userInfo.textContent = `Logged in as: ${user.email}`;
+
+  await loadVendors();
+
+  subscribeToOrderNotifications(user.id);
+
+  setupNavigation();
 });
