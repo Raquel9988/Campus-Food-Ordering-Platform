@@ -1,46 +1,50 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Dashboard</title>
-    <link rel="stylesheet" href="student-dashboard.css" />
-  </head>
-  <body>
-    <header>
-      <h1>Campus Food Platform</h1>
-      
-    </button>
-    
-      <div id="user-info"></div>
-      
-      <div class="header-actions">
-    
-    <button id="logout">Logout</button>
-    
-  </div>
-  <button class="view-cart-btn" title="cart" id="view-cart">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard</title>
+  <link rel="stylesheet" href="student-dashboard.css" />
+</head>
+
+<body>
+
+  <header>
+    <h1>Campus Food Platform</h1>
+
+    <section id="user-info"></section>
+
+    <nav class="header-actions">
+      <!-- CLEAR visible button -->
+      <button id="my-orders" class="my-orders-btn">
+        View Orders
+        <span id="order-notification" class="notification-dot hidden"></span>
+      </button>
+
+      <button id="logout">Logout</button>
+    </nav>
+
+    <button class="view-cart-btn" id="view-cart" title="cart">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="26" height="26" fill="white">
-    <path d="M528.12 301.319l47.273-208C578.19 78.191 567.04 64 551.99 64H128l-9.4-44.27C115.7 8.64 106.8 0 96.27 0H16C7.16 0 0 7.16 0 16v16c0 8.84 7.16 16 16 16h66.5l61.2 288.28c-16.2 9.2-27.7 26.6-27.7 46.72 0 30.93 25.07 56 56 56s56-25.07 56-56c0-9.6-2.4-18.7-6.6-26.7h169.2c-4.2 8-6.6 17.1-6.6 26.7 0 30.93 25.07 56 56 56s56-25.07 56-56c0-23.3-14.2-43.4-34.6-52.3l4.7-20.7z"/>
-  </svg>
+        <path d="M528.12 301.319l47.273-208C578.19 78.191 567.04 64 551.99 64H128l-9.4-44.27C115.7 8.64 106.8 0 96.27 0H16C7.16 0 0 7.16 0 16v16c0 8.84 7.16 16 16 16h66.5l61.2 288.28c-16.2 9.2-27.7 26.6-27.7 46.72 0 30.93 25.07 56 56 56s56-25.07 56-56c0-9.6-2.4-18.7-6.6-26.7h169.2c-4.2 8-6.6 17.1-6.6 26.7 0 30.93 25.07 56 56 56s56-25.07 56-56c0-23.3-14.2-43.4-34.6-52.3l4.7-20.7z"/>
+      </svg>
     </button>
-    </header>
+  </header>
 
-    <main>
-      <h2>Welcome, Student! 🍔</h2>
-      <p>Browse approved campus vendors and explore their menus.</p>
+  <main>
+    <h2>Welcome, Student! 🍔</h2>
+    <p>Browse approved campus vendors and explore their menus.</p>
 
-      <section id="vendors-section">
-        <h3>Available Vendors</h3>
-        <div id="vendors-list">
-          <p class="loading-text">Loading vendors...</p>
-        </div>
+    <section id="vendors-section">
+      <h3>Available Vendors</h3>
+
+      <section id="vendors-list">
+        <p class="loading-text">Loading vendors...</p>
       </section>
-    </main>
+    </section>
+  </main>
 
-    <script type="module" src="student-dashboard.js"></script>
-    
-  
-</button>
-  </body>
+  <script type="module" src="student-dashboard.js"></script>
+
+</body>
 </html>

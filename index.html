@@ -1,63 +1,78 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <title>Campus Food App</title>
-
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f7f7f7;
-        margin: 0;
-        min-height: 100vh;
-
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-      }
-
-      h1 {
-        margin-bottom: 30px;
-        color: #222;
-      }
-
-      /* Container box */
-      .container {
-        background-color: white;
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        width: 100%;
-        max-width: 400px;
-        text-align: center;
-      }
-
-      /* Buttons styled like links */
-      .btn {
-        display: block;
-        width: 100%;
-        padding: 12px;
-        margin-bottom: 15px;
-        background-color: #444;
-        color: white;
-        border-radius: 6px;
-        text-decoration: none;
-        font-size: 15px;
-        font-weight: bold;
-      }
-
-      .btn:hover {
-        background-color: #2f2f2f;
-      }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CampusEats – Your Time Matters, Order Smart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="index.css" />
   </head>
 
   <body>
-    <h1>Welcome to Campus Food Platform</h1>
+    <!-- ═══════════════ NAVBAR ═══════════════ -->
+    <nav class="navbar">
+      <a href="index.html" class="logo">
+        <img src="assets/logo.png" alt="CampusEats" class="logo-img" />
+      </a>
 
-    <div class="container">
-      <a href="auth/login.html" class="btn">Login</a>
-      <a href="auth/register.html" class="btn">Signup</a>
-    </div>
+      <div class="nav-links">
+        <a href="index.html" class="nav-pill active">Home</a>
+        <a href="#about"     class="nav-pill">About Us</a>
+        <a href="#contact"   class="nav-pill">Contact</a>
+      </div>
+
+      <div class="nav-auth">
+        <a href="auth/register.html" class="nav-btn">Sign Up</a>
+        <a href="auth/login.html"    class="nav-btn">login</a>
+      </div>
+    </nav>
+
+    <!-- ═══════════════ HERO ═══════════════ -->
+    <section class="hero">
+      <div class="hero-left">
+        <h1 id="title" class="hero-title fade-in">
+          Your Time <span class="hl-orange">Matters</span>,<br />
+          Order <span class="hl-green">Smart</span>
+        </h1>
+
+        <p id="desc" class="hero-desc fade-in">
+          Order from your favourite campus vendors, pay online, and collect
+          when it's ready. Designed for busy students, our platform helps you
+          eat better between classes.
+        </p>
+
+        <div id="stats" class="stats fade-in">
+          <div class="stat">
+            <div class="stat-num">6+</div>
+            <div class="stat-label">campus Vendors</div>
+          </div>
+          <span class="stat-divider"></span>
+          <div class="stat">
+            <div class="stat-num">500+</div>
+            <div class="stat-label">orders</div>
+          </div>
+          <span class="stat-divider"></span>
+          <div class="stat">
+            <div class="stat-num">1000+</div>
+            <div class="stat-label">happy students</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <img
+          class="hero-image"
+          src="assets/burger.png"
+          alt="Delicious burger"
+        />
+      </div>
+    </section>
+
+    <script src="index.js"></script>
   </body>
 </html>

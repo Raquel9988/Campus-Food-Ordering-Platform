@@ -5,33 +5,30 @@ const supabase = createClient(
   "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
 );
 
-window.addEventListener("load", async () => {
-  const userInfo = document.getElementById("user-info");
-  const logoutBtn = document.getElementById("logout");
+/* ========================================
+   DOM ELEMENTS
+======================================== */
 
-  const authResult = await getStudentAuth();
+const userInfo = document.getElementById("user-info");
+const logoutBtn = document.getElementById("logout");
+const vendorsList = document.getElementById("vendors-list");
+const notificationDot = document.getElementById("order-notification");
 
-  if (!authResult.ok) {
-    alert(authResult.message);
-    window.location.href = "../auth/login.html";
-    return;
-  }
+/* ========================================
+   NOTIFICATION DOT
+======================================== */
 
-  const { user } = authResult;
+function showOrderNotification() {
+  notificationDot?.classList.remove("hidden");
+}
 
-  if (userInfo) {
-    userInfo.textContent = `Logged in as: ${user.email}`;
-  }
+function hideOrderNotification() {
+  notificationDot?.classList.add("hidden");
+}
 
-  await loadVendors();
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "../auth/login.html";
-    });
-  }
-});
+/* ========================================
+   AUTH CHECK
+======================================== */
 
 async function getStudentAuth() {
   const {
@@ -61,8 +58,11 @@ async function getStudentAuth() {
   return { ok: true, user };
 }
 
+/* ========================================
+   LOAD VENDORS
+======================================== */
+
 async function loadVendors() {
-  const vendorsList = document.getElementById("vendors-list");
   vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
 
   const { data: vendors, error } = await supabase
@@ -85,13 +85,13 @@ async function loadVendors() {
   vendorsList.innerHTML = "";
 
   vendors.forEach((vendor) => {
-    const vendorCard = document.createElement("div");
+    const vendorCard = document.createElement("article");
     vendorCard.className = "vendor-card";
 
     vendorCard.innerHTML = `
       <h4>${vendor.business_name}</h4>
       <p>Browse this vendor's available menu items.</p>
-      <button>View Menu</button>
+      <button type="button">View Menu</button>
     `;
 
     vendorCard.querySelector("button").addEventListener("click", () => {
@@ -102,6 +102,78 @@ async function loadVendors() {
   });
 }
 
-document.getElementById("view-cart")?.addEventListener("click", () => {
-  window.location.href = "student-cart.html";
+/* ========================================
+   REAL-TIME NOTIFICATIONS
+======================================== */
+
+function subscribeToOrderNotifications(studentId) {
+  supabase
+    .channel("dashboard-orders")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "orders",
+      },
+      (payload) => {
+        const newRow = payload.new;
+        const oldRow = payload.old;
+
+        // SAFETY: handle null cases
+        if (!newRow || !oldRow) return;
+
+        if (newRow.student_id !== studentId) return;
+
+        // triggers any time it becomes "ready"
+        if (newRow.status === "ready" && oldRow.status !== "ready") {
+          showOrderNotification();
+        }
+      }
+    )
+    .subscribe();
+}
+
+/* ========================================
+   NAVIGATION
+======================================== */
+
+function setupNavigation() {
+  document.getElementById("view-cart")?.addEventListener("click", () => {
+    window.location.href = "student-cart.html";
+  });
+
+  document.getElementById("my-orders")?.addEventListener("click", () => {
+    hideOrderNotification(); // remove dot
+    window.location.href = "my-orders.html";
+  });
+
+  logoutBtn?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "../auth/login.html";
+  });
+}
+
+/* ========================================
+   INIT
+======================================== */
+
+window.addEventListener("load", async () => {
+  const authResult = await getStudentAuth();
+
+  if (!authResult.ok) {
+    alert(authResult.message);
+    window.location.href = "../auth/login.html";
+    return;
+  }
+
+  const { user } = authResult;
+
+  userInfo.textContent = `Logged in as: ${user.email}`;
+
+  await loadVendors();
+
+  subscribeToOrderNotifications(user.id);
+
+  setupNavigation();
 });
