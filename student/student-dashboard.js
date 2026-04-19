@@ -13,7 +13,7 @@ const viewCartBtn = document.getElementById("view-cart");
 const viewOrdersBtn = document.getElementById("view-orders");
 
 /* ========================================
-   NOTIFICATION DOT
+   NOTIFICATION
 ======================================== */
 function showNotification() {
   notificationDot?.classList.remove("hidden");
@@ -21,6 +21,10 @@ function showNotification() {
 
 function hideNotification() {
   notificationDot?.classList.add("hidden");
+}
+
+function markOrdersSeen() {
+  localStorage.setItem("orders_seen", "true");
 }
 
 /* ========================================
@@ -40,27 +44,22 @@ window.addEventListener("load", async () => {
 
   const { user } = authResult;
 
-  // Show logged in user
   userInfo.textContent = `Logged in as: ${user.email}`;
 
-  // 🔴 Check if any orders are ready
   await checkReadyOrders(user.id);
-
-  // 🔄 Subscribe to live updates
   subscribeToOrderUpdates(user.id);
 
-  // Load vendors
   await loadVendors();
 
-  // Logout
   logoutBtn?.addEventListener("click", async () => {
     await supabase.auth.signOut();
     window.location.href = "../auth/login.html";
   });
 
-  // 📦 View Orders button
+  /* VIEW ORDERS */
   viewOrdersBtn?.addEventListener("click", () => {
-    hideNotification(); // clear dot when clicked
+    markOrdersSeen();   // ✅ remember user saw orders
+    hideNotification();
     window.location.href = "my-orders.html";
   });
 });
@@ -95,6 +94,8 @@ async function getStudentAuth() {
    CHECK READY ORDERS
 ======================================== */
 async function checkReadyOrders(userId) {
+  const seen = localStorage.getItem("orders_seen");
+
   const { data, error } = await supabase
     .from("orders")
     .select("id")
@@ -102,11 +103,11 @@ async function checkReadyOrders(userId) {
     .eq("status", "ready");
 
   if (error) {
-    console.error("Error checking orders:", error);
+    console.error(error);
     return;
   }
 
-  if (data && data.length > 0) {
+  if (data && data.length > 0 && seen !== "true") {
     showNotification();
   } else {
     hideNotification();
@@ -114,7 +115,7 @@ async function checkReadyOrders(userId) {
 }
 
 /* ========================================
-   REAL-TIME ORDER UPDATES
+   REAL-TIME
 ======================================== */
 function subscribeToOrderUpdates(userId) {
   supabase
@@ -127,13 +128,12 @@ function subscribeToOrderUpdates(userId) {
         table: "orders"
       },
       (payload) => {
-        const updatedOrder = payload.new;
+        const order = payload.new;
 
-        if (updatedOrder.student_id === userId) {
-          if (updatedOrder.status === "ready") {
+        if (order.student_id === userId) {
+          if (order.status === "ready") {
+            localStorage.setItem("orders_seen", "false"); // 🔥 reset
             showNotification();
-          } else {
-            checkReadyOrders(userId);
           }
         }
       }
@@ -156,13 +156,12 @@ async function loadVendors() {
     .order("business_name", { ascending: true });
 
   if (error) {
-    console.error("Error fetching vendors:", error);
     vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
     return;
   }
 
   if (!vendors || vendors.length === 0) {
-    vendorsList.innerHTML = `<p class="empty-text">No vendors available yet.</p>`;
+    vendorsList.innerHTML = `<p class="empty-text">No vendors available.</p>`;
     return;
   }
 
@@ -187,7 +186,7 @@ async function loadVendors() {
 }
 
 /* ========================================
-   CART BUTTON
+   CART
 ======================================== */
 viewCartBtn?.addEventListener("click", () => {
   window.location.href = "student-cart.html";
