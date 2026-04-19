@@ -9,19 +9,17 @@ const supabase = createClient(
    ELEMENTS
 ======================================== */
 const notificationDot = document.getElementById("order-notification");
-const viewOrdersBtn = document.getElementById("view-orders");
 const viewCartBtn = document.getElementById("view-cart");
+const viewOrdersBtn = document.getElementById("view-orders");
 
 /* ========================================
    NOTIFICATION
 ======================================== */
 function showNotification() {
-  console.log("🔴 SHOW DOT");
   notificationDot?.classList.remove("hidden");
 }
 
 function hideNotification() {
-  console.log("❌ HIDE DOT");
   notificationDot?.classList.add("hidden");
 }
 
@@ -29,13 +27,22 @@ function hideNotification() {
    AUTH
 ======================================== */
 async function getStudentAuth() {
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error || !user) {
     alert("Please log in first.");
+    window.location.href = "../auth/login.html";
+    return null;
+  }
+
+  const { data: appUser } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!appUser || appUser.role !== "student") {
+    alert("Access denied.");
     window.location.href = "../auth/login.html";
     return null;
   }
@@ -44,20 +51,16 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   CHECK READY ORDERS (CRITICAL FIX)
+   CHECK READY ORDERS (FIXED PROPERLY)
 ======================================== */
 async function checkReadyOrders(userId) {
-  console.log("🔍 Checking ready orders...");
-
   const { data, error } = await supabase
     .from("orders")
-    .select("updated_at, status, student_id")
+    .select("updated_at")
     .eq("student_id", userId)
     .eq("status", "ready")
     .order("updated_at", { ascending: false })
     .limit(1);
-
-  console.log("📦 Ready orders result:", data);
 
   if (error || !data || data.length === 0) {
     hideNotification();
@@ -65,15 +68,10 @@ async function checkReadyOrders(userId) {
   }
 
   const latestReady = new Date(data[0].updated_at).getTime();
+  const lastSeen = Number(localStorage.getItem("orders_last_seen") || 0);
 
-  const lastSeenRaw = localStorage.getItem("orders_last_seen");
-  const lastSeen = lastSeenRaw ? Number(lastSeenRaw) : 0;
-
-  console.log("⏱ latestReady:", latestReady);
-  console.log("⏱ lastSeen:", lastSeen);
-
-  if (!lastSeen || latestReady > lastSeen) {
-    showNotification(); // 🔴 SHOW DOT
+  if (latestReady > lastSeen) {
+    showNotification();
   } else {
     hideNotification();
   }
@@ -83,8 +81,6 @@ async function checkReadyOrders(userId) {
    REALTIME
 ======================================== */
 function subscribeToOrderUpdates(userId) {
-  console.log("📡 Subscribing to realtime...");
-
   supabase
     .channel("orders-channel")
     .on(
@@ -95,17 +91,11 @@ function subscribeToOrderUpdates(userId) {
         table: "orders"
       },
       (payload) => {
-        console.log("⚡ Realtime event:", payload);
-
-        const oldStatus = payload.old?.status;
-        const newOrder = payload.new;
-
         if (
-          newOrder.student_id === userId &&
-          oldStatus === "preparing" &&
-          newOrder.status === "ready"
+          payload.new.student_id === userId &&
+          payload.old?.status === "preparing" &&
+          payload.new.status === "ready"
         ) {
-          console.log("🔥 NEW READY ORDER DETECTED");
           showNotification();
         }
       }
@@ -114,11 +104,53 @@ function subscribeToOrderUpdates(userId) {
 }
 
 /* ========================================
-   LOAD PAGE
+   LOAD VENDORS (UNCHANGED, WORKING)
+======================================== */
+async function loadVendors() {
+  const vendorsList = document.getElementById("vendors-list");
+
+  vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
+
+  const { data: vendors, error } = await supabase
+    .from("vendors")
+    .select("id, business_name")
+    .eq("status", "approved")
+    .order("business_name", { ascending: true });
+
+  if (error || !vendors) {
+    vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
+    return;
+  }
+
+  if (vendors.length === 0) {
+    vendorsList.innerHTML = `<p class="empty-text">No vendors available.</p>`;
+    return;
+  }
+
+  vendorsList.innerHTML = "";
+
+  vendors.forEach((vendor) => {
+    const card = document.createElement("section");
+    card.className = "vendor-card";
+
+    card.innerHTML = `
+      <h4>${vendor.business_name}</h4>
+      <p>Browse this vendor's menu.</p>
+      <button>View Menu</button>
+    `;
+
+    card.querySelector("button").addEventListener("click", () => {
+      window.location.href = `student-menu.html?vendorId=${vendor.id}`;
+    });
+
+    vendorsList.appendChild(card);
+  });
+}
+
+/* ========================================
+   INIT
 ======================================== */
 window.addEventListener("load", async () => {
-  console.log("🚀 Dashboard loading...");
-
   const userInfo = document.getElementById("user-info");
   const logoutBtn = document.getElementById("logout");
 
@@ -127,28 +159,24 @@ window.addEventListener("load", async () => {
 
   userInfo.textContent = `Logged in as: ${user.email}`;
 
-  /* 🔥 DO NOT overwrite existing value */
+  /* 🔥 CRITICAL FIX */
   if (!localStorage.getItem("orders_last_seen")) {
     localStorage.setItem("orders_last_seen", 0);
   }
 
   await checkReadyOrders(user.id);
   subscribeToOrderUpdates(user.id);
+  await loadVendors(); // ✅ vendors now load correctly
 
   logoutBtn?.addEventListener("click", async () => {
     await supabase.auth.signOut();
     window.location.href = "../auth/login.html";
   });
 
-  /* ========================================
-     VIEW ORDERS CLICK (ONLY CLEAR HERE)
-  ======================================== */
+  /* 🔴 ONLY CLEAR HERE */
   viewOrdersBtn?.addEventListener("click", () => {
-    console.log("👀 Orders viewed → clearing dot");
-
     localStorage.setItem("orders_last_seen", Date.now());
     hideNotification();
-
     window.location.href = "my-orders.html";
   });
 });
