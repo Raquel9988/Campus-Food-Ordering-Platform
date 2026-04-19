@@ -13,7 +13,7 @@ const viewCartBtn = document.getElementById("view-cart");
 const viewOrdersBtn = document.getElementById("view-orders");
 
 /* ========================================
-   DOT CONTROL (KEEP THIS — WORKS)
+   DOT CONTROL
 ======================================== */
 function showDot() {
   notificationDot?.classList.remove("hidden");
@@ -38,22 +38,34 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   CHECK EXISTING READY ORDERS (WORKING)
+   🔥 CHECK READY ORDERS (FINAL LOGIC)
 ======================================== */
 async function checkExistingReadyOrders(userId) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("orders")
-    .select("id")
+    .select("updated_at")
     .eq("student_id", userId)
-    .eq("status", "ready");
+    .eq("status", "ready")
+    .order("updated_at", { ascending: false })
+    .limit(1);
 
-  if (data && data.length > 0) {
-    showDot(); // 🔴 WORKS PERFECTLY
+  if (error || !data || data.length === 0) {
+    hideDot();
+    return;
+  }
+
+  const latestReady = new Date(data[0].updated_at).getTime();
+  const lastSeen = Number(localStorage.getItem("orders_last_seen") || 0);
+
+  if (latestReady > lastSeen) {
+    showDot(); // 🔴 ONLY if new ready exists
+  } else {
+    hideDot();
   }
 }
 
 /* ========================================
-   REALTIME (WORKING)
+   REALTIME
 ======================================== */
 function subscribeToOrders(userId) {
   supabase
@@ -73,7 +85,8 @@ function subscribeToOrders(userId) {
         if (newRow.student_id !== userId) return;
 
         if (newRow.status === "ready" && oldRow.status !== "ready") {
-          showDot(); // 🔴 NEW READY
+          localStorage.setItem("orders_last_seen", 0); // 🔥 mark unseen
+          showDot();
         }
       }
     )
@@ -81,7 +94,7 @@ function subscribeToOrders(userId) {
 }
 
 /* ========================================
-   LOAD VENDORS (UPDATED LOOK)
+   LOAD VENDORS (UNCHANGED UI)
 ======================================== */
 async function loadVendors() {
   const vendorsList = document.getElementById("vendors-list");
@@ -108,7 +121,7 @@ async function loadVendors() {
 
   vendors.forEach((vendor) => {
     const card = document.createElement("section");
-    card.className = "vendor-card"; // ✅ THIS IS THE STYLING
+    card.className = "vendor-card";
 
     card.innerHTML = `
       <h4>${vendor.business_name}</h4>
@@ -136,11 +149,14 @@ window.addEventListener("load", async () => {
 
   userInfo.textContent = `Logged in as: ${user.email}`;
 
-  await loadVendors(); // ✅ LOAD FIRST (UI)
+  /* 🔥 Initialize tracking */
+  if (!localStorage.getItem("orders_last_seen")) {
+    localStorage.setItem("orders_last_seen", 0);
+  }
 
-  await checkExistingReadyOrders(user.id); // 🔴 DOT
-
-  subscribeToOrders(user.id); // 🔴 REALTIME
+  await loadVendors();
+  await checkExistingReadyOrders(user.id);
+  subscribeToOrders(user.id);
 
   logoutBtn?.addEventListener("click", async () => {
     await supabase.auth.signOut();
@@ -148,7 +164,8 @@ window.addEventListener("load", async () => {
   });
 
   viewOrdersBtn?.addEventListener("click", () => {
-    hideDot(); // ❌ CLEAR DOT
+    localStorage.setItem("orders_last_seen", Date.now()); // ✅ mark seen
+    hideDot();
     window.location.href = "my-orders.html";
   });
 });
