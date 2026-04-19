@@ -14,20 +14,21 @@
       <p id="user-info" aria-live="polite"></p>
 
       <nav class="header-actions">
-        <button id="logout">Logout</button>
+        <!-- Logout -->
+        <button id="logout" type="button">Logout</button>
 
-        <!-- ✅ VIEW ORDERS BUTTON (MAIN FEATURE) -->
-        <button id="view-orders" class="my-orders-btn">
+        <!-- View Orders -->
+        <button id="view-orders" class="my-orders-btn" type="button">
           View Orders
-          <!-- 🔴 Notification dot now tied to orders -->
           <span id="order-notification" class="notification-dot hidden"></span>
         </button>
 
-        <!-- 🛒 CART BUTTON -->
+        <!-- Cart -->
         <span class="cart-wrapper">
           <button 
             class="view-cart-btn" 
             id="view-cart"
+            type="button"
             aria-label="View cart"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="26" height="26">
@@ -45,7 +46,8 @@
       <section id="vendors-section">
         <h3>Available Vendors</h3>
 
-        <section id="vendors-list">
+        <!-- Dynamic content -->
+        <section id="vendors-list" aria-live="polite">
           <p class="loading-text">Loading vendors...</p>
         </section>
       </section>
