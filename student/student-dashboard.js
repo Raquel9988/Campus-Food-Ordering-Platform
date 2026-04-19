@@ -8,13 +8,12 @@ const supabase = createClient(
 /* ========================================
    ELEMENTS
 ======================================== */
-const userInfo = document.getElementById("user-info");
-const logoutBtn = document.getElementById("logout");
-const vendorsList = document.getElementById("vendors-list");
 const notificationDot = document.getElementById("order-notification");
+const viewCartBtn = document.getElementById("view-cart");
+const viewOrdersBtn = document.getElementById("my-orders"); // ✅ FIXED ID
 
 /* ========================================
-   NOTIFICATION (SAME AS WORKING CODE)
+   NOTIFICATION (SIMPLE)
 ======================================== */
 function showNotification() {
   notificationDot?.classList.remove("hidden");
@@ -25,12 +24,16 @@ function hideNotification() {
 }
 
 /* ========================================
-   AUTH (MATCHED STYLE)
+   AUTH
 ======================================== */
 async function getStudentAuth() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (!user) return { ok: false };
+  if (error || !user) {
+    alert("Please log in first.");
+    window.location.href = "../auth/login.html";
+    return null;
+  }
 
   const { data: appUser } = await supabase
     .from("users")
@@ -39,46 +42,20 @@ async function getStudentAuth() {
     .single();
 
   if (!appUser || appUser.role !== "student") {
-    await supabase.auth.signOut();
-    return { ok: false };
+    alert("Access denied.");
+    window.location.href = "../auth/login.html";
+    return null;
   }
 
-  return { ok: true, user };
+  return user;
 }
 
 /* ========================================
-   LOAD VENDORS (KEEP WORKING VERSION)
+   REALTIME (ONLY THIS CONTROLS DOT)
 ======================================== */
-async function loadVendors() {
-  const { data: vendors } = await supabase
-    .from("vendors")
-    .select("id, business_name")
-    .eq("status", "approved");
-
-  vendorsList.innerHTML = "";
-
-  vendors.forEach(vendor => {
-    const card = document.createElement("article");
-
-    card.innerHTML = `
-      <h4>${vendor.business_name}</h4>
-      <button>View Menu</button>
-    `;
-
-    card.querySelector("button").onclick = () => {
-      window.location.href = `student-menu.html?vendorId=${vendor.id}`;
-    };
-
-    vendorsList.appendChild(card);
-  });
-}
-
-/* ========================================
-   REALTIME (THIS IS THE KEY FIX)
-======================================== */
-function subscribeToOrderUpdates(studentId) {
+function subscribeToOrderUpdates(userId) {
   supabase
-    .channel("orders")
+    .channel("orders-channel")
     .on(
       "postgres_changes",
       {
@@ -87,14 +64,15 @@ function subscribeToOrderUpdates(studentId) {
         table: "orders"
       },
       (payload) => {
-        // ✅ ONLY for this student
-        if (payload.new?.student_id !== studentId) return;
 
-        // ✅ SIMPLE + WORKING CONDITION
-        if (
-          payload.new.status === "ready" &&
-          payload.old.status !== "ready"
-        ) {
+        const newRow = payload.new;
+        const oldRow = payload.old;
+
+        if (!newRow || !oldRow) return;
+        if (newRow.student_id !== userId) return;
+
+        // 🔴 SIMPLE RULE
+        if (newRow.status === "ready" && oldRow.status !== "ready") {
           showNotification();
         }
       }
@@ -103,35 +81,80 @@ function subscribeToOrderUpdates(studentId) {
 }
 
 /* ========================================
-   EVENTS
+   LOAD VENDORS (UNCHANGED)
 ======================================== */
-document.getElementById("view-orders")?.addEventListener("click", () => {
-  hideNotification();
-  window.location.href = "my-orders.html";
-});
+async function loadVendors() {
+  const vendorsList = document.getElementById("vendors-list");
 
-document.getElementById("view-cart")?.addEventListener("click", () => {
-  window.location.href = "student-cart.html";
-});
+  vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
 
-logoutBtn?.addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  window.location.href = "../auth/login.html";
-});
+  const { data: vendors, error } = await supabase
+    .from("vendors")
+    .select("id, business_name")
+    .eq("status", "approved")
+    .order("business_name", { ascending: true });
 
-/* ========================================
-   INIT (CLEAN + WORKING)
-======================================== */
-window.addEventListener("load", async () => {
-  const auth = await getStudentAuth();
-
-  if (!auth.ok) {
-    window.location.href = "../auth/login.html";
+  if (error || !vendors) {
+    vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
     return;
   }
 
-  userInfo.textContent = `Logged in as: ${auth.user.email}`;
+  if (vendors.length === 0) {
+    vendorsList.innerHTML = `<p class="empty-text">No vendors available.</p>`;
+    return;
+  }
 
-  await loadVendors();                 // ✅ vendors load properly
-  subscribeToOrderUpdates(auth.user.id); // ✅ realtime works
+  vendorsList.innerHTML = "";
+
+  vendors.forEach((vendor) => {
+    const card = document.createElement("section");
+    card.className = "vendor-card";
+
+    card.innerHTML = `
+      <h4>${vendor.business_name}</h4>
+      <p>Browse this vendor's menu.</p>
+      <button>View Menu</button>
+    `;
+
+    card.querySelector("button").addEventListener("click", () => {
+      window.location.href = `student-menu.html?vendorId=${vendor.id}`;
+    });
+
+    vendorsList.appendChild(card);
+  });
+}
+
+/* ========================================
+   INIT
+======================================== */
+window.addEventListener("load", async () => {
+  const userInfo = document.getElementById("user-info");
+  const logoutBtn = document.getElementById("logout");
+
+  const user = await getStudentAuth();
+  if (!user) return;
+
+  userInfo.textContent = `Logged in as: ${user.email}`;
+
+  // ✅ ONLY REALTIME + VENDORS
+  subscribeToOrderUpdates(user.id);
+  await loadVendors();
+
+  logoutBtn?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "../auth/login.html";
+  });
+
+  /* 🔴 CLEAR DOT WHEN CLICKED */
+  viewOrdersBtn?.addEventListener("click", () => {
+    hideNotification();
+    window.location.href = "my-orders.html";
+  });
+});
+
+/* ========================================
+   CART
+======================================== */
+viewCartBtn?.addEventListener("click", () => {
+  window.location.href = "student-cart.html";
 });
