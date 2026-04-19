@@ -2,7 +2,7 @@ import { supabase } from '../shared-auth-foundation/src/js/supabaseClient.js'
 
 /* ========================================
    DOM Elements
-   ======================================== */
+======================================== */
 
 const loadingContainer = document.getElementById('loading-container')
 const errorContainer = document.getElementById('error-container')
@@ -14,15 +14,54 @@ const retryBtn = document.getElementById('retry-btn')
 
 /* ========================================
    State
-   ======================================== */
+======================================== */
 
 let currentVendorId = null
 let isRefreshing = false
 let autoRefreshInterval = null
 
 /* ========================================
+   Email Trigger (FULL DEBUG VERSION)
+======================================== */
+
+async function triggerReadyEmail(orderId) {
+    try {
+        console.log('🚨🚨🚨 triggerReadyEmail CALLED with orderId:', orderId)
+
+        const response = await fetch(
+            'https://sqbscxfolbckikrzxqhr.supabase.co/functions/v1/send-ready-email',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    order_id: orderId
+                })
+            }
+        )
+
+        console.log('📡 FETCH REQUEST SENT')
+
+        // Check raw response first
+        if (!response.ok) {
+            const text = await response.text()
+            console.error('❌ Response not OK:', text)
+            throw new Error('Failed to trigger email')
+        }
+
+        const result = await response.json()
+
+        console.log('📩 Email function response:', result)
+        console.log('✅ Email trigger request SUCCEEDED')
+
+    } catch (error) {
+        console.error('❌ Email trigger FAILED:', error)
+    }
+}
+/* ========================================
    Utility Functions
-   ======================================== */
+======================================== */
 
 /**
  * Escape HTML special characters to prevent XSS
@@ -57,7 +96,7 @@ function formatDate(dateString) {
 }
 
 /**
- * Format currency 
+ * Format currency
  */
 function formatCurrency(amount) {
     if (!amount) return 'R0.00'
@@ -98,7 +137,7 @@ function showEmpty() {
 
 /* ========================================
    Authentication & Authorization
-   ======================================== */
+======================================== */
 
 /**
  * Check vendor authentication and authorization
@@ -108,7 +147,6 @@ async function checkVendorAuth() {
     try {
         showLoading()
 
-        // Get current authenticated user
         const { data: { user }, error: authError } = await supabase.auth.getUser()
 
         if (authError || !user) {
@@ -117,7 +155,6 @@ async function checkVendorAuth() {
             return null
         }
 
-        // Get user role from users table
         const { data: appUser, error: userError } = await supabase
             .from('users')
             .select('id, role')
@@ -130,14 +167,12 @@ async function checkVendorAuth() {
             return null
         }
 
-        // Check if user is a vendor
         if (appUser.role !== 'vendor') {
             console.log('User is not a vendor, redirecting to login')
             window.location.href = '../auth/login.html'
             return null
         }
 
-        // Get vendor profile and check if approved
         const { data: vendor, error: vendorError } = await supabase
             .from('vendors')
             .select('id, status, business_name')
@@ -150,7 +185,6 @@ async function checkVendorAuth() {
             return null
         }
 
-        // Check vendor approval status
         if (vendor.status !== 'approved') {
             console.log('Vendor not approved, status:', vendor.status)
             showError(
@@ -171,8 +205,56 @@ async function checkVendorAuth() {
 }
 
 /* ========================================
+   Order Status Update (FULL DEBUG VERSION)
+======================================== */
+
+async function updateOrderStatus(orderId, newStatus) {
+    try {
+        console.log('🔥 BUTTON CLICKED:', orderId, newStatus)
+
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: newStatus })
+            .eq('id', orderId)
+            .eq('vendor_id', currentVendorId)
+
+        if (error) {
+            console.error('❌ Failed to update order:', error)
+            alert('Failed to update order.')
+            return
+        }
+
+        console.log('✅ Order status updated:', orderId, newStatus)
+
+        // Only trigger email if status is "ready"
+        if (newStatus && newStatus.toLowerCase() === 'ready') {
+            console.log('🔥🔥🔥 TRIGGERING EMAIL NOW for order:', orderId)
+
+            try {
+                await triggerReadyEmail(orderId)
+                console.log('✅ EMAIL FUNCTION COMPLETED SUCCESSFULLY')
+            } catch (emailError) {
+                console.error('❌ EMAIL FUNCTION FAILED:', emailError)
+            }
+
+        } else {
+            console.log('ℹ️ Status is not ready, no email triggered:', newStatus)
+        }
+
+        console.log('🔄 Reloading orders...')
+        await loadOrders()
+
+        console.log('✅ updateOrderStatus FINISHED')
+
+    } catch (error) {
+        console.error('❌ updateOrderStatus error:', error)
+        alert('Something went wrong while updating the order.')
+    }
+}
+
+/* ========================================
    Data Fetching
-   ======================================== */
+======================================== */
 
 /**
  * Fetch all orders for the current vendor
@@ -182,7 +264,6 @@ async function fetchOrders(vendorId) {
     if (!vendorId) return []
 
     try {
-        // Fetch orders for this vendor (no total_price in DB)
         const { data: orders, error: ordersError } = await supabase
             .from('orders')
             .select('id, student_id, status, created_at')
@@ -192,28 +273,27 @@ async function fetchOrders(vendorId) {
         if (ordersError) throw new Error(`Failed to fetch orders: ${ordersError.message}`)
         if (!orders || orders.length === 0) return []
 
-        // Enrich each order with items and student email
         const enrichedOrders = await Promise.all(
             orders.map(async (order) => {
                 try {
-                    // Fetch order items (using 'price' column)
+                    // Fetch order items
                     const { data: orderItems, error: itemsError } = await supabase
                         .from('order_items')
                         .select('id, menu_item_id, quantity, price')
                         .eq('order_id', order.id)
 
                     if (itemsError) {
-                        console.warn(`Failed to fetch items for order ${order.id}:`, itemsError)
-                        return { ...order, items: [], total_price: 0 }
+                        console.warn(`⚠️ Failed to fetch items for order ${order.id}:`, itemsError)
+                        return { ...order, items: [], total_price: 0, studentEmail: 'Unknown' }
                     }
 
-                    // Calculate total price from items
+                    // Calculate total
                     const totalPrice = (orderItems || []).reduce(
                         (sum, item) => sum + (item.price * item.quantity),
                         0
                     )
 
-                    // Fetch menu item names
+                    // Get item names
                     const itemsWithNames = await Promise.all(
                         (orderItems || []).map(async (item) => {
                             const { data: menuItem, error: menuError } = await supabase
@@ -221,50 +301,61 @@ async function fetchOrders(vendorId) {
                                 .select('name')
                                 .eq('id', item.menu_item_id)
                                 .single()
+
                             if (menuError || !menuItem) {
-                                console.warn(`Menu item ${item.menu_item_id} not found`)
+                                console.warn(`⚠️ Menu item ${item.menu_item_id} not found`)
                                 return { ...item, name: 'Item not found' }
                             }
+
                             return { ...item, name: menuItem.name }
                         })
                     )
 
-                    // Fetch student email
+                    // Get student email
                     const { data: student, error: studentError } = await supabase
                         .from('users')
                         .select('email')
                         .eq('id', order.student_id)
                         .single()
 
+                    if (studentError) {
+                        console.warn(`⚠️ Student not found for order ${order.id}`)
+                    }
+
                     return {
                         ...order,
                         items: itemsWithNames,
                         studentEmail: student?.email || 'Unknown',
-                        total_price: totalPrice   // computed, not from DB
+                        total_price: totalPrice
                     }
+
                 } catch (error) {
-                    console.error(`Error enriching order ${order.id}:`, error)
-                    return { ...order, items: [], studentEmail: 'Unknown', total_price: 0 }
+                    console.error(`❌ Error enriching order ${order.id}:`, error)
+                    return {
+                        ...order,
+                        items: [],
+                        studentEmail: 'Unknown',
+                        total_price: 0
+                    }
                 }
             })
         )
 
         return enrichedOrders
+
     } catch (error) {
-        console.error('Fetch orders error:', error)
+        console.error('❌ Fetch orders error:', error)
         throw error
     }
 }
-
 /* ========================================
-   UI Rendering
-   ======================================== */
+   UI Rendering (SEMANTIC VERSION)
+======================================== */
 
 /**
  * Render orders to the DOM
  */
 function renderOrders(orders) {
-    // Clear container
     ordersContainer.innerHTML = ''
 
     if (!orders || orders.length === 0) {
@@ -272,7 +363,6 @@ function renderOrders(orders) {
         return
     }
 
-    // Create order cards
     orders.forEach((order) => {
         const orderCard = createOrderCard(order)
         ordersContainer.appendChild(orderCard)
@@ -285,66 +375,98 @@ function renderOrders(orders) {
  * Create a single order card element
  */
 function createOrderCard(order) {
-    const card = document.createElement('div')
+    
+    const card = document.createElement('article')
     card.className = 'order-card'
 
-    // Status badge class
     const statusClass = `status-${order.status}`
 
-    // Build items HTML
     const itemsHtml = order.items
         .map(
             (item) =>
                 `<li>
-                    <span class="item-name">${escapeHtml(item.name)}</span>
-                    <span class="item-qty">× ${item.quantity}</span>
-                    <span class="item-price">${formatCurrency(item.price)}</span>
+                    <span>${escapeHtml(item.name)}</span>
+                    <span> × ${item.quantity}</span>
+                    <span> ${formatCurrency(item.price)}</span>
                 </li>`
         )
         .join('')
 
     const itemsSection = order.items.length
-        ? `<div class="items-section">
+        ? `<section>
                <strong>Items:</strong>
-               <ul class="items-list">
+               <ul>
                    ${itemsHtml}
                </ul>
-           </div>`
+           </section>`
         : ''
 
+    
     card.innerHTML = `
-        <div class="order-header">
+        <header>
             <h3>Order #${escapeHtml(order.id.substring(0, 8))}</h3>
-            <span class="status-badge ${statusClass}">
+            <p class="${statusClass}">
                 ${escapeHtml(order.status)}
-            </span>
-        </div>
+            </p>
+        </header>
         
-        <div class="order-info">
+        <section>
             <p>
                 <strong>Student:</strong>
-                <span class="order-value">${escapeHtml(order.studentEmail)}</span>
+                ${escapeHtml(order.studentEmail)}
             </p>
             <p>
                 <strong>Date:</strong>
-                <span class="order-value">${formatDate(order.created_at)}</span>
+                ${formatDate(order.created_at)}
             </p>
-        </div>
+        </section>
 
         ${itemsSection}
 
-        <div class="order-total">
-            <span>Total:</span>
-            <span class="total-amount">${formatCurrency(order.total_price)}</span>
-        </div>
+        <section>
+            <p>
+                <strong>Total:</strong>
+                ${formatCurrency(order.total_price)}
+            </p>
+        </section>
+
+        <section class="order-actions">
+            ${order.status === 'received'
+                ? `<button class="prep-btn" type="button">Preparing</button>`
+                : ''}
+            ${order.status === 'preparing'
+                ? `<button class="ready-btn" type="button">Ready for Pickup</button>`
+                : ''}
+        </section>
     `
+
+    const prepBtn = card.querySelector('.prep-btn')
+    const readyBtn = card.querySelector('.ready-btn')
+
+   
+
+    if (prepBtn) {
+        prepBtn.onclick = async () => {
+            console.log('🟡 PREPARING BUTTON CLICKED for order:', order.id)
+            await updateOrderStatus(order.id, 'preparing')
+        }
+    }
+
+    if (readyBtn) {
+        readyBtn.onclick = async () => {
+            console.log('🟢 READY BUTTON CLICKED for order:', order.id)
+
+            await updateOrderStatus(order.id, 'ready')
+
+            console.log('🟢 READY FLOW FINISHED for order:', order.id)
+        }
+    }
 
     return card
 }
-
 /* ========================================
    Refresh Logic
-   ======================================== */
+======================================== */
 
 /**
  * Fetch and render orders (core refresh logic)
@@ -378,7 +500,7 @@ async function silentRefresh() {
 
     try {
         const orders = await fetchOrders(currentVendorId)
-        // Only update if not in error/loading state
+
         if (!loadingContainer.classList.contains('hidden')) return
         if (!errorContainer.classList.contains('hidden')) return
 
@@ -390,17 +512,16 @@ async function silentRefresh() {
 
 /* ========================================
    Event Listeners
-   ======================================== */
+======================================== */
 
 refreshBtn.addEventListener('click', loadOrders)
 retryBtn.addEventListener('click', loadOrders)
 
 /* ========================================
    Auto-Refresh Setup
-   ======================================== */
+======================================== */
 
 function startAutoRefresh() {
-    // Auto-refresh every 30 seconds
     autoRefreshInterval = setInterval(() => {
         silentRefresh()
     }, 30000)
@@ -418,25 +539,18 @@ function stopAutoRefresh() {
 
 /* ========================================
    Page Initialization
-   ======================================== */
+======================================== */
 
 async function initializePage() {
     try {
-        // Check authentication and get vendor ID
         currentVendorId = await checkVendorAuth()
 
         if (!currentVendorId) {
-            // Auth check already handled redirects or displayed error
             return
         }
 
-        // Initial load of orders
         await loadOrders()
-
-        // Start auto-refresh
         startAutoRefresh()
-
-        // Clean up on page unload
         window.addEventListener('beforeunload', stopAutoRefresh)
     } catch (error) {
         console.error('Page initialization error:', error)
@@ -444,5 +558,4 @@ async function initializePage() {
     }
 }
 
-// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initializePage)
