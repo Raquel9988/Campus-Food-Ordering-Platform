@@ -25,7 +25,7 @@ const backBtn = document.getElementById("back-btn");
 let currentStudentId = null;
 
 /* ========================================
-   🔥 MARK ORDERS AS SEEN
+   MARK ORDERS AS SEEN (ONLY USED FROM DASHBOARD)
 ======================================== */
 
 async function markOrdersSeen(userId) {
@@ -157,13 +157,13 @@ async function checkStudentAuth() {
 }
 
 /* ========================================
-   Fetch Orders (UPDATED)
+   Fetch Orders
 ======================================== */
 
 async function fetchOrders(studentId) {
     const { data: orders } = await supabase
         .from("orders")
-        .select("id, vendor_id, status, created_at, updated_at") // ✅ added updated_at
+        .select("id, vendor_id, status, created_at, updated_at")
         .eq("student_id", studentId)
         .order("created_at", { ascending: false });
 
@@ -214,7 +214,7 @@ async function fetchOrders(studentId) {
 }
 
 /* ========================================
-   Render Orders (UPDATED)
+   Render Orders
 ======================================== */
 
 function createOrderCard(order) {
@@ -225,7 +225,6 @@ function createOrderCard(order) {
         <li>${escapeHtml(i.name)} × ${i.quantity}</li>
     `).join("");
 
-    // ✅ READY TIME ONLY IF READY
     const readyTime = order.status === "ready"
         ? `<p><strong>Ready Time:</strong> ${formatDate(order.updated_at)}</p>`
         : "";
@@ -315,14 +314,15 @@ retryBtn.onclick = loadOrders;
 backBtn.onclick = () => window.location.href = "student-dashboard.html";
 
 /* ========================================
-   Init
+   INIT (FINAL FIX HERE)
 ======================================== */
 
 async function initializePage() {
     currentStudentId = await checkStudentAuth();
     if (!currentStudentId) return;
 
-    await markOrdersSeen(currentStudentId);
+    // ❌ REMOVED: await markOrdersSeen(currentStudentId);
+
     await loadOrders();
     subscribeToRealtime();
 }
