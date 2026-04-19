@@ -13,7 +13,7 @@ const viewCartBtn = document.getElementById("view-cart");
 const viewOrdersBtn = document.getElementById("view-orders");
 
 /* ========================================
-   DOT CONTROL
+   DOT CONTROL (KEEP THIS — WORKS)
 ======================================== */
 function showDot() {
   notificationDot?.classList.remove("hidden");
@@ -38,22 +38,22 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   🔥 NEW: CHECK EXISTING READY ORDERS
+   CHECK EXISTING READY ORDERS (WORKING)
 ======================================== */
 async function checkExistingReadyOrders(userId) {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("orders")
     .select("id")
     .eq("student_id", userId)
     .eq("status", "ready");
 
   if (data && data.length > 0) {
-    showDot(); // 🔴 SHOW DOT if any ready orders exist
+    showDot(); // 🔴 WORKS PERFECTLY
   }
 }
 
 /* ========================================
-   REALTIME (ONLY NEW CHANGES)
+   REALTIME (WORKING)
 ======================================== */
 function subscribeToOrders(userId) {
   supabase
@@ -73,7 +73,7 @@ function subscribeToOrders(userId) {
         if (newRow.student_id !== userId) return;
 
         if (newRow.status === "ready" && oldRow.status !== "ready") {
-          showDot(); // 🔴 new ready order
+          showDot(); // 🔴 NEW READY
         }
       }
     )
@@ -81,29 +81,44 @@ function subscribeToOrders(userId) {
 }
 
 /* ========================================
-   LOAD VENDORS (UNCHANGED)
+   LOAD VENDORS (UPDATED LOOK)
 ======================================== */
 async function loadVendors() {
   const vendorsList = document.getElementById("vendors-list");
 
-  const { data: vendors } = await supabase
+  vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
+
+  const { data: vendors, error } = await supabase
     .from("vendors")
     .select("id, business_name")
-    .eq("status", "approved");
+    .eq("status", "approved")
+    .order("business_name", { ascending: true });
+
+  if (error || !vendors) {
+    vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
+    return;
+  }
+
+  if (vendors.length === 0) {
+    vendorsList.innerHTML = `<p class="empty-text">No vendors available.</p>`;
+    return;
+  }
 
   vendorsList.innerHTML = "";
 
-  vendors.forEach(vendor => {
+  vendors.forEach((vendor) => {
     const card = document.createElement("section");
+    card.className = "vendor-card"; // ✅ THIS IS THE STYLING
 
     card.innerHTML = `
       <h4>${vendor.business_name}</h4>
+      <p>Browse this vendor's menu.</p>
       <button>View Menu</button>
     `;
 
-    card.querySelector("button").onclick = () => {
+    card.querySelector("button").addEventListener("click", () => {
       window.location.href = `student-menu.html?vendorId=${vendor.id}`;
-    };
+    });
 
     vendorsList.appendChild(card);
   });
@@ -121,12 +136,11 @@ window.addEventListener("load", async () => {
 
   userInfo.textContent = `Logged in as: ${user.email}`;
 
-  await loadVendors();
+  await loadVendors(); // ✅ LOAD FIRST (UI)
 
-  // 🔥 THIS FIXES YOUR PROBLEM
-  await checkExistingReadyOrders(user.id);
+  await checkExistingReadyOrders(user.id); // 🔴 DOT
 
-  subscribeToOrders(user.id);
+  subscribeToOrders(user.id); // 🔴 REALTIME
 
   logoutBtn?.addEventListener("click", async () => {
     await supabase.auth.signOut();
@@ -134,7 +148,7 @@ window.addEventListener("load", async () => {
   });
 
   viewOrdersBtn?.addEventListener("click", () => {
-    hideDot();
+    hideDot(); // ❌ CLEAR DOT
     window.location.href = "my-orders.html";
   });
 });
