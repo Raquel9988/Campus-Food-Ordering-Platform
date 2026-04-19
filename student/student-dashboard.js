@@ -50,7 +50,7 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   CHECK READY ORDERS (FIXED)
+   CHECK READY ORDERS
 ======================================== */
 async function checkReadyOrders(userId) {
   const { data, error } = await supabase
@@ -67,17 +67,19 @@ async function checkReadyOrders(userId) {
   }
 
   const latestReady = new Date(data[0].updated_at).getTime();
-  const lastSeen = Number(localStorage.getItem("orders_last_seen"));
+
+  const lastSeenRaw = localStorage.getItem("orders_last_seen");
+  const lastSeen = lastSeenRaw ? Number(lastSeenRaw) : 0; // ✅ FIX
 
   if (latestReady > lastSeen) {
-    showNotification(); // 🔴 ONLY IF NEW
+    showNotification();
   } else {
     hideNotification();
   }
 }
 
 /* ========================================
-   REALTIME (SHOW DOT ON NEW READY)
+   REALTIME
 ======================================== */
 function subscribeToOrderUpdates(userId) {
   supabase
@@ -98,7 +100,7 @@ function subscribeToOrderUpdates(userId) {
           oldStatus === "preparing" &&
           newOrder.status === "ready"
         ) {
-          showNotification(); // 🔴 NEW READY → SHOW DOT
+          showNotification(); // 🔴 NEW READY
         }
       }
     )
@@ -124,9 +126,8 @@ window.addEventListener("load", async () => {
 
   userInfo.textContent = `Logged in as: ${user.email}`;
 
-  /* 🔥 IMPORTANT: INITIALIZE LAST SEEN */
-  const stored = localStorage.getItem("orders_last_seen");
-  if (!stored) {
+  /* 🔥 INITIALIZE LAST SEEN (ONLY ON FIRST LOAD) */
+  if (!localStorage.getItem("orders_last_seen")) {
     localStorage.setItem("orders_last_seen", Date.now());
   }
 
@@ -140,7 +141,7 @@ window.addEventListener("load", async () => {
   });
 
   /* ========================================
-     VIEW ORDERS CLICK (REMOVE DOT)
+     VIEW ORDERS CLICK (ONLY PLACE THAT CLEARS DOT)
   ======================================== */
   viewOrdersBtn?.addEventListener("click", () => {
     localStorage.setItem("orders_last_seen", Date.now()); // ✅ mark seen
