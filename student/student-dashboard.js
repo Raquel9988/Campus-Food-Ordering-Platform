@@ -38,34 +38,31 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   🔥 CHECK READY ORDERS (FINAL LOGIC)
+   CHECK READY ORDERS (FINAL LOGIC)
 ======================================== */
 async function checkExistingReadyOrders(userId) {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("orders")
-    .select("updated_at")
+    .select("id")
     .eq("student_id", userId)
-    .eq("status", "ready")
-    .order("updated_at", { ascending: false })
-    .limit(1);
+    .eq("status", "ready");
 
-  if (error || !data || data.length === 0) {
+  if (!data || data.length === 0) {
     hideDot();
     return;
   }
 
-  const latestReady = new Date(data[0].updated_at).getTime();
-  const lastSeen = Number(localStorage.getItem("orders_last_seen") || 0);
+  const seen = localStorage.getItem("orders_seen");
 
-  if (latestReady > lastSeen) {
-    showDot(); // 🔴 ONLY if new ready exists
+  if (seen === "true") {
+    hideDot();   // already viewed
   } else {
-    hideDot();
+    showDot();   // 🔴 unseen ready orders exist
   }
 }
 
 /* ========================================
-   REALTIME
+   REALTIME (NEW READY DETECTION)
 ======================================== */
 function subscribeToOrders(userId) {
   supabase
@@ -85,7 +82,7 @@ function subscribeToOrders(userId) {
         if (newRow.student_id !== userId) return;
 
         if (newRow.status === "ready" && oldRow.status !== "ready") {
-          localStorage.setItem("orders_last_seen", 0); // 🔥 mark unseen
+          localStorage.setItem("orders_seen", "false"); // 🔥 mark unseen
           showDot();
         }
       }
@@ -149,9 +146,9 @@ window.addEventListener("load", async () => {
 
   userInfo.textContent = `Logged in as: ${user.email}`;
 
-  /* 🔥 Initialize tracking */
-  if (!localStorage.getItem("orders_last_seen")) {
-    localStorage.setItem("orders_last_seen", 0);
+  /* 🔥 INITIAL STATE */
+  if (!localStorage.getItem("orders_seen")) {
+    localStorage.setItem("orders_seen", "false");
   }
 
   await loadVendors();
@@ -163,8 +160,9 @@ window.addEventListener("load", async () => {
     window.location.href = "../auth/login.html";
   });
 
+  /* 🔴 CLEAR DOT ONLY WHEN CLICKED */
   viewOrdersBtn?.addEventListener("click", () => {
-    localStorage.setItem("orders_last_seen", Date.now()); // ✅ mark seen
+    localStorage.setItem("orders_seen", "true");
     hideDot();
     window.location.href = "my-orders.html";
   });
