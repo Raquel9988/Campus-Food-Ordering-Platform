@@ -50,7 +50,7 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   CHECK READY ORDERS
+   CHECK READY ORDERS (FIXED)
 ======================================== */
 async function checkReadyOrders(userId) {
   const { data, error } = await supabase
@@ -58,42 +58,26 @@ async function checkReadyOrders(userId) {
     .select("updated_at")
     .eq("student_id", userId)
     .eq("status", "ready")
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .limit(1);
 
   if (error || !data || data.length === 0) {
     hideNotification();
     return;
   }
 
-  const latestReadyTime = data[0].updated_at;
-  const lastSeenTime = localStorage.getItem("orders_last_seen");
+  const latestReady = new Date(data[0].updated_at).getTime();
+  const lastSeen = Number(localStorage.getItem("orders_last_seen"));
 
-  if (!lastSeenTime || latestReadyTime > lastSeenTime) {
-    showNotification();
+  if (latestReady > lastSeen) {
+    showNotification(); // 🔴 ONLY IF NEW
   } else {
     hideNotification();
   }
 }
 
 /* ========================================
-   MARK AS SEEN
-======================================== */
-async function markOrdersSeen(userId) {
-  const { data } = await supabase
-    .from("orders")
-    .select("updated_at")
-    .eq("student_id", userId)
-    .eq("status", "ready")
-    .order("updated_at", { ascending: false })
-    .limit(1);
-
-  if (data && data.length > 0) {
-    localStorage.setItem("orders_last_seen", data[0].updated_at);
-  }
-}
-
-/* ========================================
-   REALTIME (FIXED)
+   REALTIME (SHOW DOT ON NEW READY)
 ======================================== */
 function subscribeToOrderUpdates(userId) {
   supabase
@@ -114,7 +98,7 @@ function subscribeToOrderUpdates(userId) {
           oldStatus === "preparing" &&
           newOrder.status === "ready"
         ) {
-          showNotification(); // 🔴 SHOW DOT
+          showNotification(); // 🔴 NEW READY → SHOW DOT
         }
       }
     )
@@ -140,6 +124,12 @@ window.addEventListener("load", async () => {
 
   userInfo.textContent = `Logged in as: ${user.email}`;
 
+  /* 🔥 IMPORTANT: INITIALIZE LAST SEEN */
+  const stored = localStorage.getItem("orders_last_seen");
+  if (!stored) {
+    localStorage.setItem("orders_last_seen", Date.now());
+  }
+
   await checkReadyOrders(user.id);
   subscribeToOrderUpdates(user.id);
   await loadVendors();
@@ -149,10 +139,12 @@ window.addEventListener("load", async () => {
     window.location.href = "../auth/login.html";
   });
 
-  /* VIEW ORDERS CLICK */
-  viewOrdersBtn?.addEventListener("click", async () => {
-    await markOrdersSeen(user.id); // ✅ ONLY HERE
-    hideNotification();
+  /* ========================================
+     VIEW ORDERS CLICK (REMOVE DOT)
+  ======================================== */
+  viewOrdersBtn?.addEventListener("click", () => {
+    localStorage.setItem("orders_last_seen", Date.now()); // ✅ mark seen
+    hideNotification(); // remove dot instantly
     window.location.href = "my-orders.html";
   });
 });
