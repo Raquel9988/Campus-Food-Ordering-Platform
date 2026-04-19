@@ -10,16 +10,16 @@ const supabase = createClient(
 ======================================== */
 const notificationDot = document.getElementById("order-notification");
 const viewCartBtn = document.getElementById("view-cart");
-const viewOrdersBtn = document.getElementById("my-orders"); // ✅ FIXED ID
+const viewOrdersBtn = document.getElementById("view-orders");
 
 /* ========================================
-   NOTIFICATION (SIMPLE)
+   DOT CONTROL
 ======================================== */
-function showNotification() {
+function showDot() {
   notificationDot?.classList.remove("hidden");
 }
 
-function hideNotification() {
+function hideDot() {
   notificationDot?.classList.add("hidden");
 }
 
@@ -30,19 +30,6 @@ async function getStudentAuth() {
   const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error || !user) {
-    alert("Please log in first.");
-    window.location.href = "../auth/login.html";
-    return null;
-  }
-
-  const { data: appUser } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!appUser || appUser.role !== "student") {
-    alert("Access denied.");
     window.location.href = "../auth/login.html";
     return null;
   }
@@ -51,9 +38,24 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   REALTIME (ONLY THIS CONTROLS DOT)
+   🔥 NEW: CHECK EXISTING READY ORDERS
 ======================================== */
-function subscribeToOrderUpdates(userId) {
+async function checkExistingReadyOrders(userId) {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("student_id", userId)
+    .eq("status", "ready");
+
+  if (data && data.length > 0) {
+    showDot(); // 🔴 SHOW DOT if any ready orders exist
+  }
+}
+
+/* ========================================
+   REALTIME (ONLY NEW CHANGES)
+======================================== */
+function subscribeToOrders(userId) {
   supabase
     .channel("orders-channel")
     .on(
@@ -64,16 +66,14 @@ function subscribeToOrderUpdates(userId) {
         table: "orders"
       },
       (payload) => {
-
         const newRow = payload.new;
         const oldRow = payload.old;
 
         if (!newRow || !oldRow) return;
         if (newRow.student_id !== userId) return;
 
-        // 🔴 SIMPLE RULE
         if (newRow.status === "ready" && oldRow.status !== "ready") {
-          showNotification();
+          showDot(); // 🔴 new ready order
         }
       }
     )
@@ -86,39 +86,24 @@ function subscribeToOrderUpdates(userId) {
 async function loadVendors() {
   const vendorsList = document.getElementById("vendors-list");
 
-  vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
-
-  const { data: vendors, error } = await supabase
+  const { data: vendors } = await supabase
     .from("vendors")
     .select("id, business_name")
-    .eq("status", "approved")
-    .order("business_name", { ascending: true });
-
-  if (error || !vendors) {
-    vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
-    return;
-  }
-
-  if (vendors.length === 0) {
-    vendorsList.innerHTML = `<p class="empty-text">No vendors available.</p>`;
-    return;
-  }
+    .eq("status", "approved");
 
   vendorsList.innerHTML = "";
 
-  vendors.forEach((vendor) => {
+  vendors.forEach(vendor => {
     const card = document.createElement("section");
-    card.className = "vendor-card";
 
     card.innerHTML = `
       <h4>${vendor.business_name}</h4>
-      <p>Browse this vendor's menu.</p>
       <button>View Menu</button>
     `;
 
-    card.querySelector("button").addEventListener("click", () => {
+    card.querySelector("button").onclick = () => {
       window.location.href = `student-menu.html?vendorId=${vendor.id}`;
-    });
+    };
 
     vendorsList.appendChild(card);
   });
@@ -136,18 +121,20 @@ window.addEventListener("load", async () => {
 
   userInfo.textContent = `Logged in as: ${user.email}`;
 
-  // ✅ ONLY REALTIME + VENDORS
-  subscribeToOrderUpdates(user.id);
   await loadVendors();
+
+  // 🔥 THIS FIXES YOUR PROBLEM
+  await checkExistingReadyOrders(user.id);
+
+  subscribeToOrders(user.id);
 
   logoutBtn?.addEventListener("click", async () => {
     await supabase.auth.signOut();
     window.location.href = "../auth/login.html";
   });
 
-  /* 🔴 CLEAR DOT WHEN CLICKED */
   viewOrdersBtn?.addEventListener("click", () => {
-    hideNotification();
+    hideDot();
     window.location.href = "my-orders.html";
   });
 });
