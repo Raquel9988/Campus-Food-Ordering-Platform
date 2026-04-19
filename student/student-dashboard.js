@@ -6,30 +6,63 @@ const supabase = createClient(
 );
 
 /* ========================================
-   DOM ELEMENTS
+   ELEMENTS
 ======================================== */
-
-const userInfo = document.getElementById("user-info");
-const logoutBtn = document.getElementById("logout");
-const vendorsList = document.getElementById("vendors-list");
 const notificationDot = document.getElementById("order-notification");
+const viewCartBtn = document.getElementById("view-cart");
 
 /* ========================================
    NOTIFICATION DOT
 ======================================== */
-
-function showOrderNotification() {
+function showNotification() {
   notificationDot?.classList.remove("hidden");
 }
 
-function hideOrderNotification() {
+function hideNotification() {
   notificationDot?.classList.add("hidden");
 }
 
 /* ========================================
-   AUTH CHECK
+   LOAD PAGE
 ======================================== */
+window.addEventListener("load", async () => {
+  const userInfo = document.getElementById("user-info");
+  const logoutBtn = document.getElementById("logout");
 
+  const authResult = await getStudentAuth();
+
+  if (!authResult.ok) {
+    alert(authResult.message);
+    window.location.href = "../auth/login.html";
+    return;
+  }
+
+  const { user } = authResult;
+
+  // Show logged in user
+  if (userInfo) {
+    userInfo.textContent = `Logged in as: ${user.email}`;
+  }
+
+  // 🔥 Check existing ready orders
+  await checkReadyOrders(user.id);
+
+  // 🔥 Real-time updates
+  subscribeToOrderUpdates(user.id);
+
+  // Load vendors
+  await loadVendors();
+
+  // Logout
+  logoutBtn?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "../auth/login.html";
+  });
+});
+
+/* ========================================
+   AUTH
+======================================== */
 async function getStudentAuth() {
   const {
     data: { user },
@@ -59,10 +92,61 @@ async function getStudentAuth() {
 }
 
 /* ========================================
+   CHECK READY ORDERS (INITIAL)
+======================================== */
+async function checkReadyOrders(userId) {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id, status")
+    .eq("student_id", userId)
+    .eq("status", "ready");
+
+  if (error) {
+    console.error("Error checking orders:", error);
+    return;
+  }
+
+  if (data && data.length > 0) {
+    showNotification();
+  } else {
+    hideNotification();
+  }
+}
+
+/* ========================================
+   REAL-TIME ORDER UPDATES
+======================================== */
+function subscribeToOrderUpdates(userId) {
+  supabase
+    .channel("orders-channel")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "orders",
+      },
+      (payload) => {
+        const updatedOrder = payload.new;
+
+        if (updatedOrder.student_id === userId) {
+          if (updatedOrder.status === "ready") {
+            showNotification();
+          } else {
+            checkReadyOrders(userId); // re-check all
+          }
+        }
+      }
+    )
+    .subscribe();
+}
+
+/* ========================================
    LOAD VENDORS
 ======================================== */
-
 async function loadVendors() {
+  const vendorsList = document.getElementById("vendors-list");
+
   vendorsList.innerHTML = `<p class="loading-text">Loading vendors...</p>`;
 
   const { data: vendors, error } = await supabase
@@ -85,13 +169,13 @@ async function loadVendors() {
   vendorsList.innerHTML = "";
 
   vendors.forEach((vendor) => {
-    const vendorCard = document.createElement("article");
+    const vendorCard = document.createElement("div");
     vendorCard.className = "vendor-card";
 
     vendorCard.innerHTML = `
       <h4>${vendor.business_name}</h4>
       <p>Browse this vendor's available menu items.</p>
-      <button type="button">View Menu</button>
+      <button>View Menu</button>
     `;
 
     vendorCard.querySelector("button").addEventListener("click", () => {
@@ -103,77 +187,9 @@ async function loadVendors() {
 }
 
 /* ========================================
-   REAL-TIME NOTIFICATIONS
+   CART BUTTON
 ======================================== */
-
-function subscribeToOrderNotifications(studentId) {
-  supabase
-    .channel("dashboard-orders")
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "orders",
-      },
-      (payload) => {
-        const newRow = payload.new;
-        const oldRow = payload.old;
-
-        // SAFETY: handle null cases
-        if (!newRow || !oldRow) return;
-
-        if (newRow.student_id !== studentId) return;
-
-        // triggers any time it becomes "ready"
-        if (newRow.status === "ready" && oldRow.status !== "ready") {
-          showOrderNotification();
-        }
-      }
-    )
-    .subscribe();
-}
-
-/* ========================================
-   NAVIGATION
-======================================== */
-
-function setupNavigation() {
-  document.getElementById("view-cart")?.addEventListener("click", () => {
-    window.location.href = "student-cart.html";
-  });
-
-  document.getElementById("my-orders")?.addEventListener("click", () => {
-    hideOrderNotification(); // remove dot
-    window.location.href = "my-orders.html";
-  });
-
-  logoutBtn?.addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    window.location.href = "../auth/login.html";
-  });
-}
-
-/* ========================================
-   INIT
-======================================== */
-
-window.addEventListener("load", async () => {
-  const authResult = await getStudentAuth();
-
-  if (!authResult.ok) {
-    alert(authResult.message);
-    window.location.href = "../auth/login.html";
-    return;
-  }
-
-  const { user } = authResult;
-
-  userInfo.textContent = `Logged in as: ${user.email}`;
-
-  await loadVendors();
-
-  subscribeToOrderNotifications(user.id);
-
-  setupNavigation();
+viewCartBtn?.addEventListener("click", () => {
+  hideNotification(); // clear dot when viewed
+  window.location.href = "student-cart.html";
 });

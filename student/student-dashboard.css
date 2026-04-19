@@ -169,12 +169,13 @@ main > p {
   }
 }
 
+/* CART BUTTON */
 .view-cart-btn {
   width: 51px;
   height: 52px;
   border: none;
   border-radius: 12px;
-  background: #14532d;
+  background: white;
   cursor: pointer;
   transition: 0.2s ease;
   display: flex;
@@ -182,45 +183,40 @@ main > p {
   justify-content: center;
 }
 
+/* icon color */
+.view-cart-btn svg {
+  fill: #14532d;
+}
+
+/* hover */
 .view-cart-btn:hover {
-  background: #166534;
+  background: #f0fdf4;
   transform: translateY(-2px);
 }
 
+/* header layout */
 .header-actions {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-/* ✅ ONLY CHANGE: add position relative */
-.my-orders-btn {
-  position: relative;  /* 🔥 IMPORTANT */
-  padding: 12px 16px;
-  border: none;
-  border-radius: 10px;
-  background: #166534;
-  color: white;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s ease;
+/* wrapper for notification */
+.cart-wrapper {
+  position: relative;
+  display: inline-block;
 }
 
-.my-orders-btn:hover {
-  background: #14532d;
-  transform: translateY(-1px);
-}
-
-/* 🔴 Notification dot */
+/* 🔴 notification dot (fixed position) */
 .notification-dot {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: -4px;
+  right: -4px;
   width: 10px;
   height: 10px;
   background: red;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px white; /* makes it visible on green */
+  box-shadow: 0 0 0 2px white;
 }
 
 /* hide class */
