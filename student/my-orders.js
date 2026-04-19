@@ -42,7 +42,7 @@ function escapeHtml(text) {
 function formatDate(dateString) {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-ZA", {
+    return date.toLocaleString("en-ZA", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -73,7 +73,7 @@ function getStatusText(status) {
 ======================================== */
 
 function showToast(message) {
-    const toast = document.createElement("section"); // ✅ semantic
+    const toast = document.createElement("section");
     toast.textContent = message;
 
     toast.style.position = "fixed";
@@ -209,7 +209,7 @@ async function fetchOrders(studentId) {
 }
 
 /* ========================================
-   Render
+   Render Orders (UPDATED)
 ======================================== */
 
 function renderOrders(orders) {
@@ -225,7 +225,7 @@ function renderOrders(orders) {
 }
 
 function createOrderCard(order) {
-    const card = document.createElement("article"); // ✅ semantic
+    const card = document.createElement("article");
     card.className = "order-card";
 
     const itemsHtml = order.items.map(i => `
@@ -241,6 +241,8 @@ function createOrderCard(order) {
         </header>
 
         <p><strong>Vendor:</strong> ${escapeHtml(order.vendorName)}</p>
+
+        <p><strong>Time:</strong> ${formatDate(order.created_at)}</p> <!-- ✅ ADDED -->
 
         <ul>${itemsHtml}</ul>
 
@@ -286,6 +288,9 @@ function subscribeToRealtime() {
                     payload.new.status === "ready"
                 ) {
                     showToast(`Order #${payload.new.id.substring(0,6)} is ready!`);
+
+                    // 🔥 IMPORTANT: reset dashboard notification
+                    localStorage.setItem("orders_seen", "false");
                 }
             }
         )
@@ -307,6 +312,9 @@ backBtn.onclick = () => window.location.href = "student-dashboard.html";
 async function initializePage() {
     currentStudentId = await checkStudentAuth();
     if (!currentStudentId) return;
+
+    // 🔥 mark as seen when opening page
+    localStorage.setItem("orders_seen", "true");
 
     await loadOrders();
     subscribeToRealtime();
