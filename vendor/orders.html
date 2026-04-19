@@ -7,18 +7,25 @@
     <link rel="stylesheet" href="orders.css">
 </head>
 <body>
+
     <!-- Header -->
     <header class="header">
         <div class="header-content">
             <h1>Orders Dashboard</h1>
-            <button id="refresh-btn" class="refresh-btn" title="Refresh orders">
-                🔄 Refresh
-            </button>
+
+            <!-- Buttons -->
+            <div>
+                <button id="back-btn" class="back-btn">← Back</button>
+                <button id="refresh-btn" class="refresh-btn" title="Refresh orders">
+                    🔄 Refresh
+                </button>
+            </div>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="container">
+
         <!-- Loading State -->
         <div id="loading-container" class="loading-container hidden">
             <div class="spinner"></div>
@@ -42,10 +49,12 @@
         <div id="orders-container" class="orders-grid">
             <!-- Orders will be inserted here by JavaScript -->
         </div>
+
     </main>
 
     <!-- Scripts -->
     <script type="module" src="orders.js"></script>
+
 </body>
 </html>
 
