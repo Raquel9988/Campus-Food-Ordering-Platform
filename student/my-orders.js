@@ -1,6 +1,5 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Supabase setup
 const supabase = createClient(
     "https://sqbscxfolbckikrzxqhr.supabase.co",
     "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
@@ -24,6 +23,24 @@ const backBtn = document.getElementById("back-btn");
 ======================================== */
 
 let currentStudentId = null;
+
+/* ========================================
+   🔥 MARK ORDERS AS SEEN (FIXED)
+======================================== */
+
+async function markOrdersSeen(userId) {
+    const { data } = await supabase
+        .from("orders")
+        .select("updated_at")
+        .eq("student_id", userId)
+        .eq("status", "ready")
+        .order("updated_at", { ascending: false })
+        .limit(1);
+
+    if (data && data.length > 0) {
+        localStorage.setItem("orders_last_seen", data[0].updated_at);
+    }
+}
 
 /* ========================================
    Utility Functions
@@ -209,7 +226,7 @@ async function fetchOrders(studentId) {
 }
 
 /* ========================================
-   Render Orders (UPDATED)
+   Render Orders
 ======================================== */
 
 function renderOrders(orders) {
@@ -242,7 +259,7 @@ function createOrderCard(order) {
 
         <p><strong>Vendor:</strong> ${escapeHtml(order.vendorName)}</p>
 
-        <p><strong>Time:</strong> ${formatDate(order.created_at)}</p> <!-- ✅ ADDED -->
+        <p><strong>Time:</strong> ${formatDate(order.created_at)}</p>
 
         <ul>${itemsHtml}</ul>
 
@@ -264,7 +281,7 @@ async function loadOrders() {
 }
 
 /* ========================================
-   REAL-TIME
+   REAL-TIME (FIXED)
 ======================================== */
 
 function subscribeToRealtime() {
@@ -288,9 +305,6 @@ function subscribeToRealtime() {
                     payload.new.status === "ready"
                 ) {
                     showToast(`Order #${payload.new.id.substring(0,6)} is ready!`);
-
-                    // 🔥 IMPORTANT: reset dashboard notification
-                    localStorage.setItem("orders_seen", "false");
                 }
             }
         )
@@ -306,15 +320,14 @@ retryBtn.onclick = loadOrders;
 backBtn.onclick = () => window.location.href = "student-dashboard.html";
 
 /* ========================================
-   Init
+   Init (FIXED)
 ======================================== */
 
 async function initializePage() {
     currentStudentId = await checkStudentAuth();
     if (!currentStudentId) return;
 
-    // 🔥 mark as seen when opening page
-    localStorage.setItem("orders_seen", "true");
+    await markOrdersSeen(currentStudentId); // 🔥 CRITICAL FIX
 
     await loadOrders();
     subscribeToRealtime();
