@@ -111,10 +111,9 @@ main {
 
 #menu-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* smaller cards */
+  gap: 18px;
 }
-
 .menu-item {
   background: #fafafa;
   border: 1px solid #e5e7eb;
@@ -131,12 +130,16 @@ main {
   box-shadow: 0 14px 24px rgba(0, 0, 0, 0.08);
 }
 
+/* IMAGE CONTAINER */
 .image-wrapper {
   width: 100%;
-  height: 190px;
-  background: #e5e7eb;
+  height: 150px;
+  background: white; /* FIXED from grey */
   overflow: hidden;
   border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .image-wrapper.empty {
@@ -147,24 +150,31 @@ main {
   font-size: 14px;
 }
 
+/* IMAGE */
 .menu-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  display: block;
+  object-fit: contain;
+  padding: 10px;
+  transition: 0.3s ease; /* hover animation */
 }
 
+/* IMAGE HOVER EFFECT */
+.menu-item:hover .menu-image {
+  transform: scale(1.05);
+}
+
+/* CONTENT */
 .menu-info {
-  padding: 18px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   flex: 1;
 }
 
 .menu-info h3 {
-  font-size: 20px;
-  color: #14532d;
+  font-size: 18px;
 }
 
 .menu-info .description {
@@ -180,6 +190,7 @@ main {
   color: #1f2937;
 }
 
+/* BUTTON */
 .menu-info button {
   margin-top: auto;
   width: 100%;
@@ -197,6 +208,7 @@ main {
   background: #166534;
 }
 
+/* STATES */
 .loading-text,
 .empty-text,
 .error-text {
@@ -224,6 +236,7 @@ main {
   border: 1px solid #fecaca;
 }
 
+/* TOAST */
 .toast {
   position: fixed;
   right: 24px;
@@ -246,6 +259,7 @@ main {
   transform: translateY(0);
 }
 
+
 @media (max-width: 700px) {
   header {
     flex-direction: column;
@@ -262,6 +276,6 @@ main {
   }
 
   .image-wrapper {
-    height: 170px;
+    height: 140px; /* correct smaller size */
   }
 }
