@@ -50,6 +50,7 @@ body {
    Buttons
    ======================================== */
 
+.back-btn,
 .refresh-btn,
 .retry-btn {
     background-color: white;
@@ -64,6 +65,7 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.back-btn:hover,
 .refresh-btn:hover,
 .retry-btn:hover {
     background-color: #f0fdf4;
@@ -71,6 +73,7 @@ body {
     transform: translateY(-1px);
 }
 
+.back-btn:active,
 .refresh-btn:active,
 .retry-btn:active {
     transform: translateY(0);
@@ -80,6 +83,11 @@ body {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+}
+
+/* small spacing between Back and Refresh */
+.back-btn {
+    margin-right: 8px;
 }
 
 /* ========================================
