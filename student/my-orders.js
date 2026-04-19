@@ -25,24 +25,6 @@ const backBtn = document.getElementById("back-btn");
 let currentStudentId = null;
 
 /* ========================================
-   MARK ORDERS AS SEEN (ONLY USED FROM DASHBOARD)
-======================================== */
-
-async function markOrdersSeen(userId) {
-    const { data } = await supabase
-        .from("orders")
-        .select("updated_at")
-        .eq("student_id", userId)
-        .eq("status", "ready")
-        .order("updated_at", { ascending: false })
-        .limit(1);
-
-    if (data && data.length > 0) {
-        localStorage.setItem("orders_last_seen", data[0].updated_at);
-    }
-}
-
-/* ========================================
    Utility Functions
 ======================================== */
 
@@ -238,9 +220,7 @@ function createOrderCard(order) {
         </header>
 
         <p><strong>Vendor:</strong> ${escapeHtml(order.vendorName)}</p>
-
         <p><strong>Order Time:</strong> ${formatDate(order.created_at)}</p>
-
         ${readyTime}
 
         <ul>${itemsHtml}</ul>
@@ -314,14 +294,12 @@ retryBtn.onclick = loadOrders;
 backBtn.onclick = () => window.location.href = "student-dashboard.html";
 
 /* ========================================
-   INIT (FINAL FIX HERE)
+   INIT (CLEAN VERSION)
 ======================================== */
 
 async function initializePage() {
     currentStudentId = await checkStudentAuth();
     if (!currentStudentId) return;
-
-    // ❌ REMOVED: await markOrdersSeen(currentStudentId);
 
     await loadOrders();
     subscribeToRealtime();
