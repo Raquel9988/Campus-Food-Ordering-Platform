@@ -11,15 +11,17 @@
     <header>
       <h1>Campus Food Platform</h1>
 
+      <!-- ✅ MUST match JS -->
       <p id="user-info" aria-live="polite"></p>
 
       <nav class="header-actions">
         <!-- Logout -->
         <button id="logout" type="button">Logout</button>
 
-        <!-- View Orders -->
+        <!-- ✅ View Orders (MATCHES JS EXACTLY) -->
         <button id="view-orders" class="my-orders-btn" type="button">
           View Orders
+          <!-- ✅ Notification dot (JS controls this) -->
           <span id="order-notification" class="notification-dot hidden"></span>
         </button>
 
@@ -46,13 +48,14 @@
       <section id="vendors-section">
         <h3>Available Vendors</h3>
 
-        <!-- Dynamic content -->
+        <!-- ✅ MUST match JS -->
         <section id="vendors-list" aria-live="polite">
           <p class="loading-text">Loading vendors...</p>
         </section>
       </section>
     </main>
 
+    <!-- ✅ IMPORTANT: module must load AFTER elements -->
     <script type="module" src="student-dashboard.js"></script>
   </body>
 </html>
