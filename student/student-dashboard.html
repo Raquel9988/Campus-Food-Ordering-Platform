@@ -16,14 +16,20 @@
 
       <nav class="header-actions">
 
-        <!-- View Orders (JS uses this ID) -->
-        <button id="view-orders" class="my-orders-btn" type="button">
+        <!-- View Orders (notification lives here) -->
+        <button 
+          id="view-orders" 
+          class="my-orders-btn" 
+          type="button"
+          aria-label="View your orders"
+        >
           View Orders
-          <span id="order-notification" class="notification-dot hidden"></span>
+          <span 
+            id="order-notification" 
+            class="notification-dot hidden"
+            aria-hidden="true"
+          ></span>
         </button>
-
-        <!-- Logout -->
-        <button id="logout" type="button">Logout</button>
 
         <!-- Cart -->
         <span class="cart-wrapper">
@@ -38,6 +44,11 @@
             </svg>
           </button>
         </span>
+
+        <!-- Logout -->
+        <button id="logout" type="button" aria-label="Log out">
+          Logout
+        </button>
 
       </nav>
     </header>
@@ -55,7 +66,7 @@
       </section>
     </main>
 
-    <!-- JS loads after DOM -->
+    <!-- JS -->
     <script type="module" src="student-dashboard.js"></script>
   </body>
 </html>
