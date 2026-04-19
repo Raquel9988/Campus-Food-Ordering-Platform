@@ -10,6 +10,7 @@ const supabase = createClient(
 ======================================== */
 const notificationDot = document.getElementById("order-notification");
 const viewCartBtn = document.getElementById("view-cart");
+const viewOrdersBtn = document.getElementById("view-orders");
 
 /* ========================================
    NOTIFICATION DOT
@@ -40,14 +41,12 @@ window.addEventListener("load", async () => {
   const { user } = authResult;
 
   // Show logged in user
-  if (userInfo) {
-    userInfo.textContent = `Logged in as: ${user.email}`;
-  }
+  userInfo.textContent = `Logged in as: ${user.email}`;
 
-  // 🔥 Check existing ready orders
+  // 🔴 Check if any orders are ready
   await checkReadyOrders(user.id);
 
-  // 🔥 Real-time updates
+  // 🔄 Subscribe to live updates
   subscribeToOrderUpdates(user.id);
 
   // Load vendors
@@ -58,6 +57,12 @@ window.addEventListener("load", async () => {
     await supabase.auth.signOut();
     window.location.href = "../auth/login.html";
   });
+
+  // 📦 View Orders button
+  viewOrdersBtn?.addEventListener("click", () => {
+    hideNotification(); // clear dot when clicked
+    window.location.href = "my-orders.html";
+  });
 });
 
 /* ========================================
@@ -66,38 +71,33 @@ window.addEventListener("load", async () => {
 async function getStudentAuth() {
   const {
     data: { user },
-    error: authError,
+    error
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
+  if (error || !user) {
     return { ok: false, message: "Please log in first." };
   }
 
-  const { data: appUser, error: roleError } = await supabase
+  const { data: appUser } = await supabase
     .from("users")
-    .select("id, role")
+    .select("role")
     .eq("id", user.id)
     .single();
 
-  if (roleError || !appUser) {
-    return { ok: false, message: "Unable to verify your account." };
-  }
-
-  if (appUser.role !== "student") {
-    await supabase.auth.signOut();
-    return { ok: false, message: "Access denied. Students only." };
+  if (!appUser || appUser.role !== "student") {
+    return { ok: false, message: "Access denied." };
   }
 
   return { ok: true, user };
 }
 
 /* ========================================
-   CHECK READY ORDERS (INITIAL)
+   CHECK READY ORDERS
 ======================================== */
 async function checkReadyOrders(userId) {
   const { data, error } = await supabase
     .from("orders")
-    .select("id, status")
+    .select("id")
     .eq("student_id", userId)
     .eq("status", "ready");
 
@@ -124,7 +124,7 @@ function subscribeToOrderUpdates(userId) {
       {
         event: "UPDATE",
         schema: "public",
-        table: "orders",
+        table: "orders"
       },
       (payload) => {
         const updatedOrder = payload.new;
@@ -133,7 +133,7 @@ function subscribeToOrderUpdates(userId) {
           if (updatedOrder.status === "ready") {
             showNotification();
           } else {
-            checkReadyOrders(userId); // re-check all
+            checkReadyOrders(userId);
           }
         }
       }
@@ -169,20 +169,20 @@ async function loadVendors() {
   vendorsList.innerHTML = "";
 
   vendors.forEach((vendor) => {
-    const vendorCard = document.createElement("div");
-    vendorCard.className = "vendor-card";
+    const card = document.createElement("div");
+    card.className = "vendor-card";
 
-    vendorCard.innerHTML = `
+    card.innerHTML = `
       <h4>${vendor.business_name}</h4>
       <p>Browse this vendor's available menu items.</p>
       <button>View Menu</button>
     `;
 
-    vendorCard.querySelector("button").addEventListener("click", () => {
+    card.querySelector("button").addEventListener("click", () => {
       window.location.href = `student-menu.html?vendorId=${vendor.id}`;
     });
 
-    vendorsList.appendChild(vendorCard);
+    vendorsList.appendChild(card);
   });
 }
 
@@ -190,6 +190,5 @@ async function loadVendors() {
    CART BUTTON
 ======================================== */
 viewCartBtn?.addEventListener("click", () => {
-  hideNotification(); // clear dot when viewed
   window.location.href = "student-cart.html";
 });
