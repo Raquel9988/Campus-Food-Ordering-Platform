@@ -24,43 +24,6 @@ function hideNotification() {
 }
 
 /* ========================================
-   LOAD PAGE
-======================================== */
-window.addEventListener("load", async () => {
-  const userInfo = document.getElementById("user-info");
-  const logoutBtn = document.getElementById("logout");
-
-  const authResult = await getStudentAuth();
-
-  if (!authResult.ok) {
-    alert(authResult.message);
-    window.location.href = "../auth/login.html";
-    return;
-  }
-
-  const { user } = authResult;
-
-  userInfo.textContent = `Logged in as: ${user.email}`;
-
-  await checkReadyOrders(user.id); // 🔥 FIXED LOGIC
-  subscribeToOrderUpdates(user.id);
-
-  await loadVendors();
-
-  logoutBtn?.addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    window.location.href = "../auth/login.html";
-  });
-
-  /* VIEW ORDERS CLICK */
-  viewOrdersBtn?.addEventListener("click", async () => {
-    await markOrdersSeen(user.id); // 🔥 FIXED
-    hideNotification();
-    window.location.href = "my-orders.html";
-  });
-});
-
-/* ========================================
    AUTH
 ======================================== */
 async function getStudentAuth() {
@@ -87,22 +50,17 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   CHECK READY ORDERS (FIXED)
+   CHECK READY ORDERS
 ======================================== */
 async function checkReadyOrders(userId) {
   const { data, error } = await supabase
     .from("orders")
-    .select("id, updated_at")
+    .select("updated_at")
     .eq("student_id", userId)
     .eq("status", "ready")
     .order("updated_at", { ascending: false });
 
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  if (!data || data.length === 0) {
+  if (error || !data || data.length === 0) {
     hideNotification();
     return;
   }
@@ -118,7 +76,7 @@ async function checkReadyOrders(userId) {
 }
 
 /* ========================================
-   MARK ORDERS SEEN (FIXED)
+   MARK AS SEEN
 ======================================== */
 async function markOrdersSeen(userId) {
   const { data } = await supabase
@@ -135,7 +93,7 @@ async function markOrdersSeen(userId) {
 }
 
 /* ========================================
-   REAL-TIME (FIXED)
+   REALTIME (FIXED)
 ======================================== */
 function subscribeToOrderUpdates(userId) {
   supabase
@@ -148,15 +106,56 @@ function subscribeToOrderUpdates(userId) {
         table: "orders"
       },
       (payload) => {
-        const order = payload.new;
+        const oldStatus = payload.old?.status;
+        const newOrder = payload.new;
 
-        if (order.student_id === userId && order.status === "ready") {
-          showNotification(); // 🔥 immediate update
+        if (
+          newOrder.student_id === userId &&
+          oldStatus === "preparing" &&
+          newOrder.status === "ready"
+        ) {
+          showNotification(); // 🔴 SHOW DOT
         }
       }
     )
     .subscribe();
 }
+
+/* ========================================
+   LOAD PAGE
+======================================== */
+window.addEventListener("load", async () => {
+  const userInfo = document.getElementById("user-info");
+  const logoutBtn = document.getElementById("logout");
+
+  const authResult = await getStudentAuth();
+
+  if (!authResult.ok) {
+    alert(authResult.message);
+    window.location.href = "../auth/login.html";
+    return;
+  }
+
+  const { user } = authResult;
+
+  userInfo.textContent = `Logged in as: ${user.email}`;
+
+  await checkReadyOrders(user.id);
+  subscribeToOrderUpdates(user.id);
+  await loadVendors();
+
+  logoutBtn?.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "../auth/login.html";
+  });
+
+  /* VIEW ORDERS CLICK */
+  viewOrdersBtn?.addEventListener("click", async () => {
+    await markOrdersSeen(user.id); // ✅ ONLY HERE
+    hideNotification();
+    window.location.href = "my-orders.html";
+  });
+});
 
 /* ========================================
    LOAD VENDORS
@@ -172,12 +171,12 @@ async function loadVendors() {
     .eq("status", "approved")
     .order("business_name", { ascending: true });
 
-  if (error) {
+  if (error || !vendors) {
     vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
     return;
   }
 
-  if (!vendors || vendors.length === 0) {
+  if (vendors.length === 0) {
     vendorsList.innerHTML = `<p class="empty-text">No vendors available.</p>`;
     return;
   }
@@ -185,12 +184,12 @@ async function loadVendors() {
   vendorsList.innerHTML = "";
 
   vendors.forEach((vendor) => {
-    const card = document.createElement("div");
+    const card = document.createElement("section");
     card.className = "vendor-card";
 
     card.innerHTML = `
       <h4>${vendor.business_name}</h4>
-      <p>Browse this vendor's available menu items.</p>
+      <p>Browse this vendor's menu.</p>
       <button>View Menu</button>
     `;
 
