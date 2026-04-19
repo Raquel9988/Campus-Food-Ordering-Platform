@@ -11,6 +11,7 @@ const ordersContainer = document.getElementById('orders-container')
 const emptyState = document.getElementById('empty-state')
 const refreshBtn = document.getElementById('refresh-btn')
 const retryBtn = document.getElementById('retry-btn')
+const backBtn = document.getElementById('back-btn')   
 
 /* ========================================
    State
@@ -517,6 +518,9 @@ async function silentRefresh() {
 refreshBtn.addEventListener('click', loadOrders)
 retryBtn.addEventListener('click', loadOrders)
 
+backBtn.addEventListener('click', () => {
+    window.location.href = 'vendor-dashboard.html'
+})
 /* ========================================
    Auto-Refresh Setup
 ======================================== */
