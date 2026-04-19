@@ -23,10 +23,6 @@ function hideNotification() {
   notificationDot?.classList.add("hidden");
 }
 
-function markOrdersSeen() {
-  localStorage.setItem("orders_seen", "true");
-}
-
 /* ========================================
    LOAD PAGE
 ======================================== */
@@ -46,7 +42,7 @@ window.addEventListener("load", async () => {
 
   userInfo.textContent = `Logged in as: ${user.email}`;
 
-  await checkReadyOrders(user.id);
+  await checkReadyOrders(user.id); // 🔥 FIXED LOGIC
   subscribeToOrderUpdates(user.id);
 
   await loadVendors();
@@ -56,9 +52,9 @@ window.addEventListener("load", async () => {
     window.location.href = "../auth/login.html";
   });
 
-  /* VIEW ORDERS */
-  viewOrdersBtn?.addEventListener("click", () => {
-    markOrdersSeen();   // ✅ remember user saw orders
+  /* VIEW ORDERS CLICK */
+  viewOrdersBtn?.addEventListener("click", async () => {
+    await markOrdersSeen(user.id); // 🔥 FIXED
     hideNotification();
     window.location.href = "my-orders.html";
   });
@@ -91,23 +87,30 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   CHECK READY ORDERS
+   CHECK READY ORDERS (FIXED)
 ======================================== */
 async function checkReadyOrders(userId) {
-  const seen = localStorage.getItem("orders_seen");
-
   const { data, error } = await supabase
     .from("orders")
-    .select("id")
+    .select("id, updated_at")
     .eq("student_id", userId)
-    .eq("status", "ready");
+    .eq("status", "ready")
+    .order("updated_at", { ascending: false });
 
   if (error) {
     console.error(error);
     return;
   }
 
-  if (data && data.length > 0 && seen !== "true") {
+  if (!data || data.length === 0) {
+    hideNotification();
+    return;
+  }
+
+  const latestReadyTime = data[0].updated_at;
+  const lastSeenTime = localStorage.getItem("orders_last_seen");
+
+  if (!lastSeenTime || latestReadyTime > lastSeenTime) {
     showNotification();
   } else {
     hideNotification();
@@ -115,7 +118,24 @@ async function checkReadyOrders(userId) {
 }
 
 /* ========================================
-   REAL-TIME
+   MARK ORDERS SEEN (FIXED)
+======================================== */
+async function markOrdersSeen(userId) {
+  const { data } = await supabase
+    .from("orders")
+    .select("updated_at")
+    .eq("student_id", userId)
+    .eq("status", "ready")
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (data && data.length > 0) {
+    localStorage.setItem("orders_last_seen", data[0].updated_at);
+  }
+}
+
+/* ========================================
+   REAL-TIME (FIXED)
 ======================================== */
 function subscribeToOrderUpdates(userId) {
   supabase
@@ -130,11 +150,8 @@ function subscribeToOrderUpdates(userId) {
       (payload) => {
         const order = payload.new;
 
-        if (order.student_id === userId) {
-          if (order.status === "ready") {
-            localStorage.setItem("orders_seen", "false"); // 🔥 reset
-            showNotification();
-          }
+        if (order.student_id === userId && order.status === "ready") {
+          showNotification(); // 🔥 immediate update
         }
       }
     )
