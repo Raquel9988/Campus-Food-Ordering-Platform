@@ -108,7 +108,7 @@ function subscribeToOrders(userId) {
     .on(
       "postgres_changes",
       {
-        event: "*", // ✅ handles INSERT, UPDATE, DELETE
+        event: "*", 
         schema: "public",
         table: "orders"
       },
@@ -120,7 +120,7 @@ function subscribeToOrders(userId) {
         if (newRow && newRow.student_id !== userId) return;
         if (oldRow && oldRow.student_id !== userId) return;
 
-        // 🔴 Detect NEW READY status
+        
         if (
           newRow &&
           newRow.status === "ready" &&
@@ -130,7 +130,7 @@ function subscribeToOrders(userId) {
           showToast("Your order is ready for pickup!");
         }
 
-        // 🔄 Always sync UI
+        
         await updateNotificationState(userId);
       }
     )
@@ -207,7 +207,7 @@ window.addEventListener("load", async () => {
     window.location.href = "../auth/login.html";
   };
 
-  /* 🔴 CLEAR DOT WHEN VIEWING ORDERS */
+ 
   viewOrdersBtn.onclick = async () => {
     const readyIds = await getReadyOrderIds(user.id);
     setSeenIds(readyIds);
