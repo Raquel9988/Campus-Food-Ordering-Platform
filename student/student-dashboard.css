@@ -201,9 +201,9 @@ main > p {
   align-items: center;
 }
 
-/* ✅ VIEW ORDERS BUTTON */
+/* VIEW ORDERS BUTTON */
 .my-orders-btn {
-  position: relative; /* required for dot positioning */
+  position: relative; 
   padding: 12px 16px;
   border: none;
   border-radius: 10px;
@@ -213,7 +213,7 @@ main > p {
   cursor: pointer;
   transition: 0.2s ease;
 
-  display: inline-flex;        /* ✅ keeps text + dot aligned nicely */
+  display: inline-flex;      
   align-items: center;
   justify-content: center;
 }
@@ -223,7 +223,7 @@ main > p {
   transform: translateY(-1px);
 }
 
-/* 🔴 NOTIFICATION DOT */
+/* NOTIFICATION DOT */
 .my-orders-btn .notification-dot {
   position: absolute;
   top: -4px;
@@ -235,8 +235,8 @@ main > p {
   background: red;
   border-radius: 50%;
 
-  box-shadow: 0 0 0 2px white; /* makes it pop on green header */
-  z-index: 10;                 /* ✅ ensures it stays visible */
+  box-shadow: 0 0 0 2px white; 
+  z-index: 10;                 
 }
 
 /* (optional) CART WRAPPER */
