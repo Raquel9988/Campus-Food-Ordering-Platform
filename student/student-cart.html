@@ -1,36 +1,40 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your Cart</title>
-  <link rel="stylesheet" href="student-cart.css" />
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Cart</title>
+    <link rel="stylesheet" href="student-cart.css" />
+  </head>
 
-<body>
+  <body>
+    <!-- Toast Message -->
+    <section id="toast" class="toast" aria-live="polite"></section>
 
-  <!-- Toast -->
-  <section id="toast" class="toast"></section>
+    <header>
+      <h1>Your Cart 🛒</h1>
 
-  <header>
-    <h1>Your Cart 🛒</h1>
-    <button class="back-btn">← Back</button>
-  </header>
+      <button class="back-btn" type="button">
+        ← Back
+      </button>
+    </header>
 
-  <main>
+    <main>
+      <!-- Cart Items -->
+      <section id="cart-items" aria-live="polite">
+        <!-- Cart items will be inserted here by student-cart.js -->
+      </section>
 
-    <!-- Cart Items -->
-    <section id="cart-items"></section>
+      <!-- Cart Summary -->
+      <section id="cart-summary">
+        <h3 id="total">Total: R0.00</h3>
 
-    <!-- Cart Summary -->
-    <section id="cart-summary">
-      <h3 id="total">Total: R0</h3>
-      <button id="place-order">Place Order</button>
-    </section>
+        <button id="place-order" type="button">
+          Pay Now
+        </button>
+      </section>
+    </main>
 
-  </main>
-
-  <script type="module" src="student-cart.js"></script>
-
-</body>
+    <script type="module" src="student-cart.js"></script>
+  </body>
 </html>
