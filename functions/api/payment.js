@@ -30,7 +30,12 @@ export async function onRequest(context) {
   try {
     const body = await request.json();
 
-    const { amount, orderReference, payerReference } = body;
+    const {
+      amount,
+      orderReference,
+      payerReference,
+      vendorReference,
+    } = body;
 
     if (!amount || amount <= 0) {
       return jsonResponse(
@@ -62,12 +67,23 @@ export async function onRequest(context) {
       );
     }
 
+    if (!vendorReference) {
+      return jsonResponse(
+        {
+          success: false,
+          message: "Vendor reference is required.",
+        },
+        400
+      );
+    }
+
     const transactionId = `TEST-${Date.now()}`;
 
     console.log("Payment request received:", {
       amount,
       orderReference,
       payerReference,
+      vendorReference,
       transactionId,
       mode: "test",
     });
@@ -80,6 +96,7 @@ export async function onRequest(context) {
       amount,
       orderReference,
       payerReference,
+      vendorReference,
       mode: "test",
     });
   } catch (error) {
