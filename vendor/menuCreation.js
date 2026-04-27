@@ -119,6 +119,12 @@ window.addEventListener("load", async () => {
     const itemPrice = parseFloat(document.getElementById("item-price").value);
     const itemAvailability = document.getElementById("item-availability").value === "true";
     const imageFile = document.getElementById("item-image").files[0];
+    const selectedTags = [...document.querySelectorAll(".dietary-tag:checked")].map(tag => tag.value);
+
+    if (selectedTags.length === 0){
+      alert("Please select at least one dietary tag");
+      return;
+    }
 
     let imageUrl = null;
 
