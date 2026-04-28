@@ -160,6 +160,7 @@ window.addEventListener("load", async () => {
         description: itemDescription,
         price: itemPrice,
         is_available: itemAvailability,
+        dietary_tags: selectedTags,
         updated_at: new Date().toISOString(),
       };
 
@@ -188,6 +189,7 @@ window.addEventListener("load", async () => {
           price: itemPrice,
           is_available: itemAvailability,
           image_url: imageUrl,
+          dietary_tags: selectedTags
         },
       ]);
 
@@ -196,6 +198,19 @@ window.addEventListener("load", async () => {
         return;
       }
 
+      try{
+        await fetch("http://localhost:3000/api/dietary-tags",{
+          method:"POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            item_name: itemName,
+            tags: selectedTags
+          })
+        });
+      }
+      catch(error){
+        console.log("Dietary API not available yet.")
+      }
       alert("Item added.");
     }
 
