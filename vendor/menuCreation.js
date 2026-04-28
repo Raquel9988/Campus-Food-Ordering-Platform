@@ -61,6 +61,11 @@ window.addEventListener("load", async () => {
         <p><strong>Description:</strong> ${escapeHtml(item.description || "No description available.")}</p>
         <p><strong>Price:</strong> R${Number(item.price).toFixed(2)}</p>
         <p><strong>Availability:</strong> ${item.is_available ? "Available" : "Sold Out"}</p>
+        <p><strong>Dietary Tags:</strong> ${
+          item.dietary_tags?.length
+          ? formatDietaryTags(item.dietary_tags)
+          : "None"
+        }</p>
 
         <button class="edit-btn">Edit</button>
         <button class="delete-btn">Delete</button>
@@ -99,6 +104,9 @@ window.addEventListener("load", async () => {
     document.getElementById("item-description").value = item.description || "";
     document.getElementById("item-price").value = item.price;
     document.getElementById("item-availability").value = item.is_available ? "true" : "false";
+    document.querySelectorAll(".dietary-tag").forEach(tag => {
+      tag.checked = item.dietary_tags?.includes(tag.value) || false;
+    });
 
     submitBtn.textContent = "Update Item";
     cancelEditBtn.style.display = "inline-block";
@@ -216,6 +224,11 @@ window.addEventListener("load", async () => {
 
     editingItemId = null;
     menuForm.reset();
+
+    document.querySelectorAll(".dietary-tag").forEach(tag =>{
+      tag.checked = false;
+    });
+    
     cancelEditBtn.style.display = "none";
     submitBtn.textContent = "Add Item";
 
@@ -281,5 +294,13 @@ window.addEventListener("load", async () => {
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function formatDietaryTags(tags){
+    return tags.map(tag => 
+      tag
+        .replaceAll("_","-")
+        .replace(/\b\w/g, letter => letter.toUpperCase())
+    ).join(", ");
   }
 });
