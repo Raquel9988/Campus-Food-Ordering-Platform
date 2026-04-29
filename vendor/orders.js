@@ -130,14 +130,13 @@ async function getApprovedVendorAuth() {
 async function fetchOrders(vendorId) {
   const { data: orders, error: ordersError } = await supabase
     .from("orders")
-    .select("id, student_id, status, created_at, updated_at")
+    .select("id, student_id, status, payment_status, payment_provider, created_at, updated_at")
     .eq("vendor_id", vendorId)
-
+    .eq("payment_status", "paid")
     // Payment-safe filter:
     // Vendors should only see orders after payment succeeds.
     // payment_pending and payment_failed orders are hidden.
     .in("status", ["received", "preparing", "ready"])
-
     .order("created_at", { ascending: false });
 
   if (ordersError) {
@@ -206,7 +205,8 @@ function isValidStatusTransition(currentStatus, newStatus) {
   const validTransitions = {
     received: ["preparing"],
     preparing: ["ready"],
-    ready: [],
+    ready: ["complete"],
+    complete: [],
   };
 
   return validTransitions[currentStatus]?.includes(newStatus);
@@ -271,14 +271,22 @@ function createOrderCard(order) {
       <ul class="items-list">${itemsHtml}</ul>
     </section>
 
+    ${order.payment_status === "paid" ? `
+    <div class="payment-info">
+      <p class="payment-badge">✓ Payment Received</p>
+      ${order.payment_provider ? `<p class="payment-provider">via ${escapeHtml(order.payment_provider)}</p>` : ``}
+    </div>
+    ` : ``}
+
     <footer class="order-total">
       <span>Total:</span>
       <span class="total-amount">${formatCurrency(order.total_price)}</span>
     </footer>
 
     <section class="order-actions">
-      ${order.status === "received" ? `<button class="prep-btn" type="button">Preparing</button>` : ""}
-      ${order.status === "preparing" ? `<button class="ready-btn" type="button">Ready for Pickup</button>` : ""}
+      ${order.status === "received" ? `<button class="prep-btn" type="button">Start Preparing</button>` : ""}
+      ${order.status === "preparing" ? `<button class="ready-btn" type="button">Mark as Ready</button>` : ""}
+      ${order.status === "ready" ? `<button class="complete-btn" type="button">Order Complete</button>` : ""}
     </section>
   `;
 
@@ -294,6 +302,13 @@ function createOrderCard(order) {
   if (readyBtn) {
     readyBtn.addEventListener("click", async () => {
       await updateOrderStatus(order.id, "ready", order.status);
+    });
+  }
+
+  const completeBtn = card.querySelector(".complete-btn");
+  if (completeBtn) {
+    completeBtn.addEventListener("click", async () => {
+      await updateOrderStatus(order.id, "complete", order.status);
     });
   }
 
@@ -371,6 +386,10 @@ async function silentRefresh() {
     console.warn("Silent refresh failed:", error);
   }
 }
+
+export {
+  isValidStatusTransition,
+};
 
 function startAutoRefresh() {
   autoRefreshInterval = setInterval(() => {
