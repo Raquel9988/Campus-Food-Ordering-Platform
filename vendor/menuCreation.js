@@ -10,6 +10,32 @@ window.addEventListener("load", async () => {
   const menuItemsContainer = document.getElementById("menu-items-container");
   const submitBtn = document.getElementById("submit-btn");
   const cancelEditBtn = document.getElementById("cancel-edit-btn");
+  const otherCheckbox = document.getElementById("other-checkbox");
+  const otherInput = document.getElementById("other-input");
+
+  otherCheckbox.addEventListener("change", () => {
+    otherInput.style.display = otherCheckbox.checked?"block":"none";
+    if (!otherCheckbox.checked){
+      otherInput.value = "";
+    }
+    const dietaryAnchor = document.getElementById("dietary-anchor");
+    otherInput.setCustomValidity("");
+    dietaryAnchor.setCustomValidity("");
+  });
+
+  otherInput.addEventListener("input", () =>{
+    otherInput.setCustomValidity("");
+
+    const dietaryAnchor = document.getElementById("dietary-anchor");
+    dietaryAnchor.setCustomValidity("");
+  });
+
+  document.querySelectorAll(".dietary-tag").forEach(tag => {
+    tag.addEventListener("change", () => {
+      const dietaryAnchor = document.getElementById("dietary-anchor");
+      dietaryAnchor.setCustomValidity("");
+    });
+  });
 
   let editingItemId = null;
 
@@ -104,9 +130,34 @@ window.addEventListener("load", async () => {
     document.getElementById("item-description").value = item.description || "";
     document.getElementById("item-price").value = item.price;
     document.getElementById("item-availability").value = item.is_available ? "true" : "false";
+    
+    const predefinedTags=["halal","vegetarian","vegan","nut_free","gluten_free","dairy_free"];
     document.querySelectorAll(".dietary-tag").forEach(tag => {
-      tag.checked = item.dietary_tags?.includes(tag.value) || false;
+      tag.checked = false;
     });
+    otherCheckbox.checked = false;
+    otherInput.style.display = "none";
+    otherInput.value = "";
+
+    const customTags =[];
+
+    item.dietary_tags?.forEach(tag => {
+      if (predefinedTags.includes(tag)){
+        const checkbox = document.querySelector(`.dietary-tag[value="${tag}"]`);
+        if (checkbox) {
+          checkbox.checked = true;
+        }
+      }
+      else{
+        customTags.push(tag);
+      }
+    });
+
+    if (customTags.length > 0){
+      otherCheckbox.checked = true;
+      otherInput.style.display = "block";
+      otherInput.value = customTags.join(", ");
+    }
 
     submitBtn.textContent = "Update Item";
     cancelEditBtn.style.display = "inline-block";
@@ -127,11 +178,35 @@ window.addEventListener("load", async () => {
     const itemPrice = parseFloat(document.getElementById("item-price").value);
     const itemAvailability = document.getElementById("item-availability").value === "true";
     const imageFile = document.getElementById("item-image").files[0];
-    const selectedTags = [...document.querySelectorAll(".dietary-tag:checked")].map(tag => tag.value);
+    let selectedTags = [...document.querySelectorAll(".dietary-tag:checked")].map(tag => tag.value);
 
-    if (selectedTags.length === 0){
-      alert("Please select at least one dietary tag");
-      return;
+    const dietaryAnchor = document.getElementById("dietary-anchor");
+
+    otherInput.setCustomValidity("");
+    dietaryAnchor.setCustomValidity("");
+
+    if (otherCheckbox.checked){
+      if (otherInput.value.trim() === ""){
+        otherInput.setCustomValidity("Please enter a custom dietary tag");
+        otherInput.reportValidity();
+        return;
+      }
+    }
+    else{
+      if (selectedTags.length === 0){
+        dietaryAnchor.setCustomValidity("Please select at least one dietary tag");
+        dietaryAnchor.reportValidity();
+        return;
+      }
+    }
+
+    if (otherCheckbox.checked){
+      const extraTags = otherInput.value
+        .split(",")
+        .map(tag => tag.trim().toLowerCase())
+        .filter(tag => tag !== "");
+
+      selectedTags.push(...extraTags);
     }
 
     let imageUrl = null;
@@ -228,7 +303,10 @@ window.addEventListener("load", async () => {
     document.querySelectorAll(".dietary-tag").forEach(tag =>{
       tag.checked = false;
     });
-    
+
+    otherInput.style.display = "none";
+    otherInput.value = "";
+
     cancelEditBtn.style.display = "none";
     submitBtn.textContent = "Add Item";
 
