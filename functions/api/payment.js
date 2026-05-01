@@ -10,6 +10,14 @@ function jsonResponse(data, status = 200) {
   });
 }
 
+/* =========================
+   PAYFAST HELPERS
+========================= */
+
+function cleanEnvValue(value) {
+  return String(value || "").trim();
+}
+
 function encodePayFastValue(value) {
   return encodeURIComponent(String(value).trim()).replace(/%20/g, "+");
 }
@@ -23,42 +31,65 @@ async function createMd5Hash(value) {
     .join("");
 }
 
+function shouldUsePassphrase(passphrase) {
+  const cleanPassphrase = cleanEnvValue(passphrase);
+
+  if (!cleanPassphrase) return false;
+
+  /*
+    If Cloudflare forced you to enter something for PAYFAST_PASSPHRASE,
+    these values should be treated as empty.
+  */
+  const ignoredValues = ["none", "null", "undefined", "blank", "empty"];
+
+  return !ignoredValues.includes(cleanPassphrase.toLowerCase());
+}
+
 function buildPayFastSignatureString(paymentFields, passphrase) {
   const signatureParts = [];
 
+  /*
+    PayFast signature must be built from the same fields that are sent
+    to PayFast, excluding the signature itself.
+  */
   for (const [key, value] of Object.entries(paymentFields)) {
     if (value !== undefined && value !== null && String(value).trim() !== "") {
       signatureParts.push(`${key}=${encodePayFastValue(value)}`);
     }
   }
 
-  if (passphrase && String(passphrase).trim() !== "") {
+  if (shouldUsePassphrase(passphrase)) {
     signatureParts.push(`passphrase=${encodePayFastValue(passphrase)}`);
   }
 
   return signatureParts.join("&");
 }
 
+/* =========================
+   CREATE PAYFAST PAYMENT
+========================= */
+
 async function createPayFastSandboxPayment(paymentData, env) {
   const amount = Number(paymentData.amount).toFixed(2);
+  const orderReference = String(paymentData.orderReference);
 
   const paymentFields = {
-    merchant_id: env.PAYFAST_MERCHANT_ID,
-    merchant_key: env.PAYFAST_MERCHANT_KEY,
+    merchant_id: cleanEnvValue(env.PAYFAST_MERCHANT_ID),
+    merchant_key: cleanEnvValue(env.PAYFAST_MERCHANT_KEY),
 
-    return_url: env.PAYFAST_RETURN_URL,
-    cancel_url: env.PAYFAST_CANCEL_URL,
-    notify_url: env.PAYFAST_NOTIFY_URL,
+    return_url: cleanEnvValue(env.PAYFAST_RETURN_URL),
+    cancel_url: cleanEnvValue(env.PAYFAST_CANCEL_URL),
+    notify_url: cleanEnvValue(env.PAYFAST_NOTIFY_URL),
 
-    m_payment_id: paymentData.orderReference,
+    m_payment_id: orderReference,
     amount,
 
-    item_name: `Campus Food Order ${paymentData.orderReference.slice(0, 8)}`,
-    item_description: `Payment for campus food order ${paymentData.orderReference}`,
+    item_name: `Campus Food Order ${orderReference.slice(0, 8)}`,
+    item_description: `Payment for campus food order ${orderReference}`,
 
-    custom_str1: paymentData.payerReference,
-    custom_str2: paymentData.vendorReference,
-    custom_str3: paymentData.orderReference,
+    custom_str1: String(paymentData.payerReference),
+    custom_str2: String(paymentData.vendorReference),
+    custom_str3: orderReference,
   };
 
   const signatureString = buildPayFastSignatureString(
@@ -72,7 +103,7 @@ async function createPayFastSandboxPayment(paymentData, env) {
     success: true,
     status: "pending",
     message: "PayFast sandbox payment request created successfully.",
-    paymentUrl: env.PAYFAST_PROCESS_URL,
+    paymentUrl: cleanEnvValue(env.PAYFAST_PROCESS_URL),
     paymentFields: {
       ...paymentFields,
       signature,
@@ -80,6 +111,10 @@ async function createPayFastSandboxPayment(paymentData, env) {
     mode: "payfast-sandbox",
   };
 }
+
+/* =========================
+   API HANDLER
+========================= */
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -100,12 +135,12 @@ export async function onRequest(context) {
 
   try {
     if (
-      !env.PAYFAST_MERCHANT_ID ||
-      !env.PAYFAST_MERCHANT_KEY ||
-      !env.PAYFAST_PROCESS_URL ||
-      !env.PAYFAST_RETURN_URL ||
-      !env.PAYFAST_CANCEL_URL ||
-      !env.PAYFAST_NOTIFY_URL
+      !cleanEnvValue(env.PAYFAST_MERCHANT_ID) ||
+      !cleanEnvValue(env.PAYFAST_MERCHANT_KEY) ||
+      !cleanEnvValue(env.PAYFAST_PROCESS_URL) ||
+      !cleanEnvValue(env.PAYFAST_RETURN_URL) ||
+      !cleanEnvValue(env.PAYFAST_CANCEL_URL) ||
+      !cleanEnvValue(env.PAYFAST_NOTIFY_URL)
     ) {
       return jsonResponse(
         {
@@ -184,6 +219,7 @@ export async function onRequest(context) {
       vendorReference,
       status: paymentResult.status,
       mode: paymentResult.mode,
+      passphraseUsed: shouldUsePassphrase(env.PAYFAST_PASSPHRASE),
     });
 
     return jsonResponse(paymentResult);
