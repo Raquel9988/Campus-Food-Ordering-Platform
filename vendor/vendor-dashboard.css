@@ -232,3 +232,18 @@ textarea {
     align-items: flex-start;
   }
 }
+
+.dietary-options{
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.dietary-option{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: normal;
+}
+.dietary-option input[type="checkbox"]{
+  width: auto;
+}
