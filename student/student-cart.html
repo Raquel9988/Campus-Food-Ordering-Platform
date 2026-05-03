@@ -3,34 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your Cart</title>
+  <title>Your Cart – CampusEats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="student-cart.css" />
 </head>
-
 <body>
 
-  <!-- Toast -->
-  <section id="toast" class="toast"></section>
+  <div id="toast" class="toast"></div>
 
-  <header>
-    <h1>Your Cart 🛒</h1>
-    <button class="back-btn">← Back</button>
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <a href="../index.html" class="logo-link">
+          <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
+        </a>
+        <div>
+          <h1 class="header-title">Your Cart</h1>
+          <p class="header-sub">Review and place your order</p>
+        </div>
+      </div>
+
+      <button class="hdr-btn hdr-btn--ghost back-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </button>
+    </div>
   </header>
 
-  <main>
+  <main class="main-card">
 
-    <!-- Cart Items -->
     <section id="cart-items"></section>
 
-    <!-- Cart Summary -->
     <section id="cart-summary">
-      <h3 id="total">Total: R0</h3>
-      <button id="place-order">Place Order</button>
+      <h3 id="total" class="cart-total">Total: R0.00</h3>
+      <button id="place-order" class="place-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Place Order
+      </button>
     </section>
 
   </main>
 
   <script type="module" src="student-cart.js"></script>
-
 </body>
 </html>

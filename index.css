@@ -48,6 +48,7 @@ body {
   position: sticky;
   top: 20px;
   z-index: 100;
+  flex-wrap: wrap;
 }
 
 .logo {
@@ -62,6 +63,46 @@ body {
   width: auto;
   display: block;
   object-fit: contain;
+}
+
+/* ═══════════════ HAMBURGER BUTTON ═══════════════ */
+
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f9fafb;
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.menu-toggle:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.menu-toggle .icon-close {
+  display: none;
+}
+
+.menu-toggle.open .icon-menu {
+  display: none;
+}
+
+.menu-toggle.open .icon-close {
+  display: block;
+}
+
+/* ═══════════════ NAV DRAWER ═══════════════ */
+
+.nav-drawer {
+  display: contents; /* behaves like no wrapper on desktop */
 }
 
 .nav-links {
@@ -294,27 +335,78 @@ body {
 
 @media (max-width: 760px) {
   body {
-    padding: 16px;
+    padding: 14px;
   }
 
+  /* Navbar becomes a flex row on mobile: logo left, hamburger right */
   .navbar {
-    padding: 16px;
+    flex-wrap: wrap;
+    padding: 14px 16px;
     border-radius: 18px;
-    position: static;
+    position: sticky;
+    top: 14px;
+    gap: 0;
   }
 
-  .navbar {
+  /* Show the hamburger button */
+  .menu-toggle {
+    display: flex;
+  }
+
+  /* Nav drawer is hidden by default on mobile */
+  .nav-drawer {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    margin-top: 12px;
+    /* Animate open */
+    animation: drawerOpen 0.22s ease forwards;
+  }
+
+  /* When open class is toggled via JS */
+  .nav-drawer.open {
+    display: flex;
+  }
+
+  @keyframes drawerOpen {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Stack nav links vertically */
+  .nav-links {
     flex-direction: column;
     align-items: stretch;
+    gap: 4px;
+    width: 100%;
   }
 
-  .logo {
-    justify-content: center;
+  .nav-pill {
+    text-align: center;
+    padding: 12px 16px;
+    border-radius: 12px;
   }
 
-  .nav-links,
+  /* Stack auth buttons vertically */
   .nav-auth {
-    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .nav-btn {
+    width: 100%;
+    text-align: center;
+    padding: 13px 18px;
   }
 
   .hero {
@@ -346,25 +438,22 @@ body {
   }
 
   .hero-image {
-    max-height: 320px;
+    max-height: 300px;
   }
 }
 
 @media (max-width: 480px) {
-  .nav-btn,
-  .nav-pill {
-    width: 100%;
-    text-align: center;
+  body {
+    padding: 10px;
   }
 
-  .nav-auth {
-    width: 100%;
-    flex-direction: column;
+  .navbar {
+    top: 10px;
+    border-radius: 16px;
   }
 
-  .nav-links {
-    width: 100%;
-    flex-direction: column;
+  .logo-img {
+    height: 44px;
   }
 
   .stats {
@@ -374,5 +463,9 @@ body {
 
   .stat {
     width: 100%;
+  }
+
+  .hero-image {
+    max-height: 240px;
   }
 }

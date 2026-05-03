@@ -1,55 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor Orders Dashboard</title>
-    <link rel="stylesheet" href="orders.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orders Dashboard – CampusEats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="orders.css" />
 </head>
+
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <h1>Orders Dashboard</h1>
-            <div class="header-actions">
-                <button id="dashboard-btn" class="nav-btn">
-                Manage Menu
-                </button>
-                <button id="refresh-btn" class="refresh-btn" title="Refresh orders">
-                🔄 Refresh
-                </button>
-            </div>
-        </div>
-    </header>
 
-    <!-- Main Content -->
-    <main class="container">
-        <!-- Loading State -->
-        <div id="loading-container" class="loading-container hidden">
-            <div class="spinner"></div>
-            <p>Loading orders...</p>
-        </div>
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="header">
+    <div class="header-content">
+      <div class="header-brand">
+        <a href="../index.html" class="logo-link">
+          <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
+        </a>
+        <h1 class="header-title">Orders Dashboard</h1>
+      </div>
 
-        <!-- Error State -->
-        <div id="error-container" class="error-container hidden">
-            <div class="error-message">
-                <p id="error-text"></p>
-                <button id="retry-btn" class="retry-btn">Try Again</button>
-            </div>
-        </div>
+      <div class="header-actions">
+        <!-- Manage Menu -->
+        <button id="dashboard-btn" class="hdr-btn hdr-btn--ghost" title="Manage menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          <span>Manage Menu</span>
+        </button>
+        <!-- Refresh -->
+        <button id="refresh-btn" class="hdr-btn hdr-btn--refresh" title="Refresh orders">
+          <svg id="refresh-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <polyline points="23 4 23 10 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+  </header>
 
-        <!-- Empty State -->
-        <div id="empty-state" class="empty-state hidden">
-            <p>No orders yet. Check back soon!</p>
-        </div>
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <main class="container">
 
-        <!-- Orders Grid -->
-        <div id="orders-container" class="orders-grid">
-            <!-- Orders will be inserted here by JavaScript -->
-        </div>
-    </main>
+    <!-- Loading -->
+    <div id="loading-container" class="loading-container hidden">
+      <div class="spinner"></div>
+      <p>Loading orders…</p>
+    </div>
 
-    <!-- Scripts -->
-    <script type="module" src="orders.js"></script>
+    <!-- Error -->
+    <div id="error-container" class="error-container hidden">
+      <div class="error-message">
+        <p id="error-text"></p>
+        <button id="retry-btn" class="retry-btn" title="Retry">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <polyline points="1 4 1 10 7 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Try Again
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div id="empty-state" class="empty-state hidden">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="margin:0 auto 16px;display:block;opacity:0.3;">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <p>No orders yet. Check back soon!</p>
+    </div>
+
+    <!-- Orders grid -->
+    <div id="orders-container" class="orders-grid"></div>
+
+  </main>
+
+  <script type="module" src="orders.js"></script>
 </body>
+
 </html>

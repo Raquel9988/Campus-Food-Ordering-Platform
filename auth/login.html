@@ -2,28 +2,62 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
-    <link rel="stylesheet" href="login.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login – CampusEats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="login.css" />
 </head>
 
 <body>
-    <h2>Login</h2>
+  <!-- ═══════════════ CARD ═══════════════ -->
+  <main class="auth-wrapper">
+    <div class="auth-card fade-in">
 
-    <form id="login-form">
-        <input type="email" id="email" placeholder="Enter email" required />
-        <button type="submit">Send Login Link</button>
-    </form>
+      <div class="auth-header">
+        <div class="auth-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="10 17 15 12 10 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-subtitle">Enter your email to receive a magic link</p>
+      </div>
 
-    <p id="message"></p>
+      <form id="login-form" novalidate>
 
-    <p>
+        <div class="field-group">
+          <label class="field-label" for="email">Email address</label>
+          <input class="field-input" type="email" id="email" placeholder="you@campus.ac.za" required />
+        </div>
+
+        <button class="auth-btn" type="submit">
+          <span>Send Login Link</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <polyline points="12 5 19 12 12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <p id="message" class="auth-message"></p>
+
+      </form>
+
+      <p class="auth-switch">
         Don't have an account?
-        <a href="register.html">Register here</a>
-    </p>
+        <a href="register.html" class="auth-link">Register here</a>
+      </p>
 
-    <script type="module" src="login.js"></script>
+    </div>
+  </main>
+
+  <script type="module" src="login.js"></script>
 </body>
 
 </html>

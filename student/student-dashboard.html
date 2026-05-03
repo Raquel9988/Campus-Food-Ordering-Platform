@@ -1,72 +1,91 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Dashboard</title>
-    <link rel="stylesheet" href="student-dashboard.css" />
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard – CampusEats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="student-dashboard.css" />
+</head>
+<body>
 
-  <body>
-    <header>
-      <h1>Campus Food Platform</h1>
-
-      <!-- User info -->
-      <p id="user-info" aria-live="polite"></p>
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <a href="../index.html" class="logo-link">
+          <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
+        </a>
+        <div>
+          <h1 class="header-title">Campus Food</h1>
+          <p id="user-info" class="header-sub" aria-live="polite"></p>
+        </div>
+      </div>
 
       <nav class="header-actions">
 
-        <!-- View Orders (notification lives here) -->
-        <button 
-          id="view-orders" 
-          class="my-orders-btn" 
-          type="button"
-          aria-label="View your orders"
-        >
-          View Orders
-          <span 
-            id="order-notification" 
-            class="notification-dot hidden"
-            aria-hidden="true"
-          ></span>
+        <!-- View Orders -->
+        <button id="view-orders" class="hdr-btn hdr-btn--ghost" type="button" aria-label="View your orders">
+          <span class="btn-inner">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
+              <line x1="9" y1="12" x2="15" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="9" y1="16" x2="13" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            My Orders
+            <span id="order-notification" class="notif-dot hidden" aria-hidden="true"></span>
+          </span>
         </button>
 
         <!-- Cart -->
-        <span class="cart-wrapper">
-          <button 
-            class="view-cart-btn" 
-            id="view-cart"
-            type="button"
-            aria-label="View cart"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="26" height="26">
-              <path d="M528.12 301.319l47.273-208C578.19 78.191 567.04 64 551.99 64H128l-9.4-44.27C115.7 8.64 106.8 0 96.27 0H16C7.16 0 0 7.16 0 16v16c0 8.84 7.16 16 16 16h66.5l61.2 288.28c-16.2 9.2-27.7 26.6-27.7 46.72 0 30.93 25.07 56 56 56s56-25.07 56-56c0-9.6-2.4-18.7-6.6-26.7h169.2c-4.2 8-6.6 17.1-6.6 26.7 0 30.93 25.07 56 56 56s56-25.07 56-56c0-23.3-14.2-43.4-34.6-52.3l4.7-20.7z"/>
-            </svg>
-          </button>
-        </span>
+        <button class="hdr-btn hdr-btn--cart" id="view-cart" type="button" aria-label="View cart">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="20" height="20" fill="currentColor">
+            <path d="M528.12 301.319l47.273-208C578.19 78.191 567.04 64 551.99 64H128l-9.4-44.27C115.7 8.64 106.8 0 96.27 0H16C7.16 0 0 7.16 0 16v16c0 8.84 7.16 16 16 16h66.5l61.2 288.28c-16.2 9.2-27.7 26.6-27.7 46.72 0 30.93 25.07 56 56 56s56-25.07 56-56c0-9.6-2.4-18.7-6.6-26.7h169.2c-4.2 8-6.6 17.1-6.6 26.7 0 30.93 25.07 56 56 56s56-25.07 56-56c0-23.3-14.2-43.4-34.6-52.3l4.7-20.7z"/>
+          </svg>
+          Cart
+        </button>
 
         <!-- Logout -->
-        <button id="logout" type="button" aria-label="Log out">
+        <button id="logout" class="hdr-btn hdr-btn--danger" type="button" aria-label="Log out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="16 17 21 12 16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
           Logout
         </button>
 
       </nav>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <h2>Welcome, Student! 🍔</h2>
-      <p>Browse approved campus vendors and explore their menus.</p>
+  <main class="main-card">
+    <div class="main-header">
+      <div class="main-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="main-title">Welcome back! 🍔</h2>
+        <p class="main-sub">Browse approved campus vendors and explore their menus.</p>
+      </div>
+    </div>
 
-      <section id="vendors-section">
-        <h3>Available Vendors</h3>
+    <section id="vendors-section">
+      <h3 class="section-heading">Available Vendors</h3>
+      <div id="vendors-list" aria-live="polite">
+        <p class="loading-text">
+          <span class="spinner-sm"></span>
+          Loading vendors…
+        </p>
+      </div>
+    </section>
+  </main>
 
-        <section id="vendors-list" aria-live="polite">
-          <p class="loading-text">Loading vendors...</p>
-        </section>
-      </section>
-    </main>
-
-    <!-- JS -->
-    <script type="module" src="student-dashboard.js"></script>
-  </body>
+  <script type="module" src="student-dashboard.js"></script>
+</body>
 </html>
