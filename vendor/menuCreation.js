@@ -10,6 +10,32 @@ window.addEventListener("load", async () => {
   const menuItemsContainer = document.getElementById("menu-items-container");
   const submitBtn = document.getElementById("submit-btn");
   const cancelEditBtn = document.getElementById("cancel-edit-btn");
+  const otherCheckbox = document.getElementById("other-checkbox");
+  const otherInput = document.getElementById("other-input");
+
+  otherCheckbox.addEventListener("change", () => {
+    otherInput.style.display = otherCheckbox.checked?"block":"none";
+    if (!otherCheckbox.checked){
+      otherInput.value = "";
+    }
+    const dietaryAnchor = document.getElementById("dietary-anchor");
+    otherInput.setCustomValidity("");
+    dietaryAnchor.setCustomValidity("");
+  });
+
+  otherInput.addEventListener("input", () =>{
+    otherInput.setCustomValidity("");
+
+    const dietaryAnchor = document.getElementById("dietary-anchor");
+    dietaryAnchor.setCustomValidity("");
+  });
+
+  document.querySelectorAll(".dietary-tag").forEach(tag => {
+    tag.addEventListener("change", () => {
+      const dietaryAnchor = document.getElementById("dietary-anchor");
+      dietaryAnchor.setCustomValidity("");
+    });
+  });
 
   let editingItemId = null;
 
@@ -61,6 +87,11 @@ window.addEventListener("load", async () => {
         <p><strong>Description:</strong> ${escapeHtml(item.description || "No description available.")}</p>
         <p><strong>Price:</strong> R${Number(item.price).toFixed(2)}</p>
         <p><strong>Availability:</strong> ${item.is_available ? "Available" : "Sold Out"}</p>
+        <p><strong>Dietary Tags:</strong> ${
+          item.dietary_tags?.length
+          ? formatDietaryTags(item.dietary_tags)
+          : "None"
+        }</p>
 
         <button class="edit-btn">Edit</button>
         <button class="delete-btn">Delete</button>
@@ -99,6 +130,34 @@ window.addEventListener("load", async () => {
     document.getElementById("item-description").value = item.description || "";
     document.getElementById("item-price").value = item.price;
     document.getElementById("item-availability").value = item.is_available ? "true" : "false";
+    
+    const predefinedTags=["halal","vegetarian","vegan","nut_free","gluten_free","dairy_free"];
+    document.querySelectorAll(".dietary-tag").forEach(tag => {
+      tag.checked = false;
+    });
+    otherCheckbox.checked = false;
+    otherInput.style.display = "none";
+    otherInput.value = "";
+
+    const customTags =[];
+
+    item.dietary_tags?.forEach(tag => {
+      if (predefinedTags.includes(tag)){
+        const checkbox = document.querySelector(`.dietary-tag[value="${tag}"]`);
+        if (checkbox) {
+          checkbox.checked = true;
+        }
+      }
+      else{
+        customTags.push(tag);
+      }
+    });
+
+    if (customTags.length > 0){
+      otherCheckbox.checked = true;
+      otherInput.style.display = "block";
+      otherInput.value = customTags.join(", ");
+    }
 
     submitBtn.textContent = "Update Item";
     cancelEditBtn.style.display = "inline-block";
@@ -119,6 +178,36 @@ window.addEventListener("load", async () => {
     const itemPrice = parseFloat(document.getElementById("item-price").value);
     const itemAvailability = document.getElementById("item-availability").value === "true";
     const imageFile = document.getElementById("item-image").files[0];
+    let selectedTags = [...document.querySelectorAll(".dietary-tag:checked")].map(tag => tag.value);
+
+    const dietaryAnchor = document.getElementById("dietary-anchor");
+
+    otherInput.setCustomValidity("");
+    dietaryAnchor.setCustomValidity("");
+
+    if (otherCheckbox.checked){
+      if (otherInput.value.trim() === ""){
+        otherInput.setCustomValidity("Please enter a custom dietary tag");
+        otherInput.reportValidity();
+        return;
+      }
+    }
+    else{
+      if (selectedTags.length === 0){
+        dietaryAnchor.setCustomValidity("Please select at least one dietary tag");
+        dietaryAnchor.reportValidity();
+        return;
+      }
+    }
+
+    if (otherCheckbox.checked){
+      const extraTags = otherInput.value
+        .split(",")
+        .map(tag => tag.trim().toLowerCase())
+        .filter(tag => tag !== "");
+
+      selectedTags.push(...extraTags);
+    }
 
     let imageUrl = null;
 
@@ -154,6 +243,7 @@ window.addEventListener("load", async () => {
         description: itemDescription,
         price: itemPrice,
         is_available: itemAvailability,
+        dietary_tags: selectedTags,
         updated_at: new Date().toISOString(),
       };
 
@@ -182,6 +272,7 @@ window.addEventListener("load", async () => {
           price: itemPrice,
           is_available: itemAvailability,
           image_url: imageUrl,
+          dietary_tags: selectedTags
         },
       ]);
 
@@ -190,11 +281,32 @@ window.addEventListener("load", async () => {
         return;
       }
 
+      try{
+        await fetch("http://localhost:3000/api/dietary-tags",{
+          method:"POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            item_name: itemName,
+            tags: selectedTags
+          })
+        });
+      }
+      catch(error){
+        console.log("Dietary API not available yet.")
+      }
       alert("Item added.");
     }
 
     editingItemId = null;
     menuForm.reset();
+
+    document.querySelectorAll(".dietary-tag").forEach(tag =>{
+      tag.checked = false;
+    });
+
+    otherInput.style.display = "none";
+    otherInput.value = "";
+
     cancelEditBtn.style.display = "none";
     submitBtn.textContent = "Add Item";
 
@@ -260,5 +372,13 @@ window.addEventListener("load", async () => {
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function formatDietaryTags(tags){
+    return tags.map(tag => 
+      tag
+        .replaceAll("_","-")
+        .replace(/\b\w/g, letter => letter.toUpperCase())
+    ).join(", ");
   }
 });
