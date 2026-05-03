@@ -10,12 +10,6 @@ const supabase = createClient(
 ========================= */
 function showToast(message) {
   const toast = document.getElementById("toast");
-
-  if (!toast) {
-    alert(message);
-    return;
-  }
-
   toast.textContent = message;
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2500);
@@ -25,10 +19,7 @@ function showToast(message) {
    CART STORAGE
 ========================= */
 async function getCartKey() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   return user ? `campus_cart_${user.id}` : "campus_cart_guest";
 }
 
@@ -65,44 +56,20 @@ async function getStudentAuth() {
 }
 
 /* =========================
-   CART ITEM ACTIONS
+   REMOVE ITEM
 ========================= */
 async function removeItem(vendorId, menuItemId) {
   const cart = await getCart();
   const items = cart[vendorId]?.items || [];
   const updated = items.filter(i => String(i.menuItemId) !== String(menuItemId));
 
-  if (updatedItems.length === 0) {
-    delete cart[vendorId];
-  } else {
-    cart[vendorId].items = updatedItems;
-  }
-
-  await saveCart(cart);
-}
-
-async function updateQuantity(vendorId, menuItemId, changeAmount) {
-  const cart = await getCart();
-  const items = cart[vendorId]?.items || [];
-
-  const item = items.find(
-    (cartItem) => String(cartItem.menuItemId) === String(menuItemId)
-  );
-
-  if (!item) return;
-
-  item.quantity += changeAmount;
-
-  if (item.quantity <= 0) {
-    await removeItem(vendorId, menuItemId);
-    return;
-  }
+  if (updated.length === 0) delete cart[vendorId];
+  else cart[vendorId].items = updated;
 
   await saveCart(cart);
 }
 
 /* =========================
-   RENDER CART
    RENDER CART
 ========================= */
 async function renderCart() {
@@ -125,7 +92,6 @@ async function renderCart() {
       .eq("id", vendorId)
       .single();
 
-    const vendorSection = document.createElement("section");
     const vendorSection = document.createElement("section");
     vendorSection.className = "vendor-cart-group";
 
@@ -200,7 +166,7 @@ async function renderCart() {
 
       itemCard.querySelector(".remove-btn").onclick = async () => {
         await removeItem(vendorId, item.menuItemId);
-        await renderCart();
+        renderCart();
       };
 
       vendorSection.appendChild(itemCard);
@@ -213,50 +179,7 @@ async function renderCart() {
 }
 
 /* =========================
-   PAYFAST PAYMENT
-========================= */
-function redirectToPayFast(paymentUrl, paymentFields) {
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = paymentUrl;
-
-  for (const [name, value] of Object.entries(paymentFields)) {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
-  }
-
-  document.body.appendChild(form);
-  form.submit();
-}
-
-async function startPayFastPayment(order) {
-  const response = await fetch("/api/payment", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      amount: order.amount,
-      orderReference: order.id,
-      payerReference: order.student_id,
-      vendorReference: order.vendor_id,
-    }),
-  });
-
-  const result = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.message || "Payment could not be started.");
-  }
-
-  redirectToPayFast(result.paymentUrl, result.paymentFields);
-}
-
-/* =========================
-   PLACE ORDER + START PAYFAST PAYMENT
+   PLACE ORDER
 ========================= */
 document.getElementById("place-order")?.addEventListener("click", async () => {
   const auth = await getStudentAuth();
@@ -267,20 +190,7 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
   for (const vendorId of Object.keys(cart)) {
     const { data: order } = await supabase
       .from("orders")
-      .insert([
-        {
-          student_id: auth.user.id,
-          vendor_id: vendorId,
-
-          // Food order status
-          status: "payment_pending",
-
-          // Payment-specific fields
-          payment_status: "pending",
-          payment_provider: "payfast_sandbox",
-          payment_amount: Number(totalAmount.toFixed(2)),
-        },
-      ])
+      .insert([{ student_id: auth.user.id, vendor_id: vendorId, status: "received" }])
       .select()
       .single();
 
