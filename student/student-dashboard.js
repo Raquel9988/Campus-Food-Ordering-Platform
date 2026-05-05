@@ -222,3 +222,4 @@ window.addEventListener("load", async () => {
 viewCartBtn?.addEventListener("click", () => {
   window.location.href = "student-cart.html";
 });
+
