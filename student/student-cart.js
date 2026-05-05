@@ -10,16 +10,28 @@ const supabase = createClient(
 ========================= */
 function showToast(message) {
   const toast = document.getElementById("toast");
+
+  if (!toast) {
+    alert(message);
+    return;
+  }
+
   toast.textContent = message;
   toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 2500);
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2500);
 }
 
 /* =========================
    CART STORAGE
 ========================= */
 async function getCartKey() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return user ? `campus_cart_${user.id}` : "campus_cart_guest";
 }
 
@@ -42,7 +54,11 @@ async function clearCart() {
    AUTH
 ========================= */
 async function getStudentAuth() {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
   if (error || !user) return { ok: false };
 
   const { data: appUser } = await supabase
@@ -51,20 +67,49 @@ async function getStudentAuth() {
     .eq("id", user.id)
     .single();
 
-  if (!appUser || appUser.role !== "student") return { ok: false };
+  if (!appUser || appUser.role !== "student") {
+    return { ok: false };
+  }
+
   return { ok: true, user };
 }
 
 /* =========================
-   REMOVE ITEM
+   CART ITEM ACTIONS
 ========================= */
 async function removeItem(vendorId, menuItemId) {
   const cart = await getCart();
   const items = cart[vendorId]?.items || [];
-  const updated = items.filter(i => String(i.menuItemId) !== String(menuItemId));
 
-  if (updated.length === 0) delete cart[vendorId];
-  else cart[vendorId].items = updated;
+  const updatedItems = items.filter(
+    (item) => String(item.menuItemId) !== String(menuItemId)
+  );
+
+  if (updatedItems.length === 0) {
+    delete cart[vendorId];
+  } else {
+    cart[vendorId].items = updatedItems;
+  }
+
+  await saveCart(cart);
+}
+
+async function updateQuantity(vendorId, menuItemId, changeAmount) {
+  const cart = await getCart();
+  const items = cart[vendorId]?.items || [];
+
+  const item = items.find(
+    (cartItem) => String(cartItem.menuItemId) === String(menuItemId)
+  );
+
+  if (!item) return;
+
+  item.quantity += changeAmount;
+
+  if (item.quantity <= 0) {
+    await removeItem(vendorId, menuItemId);
+    return;
+  }
 
   await saveCart(cart);
 }
@@ -74,9 +119,11 @@ async function removeItem(vendorId, menuItemId) {
 ========================= */
 async function renderCart() {
   const container = document.getElementById("cart-items");
-  const totalEl   = document.getElementById("total");
-  const cart      = await getCart();
+  const totalEl = document.getElementById("total");
+
+  const cart = await getCart();
   container.innerHTML = "";
+
   let total = 0;
 
   if (Object.keys(cart).length === 0) {
@@ -95,78 +142,62 @@ async function renderCart() {
     const vendorSection = document.createElement("section");
     vendorSection.className = "vendor-cart-group";
 
-    const header = document.createElement("div");
-    header.className = "vendor-cart-header";
-    header.innerHTML = `
+    const vendorHeader = document.createElement("header");
+    vendorHeader.className = "vendor-cart-header";
+    vendorHeader.innerHTML = `
       <h3>${vendor?.business_name || "Vendor"}</h3>
       <p>Items from this vendor</p>
     `;
-    vendorSection.appendChild(header);
+
+    vendorSection.appendChild(vendorHeader);
 
     for (const item of cart[vendorId].items) {
-      total += item.price * item.quantity;
+      total += Number(item.price) * Number(item.quantity);
 
       const itemCard = document.createElement("article");
       itemCard.className = "cart-item";
 
       itemCard.innerHTML = `
-        <div class="cart-item-image ${item.image_url ? "" : "empty"}">
-          ${item.image_url
-            ? `<img src="${item.image_url}" alt="${item.name}">`
-            : `<span>No image</span>`}
-        </div>
+        <figure class="cart-item-image ${item.image_url ? "" : "empty"}">
+          ${
+            item.image_url
+              ? `<img src="${item.image_url}" alt="${item.name}">`
+              : `<figcaption>No image</figcaption>`
+          }
+        </figure>
 
-        <div class="cart-item-details">
+        <section class="cart-item-details">
           <h4>${item.name}</h4>
-          <p class="cart-item-price">R ${item.price.toFixed(2)} each</p>
-        </div>
+          <p>Price: R ${Number(item.price).toFixed(2)}</p>
+          <p class="cart-item-price">
+            Subtotal: R ${(Number(item.price) * Number(item.quantity)).toFixed(2)}
+          </p>
+        </section>
 
-        <div class="cart-item-actions">
-          <div class="quantity-controls">
-            <button class="minus" aria-label="Decrease quantity">−</button>
+        <footer class="cart-item-actions">
+          <section class="quantity-controls">
+            <button class="minus" type="button">-</button>
             <span class="quantity-value">${item.quantity}</span>
-            <button class="plus" aria-label="Increase quantity">+</button>
-          </div>
-          <button class="remove-btn">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-              <polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-            </svg>
-            Remove
-          </button>
-        </div>
+            <button class="plus" type="button">+</button>
+          </section>
+
+          <button class="remove-btn" type="button">Remove</button>
+        </footer>
       `;
 
-      /* ── Decrement: remove when reaching 0 ── */
       itemCard.querySelector(".minus").onclick = async () => {
-        const cart  = await getCart();
-        const found = cart[vendorId]?.items?.find(i => i.menuItemId == item.menuItemId);
-        if (!found) return;
-
-        if (found.quantity <= 1) {
-          // Remove item entirely when decrementing from 1
-          await removeItem(vendorId, item.menuItemId);
-        } else {
-          found.quantity--;
-          await saveCart(cart);
-        }
-        renderCart();
+        await updateQuantity(vendorId, item.menuItemId, -1);
+        await renderCart();
       };
 
       itemCard.querySelector(".plus").onclick = async () => {
-        const cart  = await getCart();
-        const found = cart[vendorId]?.items?.find(i => i.menuItemId == item.menuItemId);
-        if (!found) return;
-        found.quantity++;
-        await saveCart(cart);
-        renderCart();
+        await updateQuantity(vendorId, item.menuItemId, 1);
+        await renderCart();
       };
 
       itemCard.querySelector(".remove-btn").onclick = async () => {
         await removeItem(vendorId, item.menuItemId);
-        renderCart();
+        await renderCart();
       };
 
       vendorSection.appendChild(itemCard);
@@ -179,35 +210,145 @@ async function renderCart() {
 }
 
 /* =========================
-   PLACE ORDER
+   PAYFAST PAYMENT
+========================= */
+function redirectToPayFast(paymentUrl, paymentFields) {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = paymentUrl;
+
+  for (const [name, value] of Object.entries(paymentFields)) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+}
+
+async function startPayFastPayment(order) {
+  const response = await fetch("/api/payment", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: order.amount,
+      orderReference: order.id,
+      payerReference: order.student_id,
+      vendorReference: order.vendor_id,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(result.message || "Payment could not be started.");
+  }
+
+  redirectToPayFast(result.paymentUrl, result.paymentFields);
+}
+
+/* =========================
+   PLACE ORDER + START PAYFAST PAYMENT
 ========================= */
 document.getElementById("place-order")?.addEventListener("click", async () => {
-  const auth = await getStudentAuth();
-  if (!auth.ok) { window.location.href = "../auth/login.html"; return; }
+  const placeOrderBtn = document.getElementById("place-order");
 
-  const cart = await getCart();
+  try {
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.textContent = "Starting payment...";
 
-  for (const vendorId of Object.keys(cart)) {
-    const { data: order } = await supabase
+    const auth = await getStudentAuth();
+
+    if (!auth.ok) {
+      window.location.href = "../auth/login.html";
+      return;
+    }
+
+    const cart = await getCart();
+    const vendorIds = Object.keys(cart);
+
+    if (vendorIds.length === 0) {
+      showToast("Your cart is empty.");
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.textContent = "Pay Now";
+      return;
+    }
+
+    /*
+      Current Sprint 3 payment setup:
+      One PayFast payment request = one vendor order.
+      This prevents one payment from being attached to multiple vendors.
+    */
+    if (vendorIds.length > 1) {
+      showToast("Please order from one vendor at a time for online payment.");
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.textContent = "Pay Now";
+      return;
+    }
+
+    const vendorId = vendorIds[0];
+    const vendorCart = cart[vendorId];
+
+    const totalAmount = vendorCart.items.reduce((sum, item) => {
+      return sum + Number(item.price) * Number(item.quantity);
+    }, 0);
+
+    const { data: order, error: orderError } = await supabase
       .from("orders")
-      .insert([{ student_id: auth.user.id, vendor_id: vendorId, status: "received" }])
+      .insert([
+        {
+          student_id: auth.user.id,
+          vendor_id: vendorId,
+
+          // Food order status
+          status: "payment_pending",
+
+          // Payment-specific fields
+          payment_status: "pending",
+          payment_provider: "payfast_sandbox",
+          payment_amount: Number(totalAmount.toFixed(2)),
+        },
+      ])
       .select()
       .single();
 
-    const items = cart[vendorId].items.map(i => ({
-      order_id:     order.id,
-      menu_item_id: i.menuItemId,
-      quantity:     i.quantity,
-      price:        i.price
+    if (orderError || !order) {
+      console.error("Order insert error:", orderError);
+      throw new Error("Could not create order.");
+    }
+
+    const items = vendorCart.items.map((item) => ({
+      order_id: order.id,
+      menu_item_id: item.menuItemId,
+      quantity: item.quantity,
+      price: item.price,
     }));
 
-    await supabase.from("order_items").insert(items);
-  }
+    const { error: itemsError } = await supabase.from("order_items").insert(items);
 
-  await clearCart();
-  await renderCart();
-  showToast("Order placed successfully! 🎉");
-  setTimeout(() => { window.location.href = "student-dashboard.html"; }, 1000);
+    if (itemsError) {
+      console.error("Order items insert error:", itemsError);
+      throw new Error("Could not save order items.");
+    }
+
+    await startPayFastPayment({
+      id: order.id,
+      amount: totalAmount,
+      student_id: auth.user.id,
+      vendor_id: vendorId,
+    });
+  } catch (error) {
+    console.error("Payment start error:", error);
+    showToast(error.message || "Could not start payment.");
+
+    placeOrderBtn.disabled = false;
+    placeOrderBtn.textContent = "Pay Now";
+  }
 });
 
 /* =========================
@@ -215,7 +356,12 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
 ========================= */
 window.addEventListener("load", async () => {
   const auth = await getStudentAuth();
-  if (!auth.ok) { window.location.href = "../auth/login.html"; return; }
+
+  if (!auth.ok) {
+    window.location.href = "../auth/login.html";
+    return;
+  }
+
   await renderCart();
 });
 
