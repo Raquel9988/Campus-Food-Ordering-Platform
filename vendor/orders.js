@@ -24,7 +24,6 @@ dashboardBtn?.addEventListener("click", () => {
 
 function escapeHtml(unsafe) {
   if (!unsafe) return "";
-
   return String(unsafe)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -35,7 +34,6 @@ function escapeHtml(unsafe) {
 
 function formatDate(dateString) {
   if (!dateString) return "N/A";
-
   try {
     const date = new Date(dateString);
     return date.toLocaleString();
@@ -60,7 +58,6 @@ function showError(message) {
   errorContainer.classList.remove("hidden");
   ordersContainer.classList.add("hidden");
   emptyState.classList.add("hidden");
-
   errorText.textContent = message;
 }
 
@@ -133,9 +130,6 @@ async function fetchOrders(vendorId) {
     .select("id, student_id, status, payment_status, payment_provider, created_at, updated_at")
     .eq("vendor_id", vendorId)
     .eq("payment_status", "paid")
-    // Payment-safe filter:
-    // Vendors should only see orders after payment succeeds.
-    // payment_pending and payment_failed orders are hidden.
     .in("status", ["received", "preparing", "ready"])
     .order("created_at", { ascending: false });
 
@@ -236,7 +230,7 @@ async function updateOrderStatus(orderId, newStatus, currentStatus) {
 }
 
 function createOrderCard(order) {
-  const card = document.createElement("section");
+  const card = document.createElement("div");
   card.className = "order-card";
 
   const statusClass = `status-${order.status}`;
@@ -256,20 +250,10 @@ function createOrderCard(order) {
     : `<li>No items found.</li>`;
 
   card.innerHTML = `
-    <header class="order-header">
+    <div class="order-header">
       <h3>Order #${escapeHtml(order.id.slice(0, 8))}</h3>
       <span class="status-badge ${statusClass}">${escapeHtml(order.status)}</span>
-    </header>
-
-    <section class="order-info">
-      <p><strong>Student:</strong> <span class="order-value">${escapeHtml(order.studentEmail)}</span></p>
-      <p><strong>Placed:</strong> <span class="order-value">${formatDate(order.created_at)}</span></p>
-    </section>
-
-    <section class="items-section">
-      <strong>Items:</strong>
-      <ul class="items-list">${itemsHtml}</ul>
-    </section>
+    </div>
 
     ${order.payment_status === "paid" ? `
     <div class="payment-info">
@@ -278,16 +262,26 @@ function createOrderCard(order) {
     </div>
     ` : ``}
 
-    <footer class="order-total">
+    <div class="order-info">
+      <p><strong>Student:</strong> <span class="order-value">${escapeHtml(order.studentEmail)}</span></p>
+      <p><strong>Placed:</strong> <span class="order-value">${formatDate(order.created_at)}</span></p>
+    </div>
+
+    <div class="items-section">
+      <strong>Items:</strong>
+      <ul class="items-list">${itemsHtml}</ul>
+    </div>
+
+    <div class="order-total">
       <span>Total:</span>
       <span class="total-amount">${formatCurrency(order.total_price)}</span>
-    </footer>
+    </div>
 
-    <section class="order-actions">
-      ${order.status === "received" ? `<button class="prep-btn" type="button">Start Preparing</button>` : ""}
-      ${order.status === "preparing" ? `<button class="ready-btn" type="button">Mark as Ready</button>` : ""}
-      ${order.status === "ready" ? `<button class="complete-btn" type="button">Order Complete</button>` : ""}
-    </section>
+    <div class="order-actions">
+      ${order.status === "received" ? `<button class="prep-btn">Start Preparing</button>` : ""}
+      ${order.status === "preparing" ? `<button class="ready-btn">Mark as Ready</button>` : ""}
+      ${order.status === "ready" ? `<button class="complete-btn">Order Complete</button>` : ""}
+    </div>
   `;
 
   const prepBtn = card.querySelector(".prep-btn");
@@ -326,7 +320,6 @@ function renderOrders(orders) {
   const activeOrders = orders.filter(
     (order) => order.status === "received" || order.status === "preparing"
   );
-
   const readyOrders = orders.filter((order) => order.status === "ready");
 
   if (activeOrders.length > 0) {
@@ -419,7 +412,6 @@ async function initializePage() {
 
   await loadOrders();
   startAutoRefresh();
-
   window.addEventListener("beforeunload", stopAutoRefresh);
 }
 
