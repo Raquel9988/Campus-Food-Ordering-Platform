@@ -1,515 +1,407 @@
-import { supabase } from '../shared-auth-foundation/src/js/supabaseClient.js'
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-/* ========================================
-   DOM Elements
-   ======================================== */
+const supabase = createClient(
+  "https://sqbscxfolbckikrzxqhr.supabase.co",
+  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
+);
 
-const loadingContainer = document.getElementById('loading-container')
-const errorContainer = document.getElementById('error-container')
-const errorText = document.getElementById('error-text')
-const ordersContainer = document.getElementById('orders-container')
-const emptyState = document.getElementById('empty-state')
-const refreshBtn = document.getElementById('refresh-btn')
-const retryBtn = document.getElementById('retry-btn')
+const loadingContainer = document.getElementById("loading-container");
+const errorContainer = document.getElementById("error-container");
+const errorText = document.getElementById("error-text");
+const ordersContainer = document.getElementById("orders-container");
+const emptyState = document.getElementById("empty-state");
+const refreshBtn = document.getElementById("refresh-btn");
+const retryBtn = document.getElementById("retry-btn");
+const dashboardBtn = document.getElementById("dashboard-btn");
 
-/* ========================================
-   State
-   ======================================== */
+let currentVendorId = null;
+let isRefreshing = false;
+let autoRefreshInterval = null;
 
-let currentVendorId = null
-let isRefreshing = false
-let autoRefreshInterval = null
+dashboardBtn?.addEventListener("click", () => {
+  window.location.href = "../vendor/vendor-dashboard.html";
+});
 
-/* ========================================
-   Utility Functions
-   ======================================== */
-
-/**
- * Escape HTML special characters to prevent XSS
- */
 function escapeHtml(unsafe) {
-    if (!unsafe) return ''
-    return unsafe
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;')
+  if (!unsafe) return "";
+
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-/**
- * Format date to readable string (local timezone)
- */
 function formatDate(dateString) {
-    if (!dateString) return 'N/A'
-    try {
-        const date = new Date(dateString)
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-    } catch {
-        return dateString
-    }
+  if (!dateString) return "N/A";
+
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  } catch {
+    return dateString;
+  }
 }
 
-/**
- * Format currency 
- */
 function formatCurrency(amount) {
-    if (!amount) return 'R0.00'
-    return `R${parseFloat(amount).toFixed(2)}`
+  return `R${Number(amount || 0).toFixed(2)}`;
 }
 
-/**
- * Show/hide UI states
- */
 function showLoading() {
-    loadingContainer.classList.remove('hidden')
-    errorContainer.classList.add('hidden')
-    ordersContainer.classList.add('hidden')
-    emptyState.classList.add('hidden')
+  loadingContainer.classList.remove("hidden");
+  errorContainer.classList.add("hidden");
+  ordersContainer.classList.add("hidden");
+  emptyState.classList.add("hidden");
 }
 
 function showError(message) {
-    loadingContainer.classList.add('hidden')
-    errorContainer.classList.remove('hidden')
-    ordersContainer.classList.add('hidden')
-    emptyState.classList.add('hidden')
-    errorText.textContent = message
+  loadingContainer.classList.add("hidden");
+  errorContainer.classList.remove("hidden");
+  ordersContainer.classList.add("hidden");
+  emptyState.classList.add("hidden");
+
+  errorText.textContent = message;
 }
 
 function showOrders() {
-    loadingContainer.classList.add('hidden')
-    errorContainer.classList.add('hidden')
-    ordersContainer.classList.remove('hidden')
-    emptyState.classList.add('hidden')
+  loadingContainer.classList.add("hidden");
+  errorContainer.classList.add("hidden");
+  ordersContainer.classList.remove("hidden");
+  emptyState.classList.add("hidden");
 }
 
 function showEmpty() {
-    loadingContainer.classList.add('hidden')
-    errorContainer.classList.add('hidden')
-    ordersContainer.classList.add('hidden')
-    emptyState.classList.remove('hidden')
+  loadingContainer.classList.add("hidden");
+  errorContainer.classList.add("hidden");
+  ordersContainer.classList.add("hidden");
+  emptyState.classList.remove("hidden");
 }
 
-/* ========================================
-   Authentication & Authorization
-   ======================================== */
+async function getApprovedVendorAuth() {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-/**
- * Check vendor authentication and authorization
- * Returns vendor ID if authorized, null otherwise
- */
-async function checkVendorAuth() {
-    try {
-        showLoading()
+  if (authError || !user) {
+    return { ok: false, message: "Please log in first." };
+  }
 
-        // Get current authenticated user
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
+  const { data: appUser, error: userError } = await supabase
+    .from("users")
+    .select("id, role")
+    .eq("id", user.id)
+    .single();
 
-        if (authError || !user) {
-            console.log('Not authenticated, redirecting to login')
-            window.location.href = '../auth/login.html'
-            return null
-        }
+  if (userError || !appUser) {
+    return { ok: false, message: "Unable to verify user profile." };
+  }
 
-        // Get user role from users table
-        const { data: appUser, error: userError } = await supabase
-            .from('users')
-            .select('id, role')
-            .eq('id', user.id)
-            .single()
+  if (appUser.role !== "vendor") {
+    return { ok: false, message: "Access denied. Vendors only." };
+  }
 
-        if (userError || !appUser) {
-            console.error('User record not found:', userError)
-            window.location.href = '../auth/login.html'
-            return null
-        }
+  const { data: vendor, error: vendorError } = await supabase
+    .from("vendors")
+    .select("id, business_name, status")
+    .eq("user_id", user.id)
+    .single();
 
-        // Check if user is a vendor
-        if (appUser.role !== 'vendor') {
-            console.log('User is not a vendor, redirecting to login')
-            window.location.href = '../auth/login.html'
-            return null
-        }
+  if (vendorError || !vendor) {
+    return { ok: false, message: "Vendor profile not found." };
+  }
 
-        // Get vendor profile and check if approved
-        const { data: vendor, error: vendorError } = await supabase
-            .from('vendors')
-            .select('id, status, business_name')
-            .eq('user_id', user.id)
-            .single()
+  if (vendor.status === "pending") {
+    return { ok: false, message: "Your vendor account is pending approval." };
+  }
 
-        if (vendorError || !vendor) {
-            console.error('Vendor record not found:', vendorError)
-            showError('Vendor profile not found. Please contact support.')
-            return null
-        }
+  if (vendor.status === "suspended") {
+    return { ok: false, message: "Your vendor account has been suspended." };
+  }
 
-        // Check vendor approval status
-        if (vendor.status !== 'approved') {
-            console.log('Vendor not approved, status:', vendor.status)
-            showError(
-                vendor.status === 'pending'
-                    ? 'Your vendor account is pending approval. Check back soon!'
-                    : 'Your vendor account is suspended. Please contact support.'
-            )
-            return null
-        }
+  if (vendor.status !== "approved") {
+    return { ok: false, message: "Unknown vendor status." };
+  }
 
-        console.log('Vendor authorized:', vendor.id)
-        return vendor.id
-    } catch (error) {
-        console.error('Auth check error:', error)
-        showError('Authentication error. Please refresh and try again.')
-        return null
-    }
+  return { ok: true, vendor, user };
 }
 
-/* ========================================
-   Data Fetching
-   ======================================== */
-
-/**
- * Fetch all orders for the current vendor
- * Includes order items and student information
- */
 async function fetchOrders(vendorId) {
-    if (!vendorId) return []
+  const { data: orders, error: ordersError } = await supabase
+    .from("orders")
+    .select("id, student_id, status, created_at, updated_at")
+    .eq("vendor_id", vendorId)
 
-    try {
-        // Fetch orders for this vendor (no total_price in DB)
-        const { data: orders, error: ordersError } = await supabase
-            .from('orders')
-            .select('id, student_id, status, created_at')
-            .eq('vendor_id', vendorId)
-            .order('created_at', { ascending: false })
+    // Payment-safe filter:
+    // Vendors should only see orders after payment succeeds.
+    // payment_pending and payment_failed orders are hidden.
+    .in("status", ["received", "preparing", "ready"])
 
-        if (ordersError) throw new Error(`Failed to fetch orders: ${ordersError.message}`)
-        if (!orders || orders.length === 0) return []
+    .order("created_at", { ascending: false });
 
-        // Enrich each order with items and student email
-        const enrichedOrders = await Promise.all(
-            orders.map(async (order) => {
-                try {
-                    // Fetch order items (using 'price' column)
-                    const { data: orderItems, error: itemsError } = await supabase
-                        .from('order_items')
-                        .select('id, menu_item_id, quantity, price')
-                        .eq('order_id', order.id)
+  if (ordersError) {
+    throw new Error(ordersError.message);
+  }
 
-                    if (itemsError) {
-                        console.warn(`Failed to fetch items for order ${order.id}:`, itemsError)
-                        return { ...order, items: [], total_price: 0 }
-                    }
+  if (!orders || orders.length === 0) {
+    return [];
+  }
 
-                    // Calculate total price from items
-                    const totalPrice = (orderItems || []).reduce(
-                        (sum, item) => sum + (item.price * item.quantity),
-                        0
-                    )
+  const enrichedOrders = await Promise.all(
+    orders.map(async (order) => {
+      const { data: orderItems, error: itemsError } = await supabase
+        .from("order_items")
+        .select("id, menu_item_id, quantity, price")
+        .eq("order_id", order.id);
 
-                    // Fetch menu item names
-                    const itemsWithNames = await Promise.all(
-                        (orderItems || []).map(async (item) => {
-                            const { data: menuItem, error: menuError } = await supabase
-                                .from('menu_items')
-                                .select('name')
-                                .eq('id', item.menu_item_id)
-                                .single()
-                            if (menuError || !menuItem) {
-                                console.warn(`Menu item ${item.menu_item_id} not found`)
-                                return { ...item, name: 'Item not found' }
-                            }
-                            return { ...item, name: menuItem.name }
-                        })
-                    )
+      if (itemsError) {
+        return {
+          ...order,
+          items: [],
+          studentEmail: "Unknown",
+          total_price: 0,
+        };
+      }
 
-                    // Fetch student email
-                    const { data: student, error: studentError } = await supabase
-                        .from('users')
-                        .select('email')
-                        .eq('id', order.student_id)
-                        .single()
+      const itemsWithNames = await Promise.all(
+        (orderItems || []).map(async (item) => {
+          const { data: menuItem } = await supabase
+            .from("menu_items")
+            .select("name")
+            .eq("id", item.menu_item_id)
+            .single();
 
-                    return {
-                        ...order,
-                        items: itemsWithNames,
-                        studentEmail: student?.email || 'Unknown',
-                        total_price: totalPrice   // computed, not from DB
-                    }
-                } catch (error) {
-                    console.error(`Error enriching order ${order.id}:`, error)
-                    return { ...order, items: [], studentEmail: 'Unknown', total_price: 0 }
-                }
-            })
-        )
-
-        return enrichedOrders
-    } catch (error) {
-        console.error('Fetch orders error:', error)
-        throw error
-    }
-}
-
-//Check if the status change is valid
-function isValidStatusTransition(currentStatus, newStatus){
-    const validTransitions={
-        received:["preparing"],
-        preparing:["ready"],
-        ready:[]
-    };
-    return validTransitions[currentStatus]?.includes(newStatus);
-}
-//Update order status in database
-async function updateOrderStatus(orderId, newStatus, currentStatus){
-
-    //Block invalid transitions
-    if(!isValidStatusTransition(currentStatus, newStatus)){
-        alert("Invalid status change.");
-        return;
-    }
-    const {error}=await supabase
-        .from("orders")
-        .update({
-            status: newStatus
+          return {
+            ...item,
+            name: menuItem?.name || "Unknown item",
+          };
         })
-        .eq("id", orderId) //Correct order
-        .eq("vendor_id", currentVendorId); //Vendor can onlyupdate own orders
-    if (error){
-        alert("Failed to update order.")
-        return;
-    }
-    alert("Order updated successfully!")
+      );
 
-    //Refresh dashboard immediately
-    await loadOrders();
-    
-}
+      const totalPrice = itemsWithNames.reduce(
+        (sum, item) => sum + Number(item.price) * Number(item.quantity),
+        0
+      );
 
-/* ========================================
-   UI Rendering
-   ======================================== */
+      const { data: student } = await supabase
+        .from("users")
+        .select("email")
+        .eq("id", order.student_id)
+        .single();
 
-/**
- * Render orders to the DOM
- */
-function renderOrders(orders) {
-    // Clear container
-    ordersContainer.innerHTML = ''
-
-    if (!orders || orders.length === 0) {
-        showEmpty()
-        return
-    }
-
-    // Create order cards
-    orders.forEach((order) => {
-        const orderCard = createOrderCard(order)
-        ordersContainer.appendChild(orderCard)
+      return {
+        ...order,
+        items: itemsWithNames,
+        studentEmail: student?.email || "Unknown",
+        total_price: totalPrice,
+      };
     })
+  );
 
-    showOrders()
+  return enrichedOrders;
 }
 
-/**
- * Create a single order card element
- */
+function isValidStatusTransition(currentStatus, newStatus) {
+  const validTransitions = {
+    received: ["preparing"],
+    preparing: ["ready"],
+    ready: [],
+  };
+
+  return validTransitions[currentStatus]?.includes(newStatus);
+}
+
+async function updateOrderStatus(orderId, newStatus, currentStatus) {
+  if (!isValidStatusTransition(currentStatus, newStatus)) {
+    alert("Invalid status change.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orderId)
+    .eq("vendor_id", currentVendorId);
+
+  if (error) {
+    alert("Failed to update order.");
+    return;
+  }
+
+  await loadOrders();
+}
+
 function createOrderCard(order) {
-    const card = document.createElement('div')
-    card.className = 'order-card'
+  const card = document.createElement("section");
+  card.className = "order-card";
 
-    // Status badge class
-    const statusClass = `status-${order.status}`
+  const statusClass = `status-${order.status}`;
 
-    // Build items HTML
-    const itemsHtml = order.items
+  const itemsHtml = order.items.length
+    ? order.items
         .map(
-            (item) =>
-                `<li>
-                    <span class="item-name">${escapeHtml(item.name)}</span>
-                    <span class="item-qty">× ${item.quantity}</span>
-                    <span class="item-price">${formatCurrency(item.price)}</span>
-                </li>`
+          (item) => `
+            <li>
+              <span class="item-name">${escapeHtml(item.name)}</span>
+              <span class="item-qty">× ${item.quantity}</span>
+              <span class="item-price">${formatCurrency(item.price)}</span>
+            </li>
+          `
         )
-        .join('')
+        .join("")
+    : `<li>No items found.</li>`;
 
-    const itemsSection = order.items.length
-        ? `<div class="items-section">
-               <strong>Items:</strong>
-               <ul class="items-list">
-                   ${itemsHtml}
-               </ul>
-           </div>`
-        : ''
+  card.innerHTML = `
+    <header class="order-header">
+      <h3>Order #${escapeHtml(order.id.slice(0, 8))}</h3>
+      <span class="status-badge ${statusClass}">${escapeHtml(order.status)}</span>
+    </header>
 
-    card.innerHTML = `
-        <div class="order-header">
-            <h3>Order #${escapeHtml(order.id.substring(0, 8))}</h3>
-            <span class="status-badge ${statusClass}">
-                ${escapeHtml(order.status)}
-            </span>
-        </div>
-        
-        <div class="order-info">
-            <p>
-                <strong>Student:</strong>
-                <span class="order-value">${escapeHtml(order.studentEmail)}</span>
-            </p>
-            <p>
-                <strong>Date:</strong>
-                <span class="order-value">${formatDate(order.created_at)}</span>
-            </p>
-        </div>
+    <section class="order-info">
+      <p><strong>Student:</strong> <span class="order-value">${escapeHtml(order.studentEmail)}</span></p>
+      <p><strong>Placed:</strong> <span class="order-value">${formatDate(order.created_at)}</span></p>
+    </section>
 
-        ${itemsSection}
+    <section class="items-section">
+      <strong>Items:</strong>
+      <ul class="items-list">${itemsHtml}</ul>
+    </section>
 
-        <div class="order-total">
-            <span>Total:</span>
-            <span class="total-amount">${formatCurrency(order.total_price)}</span>
-        </div>
+    <footer class="order-total">
+      <span>Total:</span>
+      <span class="total-amount">${formatCurrency(order.total_price)}</span>
+    </footer>
 
-        <div class="order-actions">
-        ${
-            order.status==="received"
-            ? `<button class="prep-btn">Preparing</button>`
-            : ""
-        }
-        ${
-            order.status==="preparing"
-            ? `<button class="ready-btn">Ready for Pickup</button>`
-            : ""
-        }
-        </div>
+    <section class="order-actions">
+      ${order.status === "received" ? `<button class="prep-btn" type="button">Preparing</button>` : ""}
+      ${order.status === "preparing" ? `<button class="ready-btn" type="button">Ready for Pickup</button>` : ""}
+    </section>
+  `;
 
-    `
-    //find buttons inside card
-    const prepBtn=card.querySelector(".prep-btn");
-    const readyBtn=card.querySelector(".ready-btn");
+  const prepBtn = card.querySelector(".prep-btn");
+  const readyBtn = card.querySelector(".ready-btn");
 
-    // If PrepBtn exists
-    if(prepBtn){
-        prepBtn.addEventListener("click", async ()=>{
-            // Change status to "Preparing"
-            await updateOrderStatus(order.id, "preparing", order.status);
-        });
-    }
-    //If ReadyBtn exists
-    if(readyBtn){
-        readyBtn.addEventListener("click", async ()=>{
-            //Change status to "Ready"
-            await updateOrderStatus(order.id, "ready", order.status);
-        });
-    }
+  if (prepBtn) {
+    prepBtn.addEventListener("click", async () => {
+      await updateOrderStatus(order.id, "preparing", order.status);
+    });
+  }
 
-    return card
+  if (readyBtn) {
+    readyBtn.addEventListener("click", async () => {
+      await updateOrderStatus(order.id, "ready", order.status);
+    });
+  }
+
+  return card;
 }
 
-/* ========================================
-   Refresh Logic
-   ======================================== */
+function renderOrders(orders) {
+  ordersContainer.innerHTML = "";
 
-/**
- * Fetch and render orders (core refresh logic)
- */
+  if (!orders || orders.length === 0) {
+    showEmpty();
+    return;
+  }
+
+  const activeOrders = orders.filter(
+    (order) => order.status === "received" || order.status === "preparing"
+  );
+
+  const readyOrders = orders.filter((order) => order.status === "ready");
+
+  if (activeOrders.length > 0) {
+    const activeTitle = document.createElement("h2");
+    activeTitle.className = "section-title";
+    activeTitle.textContent = "Active Orders";
+    ordersContainer.appendChild(activeTitle);
+
+    activeOrders.forEach((order) => {
+      ordersContainer.appendChild(createOrderCard(order));
+    });
+  }
+
+  if (readyOrders.length > 0) {
+    const readyTitle = document.createElement("h2");
+    readyTitle.className = "section-title";
+    readyTitle.textContent = "Ready for Pickup";
+    ordersContainer.appendChild(readyTitle);
+
+    readyOrders.forEach((order) => {
+      ordersContainer.appendChild(createOrderCard(order));
+    });
+  }
+
+  showOrders();
+}
+
 async function loadOrders() {
-    if (!currentVendorId) {
-        showError('Vendor ID not set. Please refresh the page.')
-        return
-    }
+  if (!currentVendorId) {
+    showError("Vendor ID not set.");
+    return;
+  }
 
-    try {
-        isRefreshing = true
-        refreshBtn.disabled = true
+  try {
+    isRefreshing = true;
+    refreshBtn.disabled = true;
+    showLoading();
 
-        const orders = await fetchOrders(currentVendorId)
-        renderOrders(orders)
-    } catch (error) {
-        console.error('Load orders error:', error)
-        showError(`Error loading orders: ${error.message}. Please try again.`)
-    } finally {
-        isRefreshing = false
-        refreshBtn.disabled = false
-    }
+    const orders = await fetchOrders(currentVendorId);
+    renderOrders(orders);
+  } catch (error) {
+    console.error("Load orders error:", error);
+    showError(`Error loading orders: ${error.message}`);
+  } finally {
+    isRefreshing = false;
+    refreshBtn.disabled = false;
+  }
 }
 
-/**
- * Silent refresh (for auto-refresh, no UI interruption)
- */
 async function silentRefresh() {
-    if (!currentVendorId || isRefreshing) return
+  if (!currentVendorId || isRefreshing) return;
 
-    try {
-        const orders = await fetchOrders(currentVendorId)
-        // Only update if not in error/loading state
-        if (!loadingContainer.classList.contains('hidden')) return
-        if (!errorContainer.classList.contains('hidden')) return
-
-        renderOrders(orders)
-    } catch (error) {
-        console.warn('Silent refresh error (not shown to user):', error)
-    }
+  try {
+    const orders = await fetchOrders(currentVendorId);
+    renderOrders(orders);
+  } catch (error) {
+    console.warn("Silent refresh failed:", error);
+  }
 }
-
-/* ========================================
-   Event Listeners
-   ======================================== */
-
-refreshBtn.addEventListener('click', loadOrders)
-retryBtn.addEventListener('click', loadOrders)
-
-/* ========================================
-   Auto-Refresh Setup
-   ======================================== */
 
 function startAutoRefresh() {
-    // Auto-refresh every 30 seconds
-    autoRefreshInterval = setInterval(() => {
-        silentRefresh()
-    }, 30000)
-
-    console.log('Auto-refresh started (every 30 seconds)')
+  autoRefreshInterval = setInterval(() => {
+    silentRefresh();
+  }, 30000);
 }
 
 function stopAutoRefresh() {
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval)
-        autoRefreshInterval = null
-        console.log('Auto-refresh stopped')
-    }
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
 }
 
-/* ========================================
-   Page Initialization
-   ======================================== */
+refreshBtn?.addEventListener("click", loadOrders);
+retryBtn?.addEventListener("click", loadOrders);
 
 async function initializePage() {
-    try {
-        // Check authentication and get vendor ID
-        currentVendorId = await checkVendorAuth()
+  const authResult = await getApprovedVendorAuth();
 
-        if (!currentVendorId) {
-            // Auth check already handled redirects or displayed error
-            return
-        }
+  if (!authResult.ok) {
+    showError(authResult.message);
+    return;
+  }
 
-        // Initial load of orders
-        await loadOrders()
+  currentVendorId = authResult.vendor.id;
 
-        // Start auto-refresh
-        startAutoRefresh()
+  await loadOrders();
+  startAutoRefresh();
 
-        // Clean up on page unload
-        window.addEventListener('beforeunload', stopAutoRefresh)
-    } catch (error) {
-        console.error('Page initialization error:', error)
-        showError('Failed to initialize. Please refresh the page.')
-    }
+  window.addEventListener("beforeunload", stopAutoRefresh);
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', initializePage)
+document.addEventListener("DOMContentLoaded", initializePage);

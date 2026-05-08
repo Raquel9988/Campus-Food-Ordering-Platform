@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Successful</title>
+    <link rel="stylesheet" href="payment-result.css" />
+  </head>
+
+  <body>
+    <main class="result-card success">
+      <h1>Payment Successful</h1>
+
+      <p>Your payment was completed successfully.</p>
+      <p>Your order has been received and will now be processed by the vendor.</p>
+      <p>You will be redirected to your dashboard shortly.</p>
+
+      <nav>
+        <a href="student/student-dashboard.html">Back to Dashboard</a>
+        <a href="student/my-orders.html">View My Orders</a>
+      </nav>
+    </main>
+
+    <script>
+      setTimeout(() => {
+        window.location.href = "student/student-dashboard.html";
+      }, 3000);
+    </script>
+  </body>
+</html>

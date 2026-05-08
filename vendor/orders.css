@@ -1,497 +1,397 @@
-/* ========================================
-   Vendor Orders Dashboard Stylesheet
-   ======================================== */
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* ── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  --green:        #14532d;
+  --green-light:  #166534;
+  --orange:       #f97316;
+  --text:         #1f2937;
+  --muted:        #6b7280;
+  --border:       #e5e7eb;
+  --white:        #ffffff;
+  --shadow:       0 14px 32px rgba(0,0,0,0.08);
+  --shadow-card:  0 10px 28px rgba(0,0,0,0.06);
 }
+
+html { scroll-behavior: smooth; }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-        sans-serif;
-    background-color: #f5f7f4;
-    color: #1f2937;
-    line-height: 1.6;
+  font-family: "Inter","Roboto",sans-serif;
+  background: linear-gradient(135deg,#f8fafc 0%,#f5f7f4 100%);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 24px;
 }
 
-/* ========================================
-   Header
-   ======================================== */
-
+/* ── Header ────────────────────────────────────────────────────────────── */
 .header {
-    background: linear-gradient(135deg, #14532d 0%, #166534 100%);
-    color: white;
-    padding: 24px 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+  width: 100%;
+  max-width: 1250px;
+  margin: 0 auto 28px auto;
+  background: linear-gradient(135deg,#14532d 0%,#166534 100%);
+  border-radius: 22px;
+  padding: 20px 26px;
+  box-shadow: 0 14px 32px rgba(20,83,45,0.22);
+  position: sticky;
+  top: 20px;
+  z-index: 100;
 }
 
 .header-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
 }
 
-.header h1 {
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-/* ========================================
-   Buttons
-   ======================================== */
+.logo-link { display: inline-flex; align-items: center; text-decoration: none; }
 
-.refresh-btn,
-.retry-btn {
-    background-color: white;
-    color: #14532d;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.logo-img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
 }
 
-.refresh-btn:hover,
-.retry-btn:hover {
-    background-color: #f0fdf4;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
+.header-title {
+  font-family: "Roboto","Inter",sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
 }
 
-.refresh-btn:active,
-.retry-btn:active {
-    transform: translateY(0);
+.header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.refresh-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+/* Header buttons */
+.hdr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 12px;
+  font-family: "Inter","Roboto",sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.22s ease;
+  white-space: nowrap;
 }
 
-.order-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 14px;
+.hdr-btn--ghost {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  backdrop-filter: blur(4px);
+}
+.hdr-btn--ghost:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
 }
 
-/*Prepare Button*/
-.prep-btn{
-    background-color: #f59e0b;
-    color: white;
-    border: none;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.3s ease;
+.hdr-btn--refresh {
+  background: rgba(255,255,255,0.92);
+  color: var(--green);
+}
+.hdr-btn--refresh:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+.hdr-btn--refresh:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.prep-btn:hover {
-    background-color: #d97706;
-    transform: translateY(-1px);
+/* Spinning refresh icon when loading */
+.hdr-btn--refresh.spinning #refresh-icon,
+#refresh-icon.spin {
+  animation: spin 0.7s linear infinite;
 }
 
-/* Ready Button */
-.ready-btn {
-    background-color: #16a34a;
-    color: white;
-    border: none;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
-
-.ready-btn:hover {
-    background-color: #15803d;
-    transform: translateY(-1px);
-}
-
-/* ========================================
-   Container & Layout
-   ======================================== */
-
+/* ── Container ─────────────────────────────────────────────────────────── */
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 32px 24px;
+  max-width: 1250px;
+  margin: 0 auto;
 }
 
-/* ========================================
-   Loading State
-   ======================================== */
-
+/* ── Loading ───────────────────────────────────────────────────────────── */
 .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 70px 24px;
 }
 
 .spinner {
-    width: 48px;
-    height: 48px;
-    border: 4px solid #e5e7eb;
-    border-top-color: #14532d;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-bottom: 16px;
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin-bottom: 16px;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .loading-container p {
-    color: #6b7280;
-    font-size: 16px;
-    font-weight: 500;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 500;
 }
 
-/* ========================================
-   Error State
-   ======================================== */
-
+/* ── Error ─────────────────────────────────────────────────────────────── */
 .error-container {
-    background-color: #fee2e2;
-    border: 1px solid #fca5a5;
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 24px;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 24px;
 }
 
 .error-message {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
 }
 
 #error-text {
-    color: #991b1b;
-    font-size: 16px;
-    font-weight: 500;
-    margin: 0;
+  color: #991b1b;
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0;
 }
 
 .retry-btn {
-    background-color: #dc2626;
-    color: white;
-    padding: 8px 16px;
-    font-size: 14px;
-    flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-family: "Inter","Roboto",sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: 0.2s ease;
 }
+.retry-btn:hover { background: #b91c1c; transform: translateY(-1px); }
 
-.retry-btn:hover {
-    background-color: #b91c1c;
-}
-
-/* ========================================
-   Empty State
-   ======================================== */
-
+/* ── Empty state ───────────────────────────────────────────────────────── */
 .empty-state {
-    text-align: center;
-    padding: 80px 24px;
-    color: #6b7280;
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--muted);
 }
+.empty-state p { font-size: 17px; font-weight: 500; }
 
-.empty-state p {
-    font-size: 18px;
-    font-weight: 500;
-}
-
-/* ========================================
-   Orders Grid
-   ======================================== */
-
+/* ── Orders grid ───────────────────────────────────────────────────────── */
 .orders-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 22px;
 }
 
-/* ========================================
-   Order Card
-   ======================================== */
+/* ── Section title ─────────────────────────────────────────────────────── */
+.section-title {
+  grid-column: 1 / -1;
+  font-family: "Roboto","Inter",sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--green);
+  margin-top: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #d1fae5;
+  letter-spacing: -0.3px;
+}
 
+/* ── Order card ────────────────────────────────────────────────────────── */
 .order-card {
-    background-color: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 18px;
-    padding: 24px;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  background: rgba(255,255,255,0.94);
+  border: 1px solid rgba(229,231,235,0.8);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .order-card:hover {
-    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+  transform: translateY(-2px);
 }
 
-/* Order Header (ID + Status Badge) */
+/* Order header */
 .order-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
 .order-card h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #111827;
-    margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
 }
 
-/* Status Badge */
+/* Status badge */
 .status-badge {
-    display: inline-block;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: capitalize;
-    white-space: nowrap;
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 
-.status-received {
-    background-color: #dbeafe;
-    color: #1e40af;
-}
+.status-received   { background: #dbeafe; color: #1e40af; }
+.status-preparing  { background: #fed7aa; color: #92400e; }
+.status-ready      { background: #dcfce7; color: #166534; }
+.status-completed  { background: #e0e7ff; color: #3730a3; }
 
-.status-preparing {
-    background-color: #fed7aa;
-    color: #92400e;
-}
-
-.status-ready {
-    background-color: #dcfce7;
-    color: #166534;
-}
-
-.status-completed {
-    background-color: #e0e7ff;
-    color: #3730a3;
-}
-
-/* Order Info */
+/* Order info rows */
 .order-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 14px;
-    color: #4b5563;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+  color: #4b5563;
 }
 
 .order-info p {
-    margin: 0;
-    display: flex;
-    justify-content: space-between;
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
 }
 
-.order-info strong {
-    color: #1f2937;
-    font-weight: 600;
-}
+.order-info strong { color: #1f2937; font-weight: 600; }
+.order-value { color: var(--muted); text-align: right; word-break: break-word; }
 
-.order-value {
-    color: #6b7280;
-    text-align: right;
-    word-break: break-word;
-}
-
-/* Items List */
+/* Items section */
 .items-section {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 .items-section strong {
-    display: block;
-    color: #1f2937;
-    font-weight: 600;
-    margin-bottom: 8px;
-    font-size: 14px;
+  display: block;
+  color: #1f2937;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 13.5px;
 }
 
 .items-list {
-    list-style: none;
-    padding-left: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.items-list li {
-    font-size: 14px;
-    color: #4b5563;
-    padding-left: 0;
-}
+.items-list li { font-size: 13.5px; color: #4b5563; }
+.item-name  { font-weight: 600; color: #1f2937; }
+.item-qty   { color: var(--muted); }
+.item-price { color: #059669; font-weight: 700; }
 
-.item-name {
-    font-weight: 500;
-    color: #1f2937;
-}
-
-.item-qty {
-    color: #6b7280;
-}
-
-.item-price {
-    color: #059669;
-    font-weight: 600;
-}
-
-/* Total Price */
+/* Total */
 .order-total {
-    padding-top: 12px;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .total-amount {
-    color: #14532d;
-    font-size: 18px;
+  color: var(--green);
+  font-size: 1.1rem;
+  font-weight: 800;
 }
 
-/* ========================================
-   State Classes
-   ======================================== */
+/* ── Order action buttons ──────────────────────────────────────────────── */
+.order-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 
-.hidden {
-    display: none;
+.prep-btn,
+.ready-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 11px;
+  font-family: "Inter","Roboto",sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.22s ease;
 }
 
-/* ========================================
-   Responsive Design
-   ======================================== */
+.prep-btn  { background: #fef3c7; color: #92400e; }
+.prep-btn:hover  { background: #fde68a; transform: translateY(-1px); }
 
-@media (max-width: 768px) {
-    .header-content {
-        flex-direction: column;
-        gap: 16px;
-        align-items: flex-start;
-    }
+.ready-btn { background: #dcfce7; color: #166534; }
+.ready-btn:hover { background: #bbf7d0; transform: translateY(-1px); }
 
-    .header h1 {
-        font-size: 24px;
-    }
+/* ── Utility ───────────────────────────────────────────────────────────── */
+.hidden { display: none; }
 
-    .container {
-        padding: 24px 16px;
-    }
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  body { padding: 14px; }
 
-    .orders-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
+  .header { top: 14px; border-radius: 18px; padding: 16px 18px; }
+  .header-content { flex-direction: column; align-items: flex-start; }
+  .header-actions { width: 100%; }
+  .hdr-btn { flex: 1; justify-content: center; }
+  .logo-img { height: 38px; }
+  .header-title { font-size: 1.25rem; }
 
-    .order-card {
-        padding: 18px;
-    }
+  .orders-grid { grid-template-columns: 1fr; gap: 14px; }
 
-    .order-header {
-        flex-direction: column;
-    }
+  .order-header { flex-direction: column; }
+  .status-badge { align-self: flex-start; }
 
-    .status-badge {
-        align-self: flex-start;
-    }
+  .order-info p { flex-direction: column; gap: 3px; }
+  .order-value { text-align: left; }
 
-    .order-info p {
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .order-value {
-        text-align: left;
-    }
-
-    .error-message {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .retry-btn {
-        align-self: flex-start;
-    }
+  .error-message { flex-direction: column; align-items: flex-start; }
+  .retry-btn { align-self: flex-start; }
 }
 
 @media (max-width: 480px) {
-    .header-content {
-        padding: 0 16px;
-    }
-
-    .header h1 {
-        font-size: 20px;
-    }
-
-    .container {
-        padding: 16px 12px;
-    }
-
-    .orders-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .order-card {
-        padding: 16px;
-        gap: 10px;
-    }
-
-    .order-card h3 {
-        font-size: 16px;
-    }
-
-    .status-badge {
-        font-size: 11px;
-        padding: 4px 8px;
-    }
-
-    .order-info {
-        font-size: 13px;
-    }
-
-    .items-list li {
-        font-size: 13px;
-    }
-
-    .order-total {
-        font-size: 14px;
-    }
-
-    .total-amount {
-        font-size: 16px;
-    }
+  body { padding: 10px; }
+  .header { top: 10px; border-radius: 16px; }
+  .order-card { padding: 16px; gap: 10px; border-radius: 16px; }
+  .order-card h3 { font-size: 1rem; }
 }

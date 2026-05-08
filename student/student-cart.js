@@ -10,6 +10,12 @@ const supabase = createClient(
 ========================= */
 function showToast(message) {
   const toast = document.getElementById("toast");
+
+  if (!toast) {
+    alert(message);
+    return;
+  }
+
   toast.textContent = message;
   toast.classList.add("show");
 
@@ -22,7 +28,10 @@ function showToast(message) {
    CART STORAGE
 ========================= */
 async function getCartKey() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return user ? `campus_cart_${user.id}` : "campus_cart_guest";
 }
 
@@ -45,7 +54,10 @@ async function clearCart() {
    AUTH
 ========================= */
 async function getStudentAuth() {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   if (error || !user) return { ok: false };
 
@@ -63,22 +75,47 @@ async function getStudentAuth() {
 }
 
 /* =========================
-   REMOVE ITEM
+   CART ITEM ACTIONS
 ========================= */
 async function removeItem(vendorId, menuItemId) {
   const cart = await getCart();
   const items = cart[vendorId]?.items || [];
 
-  const updated = items.filter(i => String(i.menuItemId) !== String(menuItemId));
+  const updatedItems = items.filter(
+    (item) => String(item.menuItemId) !== String(menuItemId)
+  );
 
-  if (updated.length === 0) delete cart[vendorId];
-  else cart[vendorId].items = updated;
+  if (updatedItems.length === 0) {
+    delete cart[vendorId];
+  } else {
+    cart[vendorId].items = updatedItems;
+  }
+
+  await saveCart(cart);
+}
+
+async function updateQuantity(vendorId, menuItemId, changeAmount) {
+  const cart = await getCart();
+  const items = cart[vendorId]?.items || [];
+
+  const item = items.find(
+    (cartItem) => String(cartItem.menuItemId) === String(menuItemId)
+  );
+
+  if (!item) return;
+
+  item.quantity += changeAmount;
+
+  if (item.quantity <= 0) {
+    await removeItem(vendorId, menuItemId);
+    return;
+  }
 
   await saveCart(cart);
 }
 
 /* =========================
-   RENDER CART (NO DIV)
+   RENDER CART
 ========================= */
 async function renderCart() {
   const container = document.getElementById("cart-items");
@@ -96,33 +133,32 @@ async function renderCart() {
   }
 
   for (const vendorId of Object.keys(cart)) {
-
     const { data: vendor } = await supabase
       .from("vendors")
       .select("business_name")
       .eq("id", vendorId)
       .single();
 
-    const vendorSection = document.createElement("section"); // ✅
+    const vendorSection = document.createElement("section");
     vendorSection.className = "vendor-cart-group";
 
-    const header = document.createElement("header"); // ✅
-    header.innerHTML = `
+    const vendorHeader = document.createElement("header");
+    vendorHeader.className = "vendor-cart-header";
+    vendorHeader.innerHTML = `
       <h3>${vendor?.business_name || "Vendor"}</h3>
       <p>Items from this vendor</p>
     `;
 
-    vendorSection.appendChild(header);
+    vendorSection.appendChild(vendorHeader);
 
     for (const item of cart[vendorId].items) {
+      total += Number(item.price) * Number(item.quantity);
 
-      total += item.price * item.quantity;
-
-      const itemCard = document.createElement("article"); // ✅
+      const itemCard = document.createElement("article");
       itemCard.className = "cart-item";
 
       itemCard.innerHTML = `
-        <figure class="${item.image_url ? "" : "empty"}">
+        <figure class="cart-item-image ${item.image_url ? "" : "empty"}">
           ${
             item.image_url
               ? `<img src="${item.image_url}" alt="${item.name}">`
@@ -130,43 +166,38 @@ async function renderCart() {
           }
         </figure>
 
-        <section>
+        <section class="cart-item-details">
           <h4>${item.name}</h4>
-          <p>Price: R ${item.price.toFixed(2)}</p>
-          <p>Quantity: ${item.quantity}</p>
+          <p>Price: R ${Number(item.price).toFixed(2)}</p>
+          <p class="cart-item-price">
+            Subtotal: R ${(Number(item.price) * Number(item.quantity)).toFixed(2)}
+          </p>
         </section>
 
-        <footer>
-          <button class="minus">-</button>
-          <span>${item.quantity}</span>
-          <button class="plus">+</button>
-          <button class="remove-btn">Remove</button>
+        <footer class="cart-item-actions">
+          <section class="quantity-controls">
+            <button class="minus" type="button">-</button>
+            <span class="quantity-value">${item.quantity}</span>
+            <button class="plus" type="button">+</button>
+          </section>
+
+          <button class="remove-btn" type="button">Remove</button>
         </footer>
       `;
 
       itemCard.querySelector(".minus").onclick = async () => {
-        const cart = await getCart();
-        const found = cart[vendorId].items.find(i => i.menuItemId == item.menuItemId);
-
-        if (found.quantity > 1) found.quantity--;
-        else await removeItem(vendorId, item.menuItemId);
-
-        await saveCart(cart);
-        renderCart();
+        await updateQuantity(vendorId, item.menuItemId, -1);
+        await renderCart();
       };
 
       itemCard.querySelector(".plus").onclick = async () => {
-        const cart = await getCart();
-        const found = cart[vendorId].items.find(i => i.menuItemId == item.menuItemId);
-
-        found.quantity++;
-        await saveCart(cart);
-        renderCart();
+        await updateQuantity(vendorId, item.menuItemId, 1);
+        await renderCart();
       };
 
       itemCard.querySelector(".remove-btn").onclick = async () => {
         await removeItem(vendorId, item.menuItemId);
-        renderCart();
+        await renderCart();
       };
 
       vendorSection.appendChild(itemCard);
@@ -179,43 +210,145 @@ async function renderCart() {
 }
 
 /* =========================
-   PLACE ORDER
+   PAYFAST PAYMENT
 ========================= */
-document.getElementById("place-order")?.addEventListener("click", async () => {
-  const auth = await getStudentAuth();
+function redirectToPayFast(paymentUrl, paymentFields) {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = paymentUrl;
 
-  if (!auth.ok) {
-    window.location.href = "../auth/login.html";
-    return;
+  for (const [name, value] of Object.entries(paymentFields)) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
   }
 
-  const cart = await getCart();
+  document.body.appendChild(form);
+  form.submit();
+}
 
-  for (const vendorId of Object.keys(cart)) {
+async function startPayFastPayment(order) {
+  const response = await fetch("/api/payment", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: order.amount,
+      orderReference: order.id,
+      payerReference: order.student_id,
+      vendorReference: order.vendor_id,
+    }),
+  });
 
-    const { data: order } = await supabase
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(result.message || "Payment could not be started.");
+  }
+
+  redirectToPayFast(result.paymentUrl, result.paymentFields);
+}
+
+/* =========================
+   PLACE ORDER + START PAYFAST PAYMENT
+========================= */
+document.getElementById("place-order")?.addEventListener("click", async () => {
+  const placeOrderBtn = document.getElementById("place-order");
+
+  try {
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.textContent = "Starting payment...";
+
+    const auth = await getStudentAuth();
+
+    if (!auth.ok) {
+      window.location.href = "../auth/login.html";
+      return;
+    }
+
+    const cart = await getCart();
+    const vendorIds = Object.keys(cart);
+
+    if (vendorIds.length === 0) {
+      showToast("Your cart is empty.");
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.textContent = "Pay Now";
+      return;
+    }
+
+    /*
+      Current Sprint 3 payment setup:
+      One PayFast payment request = one vendor order.
+      This prevents one payment from being attached to multiple vendors.
+    */
+    if (vendorIds.length > 1) {
+      showToast("Please order from one vendor at a time for online payment.");
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.textContent = "Pay Now";
+      return;
+    }
+
+    const vendorId = vendorIds[0];
+    const vendorCart = cart[vendorId];
+
+    const totalAmount = vendorCart.items.reduce((sum, item) => {
+      return sum + Number(item.price) * Number(item.quantity);
+    }, 0);
+
+    const { data: order, error: orderError } = await supabase
       .from("orders")
-      .insert([{ student_id: auth.user.id, vendor_id: vendorId, status: "received" }])
+      .insert([
+        {
+          student_id: auth.user.id,
+          vendor_id: vendorId,
+
+          // Food order status
+          status: "payment_pending",
+
+          // Payment-specific fields
+          payment_status: "pending",
+          payment_provider: "payfast_sandbox",
+          payment_amount: Number(totalAmount.toFixed(2)),
+        },
+      ])
       .select()
       .single();
 
-    const items = cart[vendorId].items.map(i => ({
+    if (orderError || !order) {
+      console.error("Order insert error:", orderError);
+      throw new Error("Could not create order.");
+    }
+
+    const items = vendorCart.items.map((item) => ({
       order_id: order.id,
-      menu_item_id: i.menuItemId,
-      quantity: i.quantity,
-      price: i.price
+      menu_item_id: item.menuItemId,
+      quantity: item.quantity,
+      price: item.price,
     }));
 
-    await supabase.from("order_items").insert(items);
+    const { error: itemsError } = await supabase.from("order_items").insert(items);
+
+    if (itemsError) {
+      console.error("Order items insert error:", itemsError);
+      throw new Error("Could not save order items.");
+    }
+
+    await startPayFastPayment({
+      id: order.id,
+      amount: totalAmount,
+      student_id: auth.user.id,
+      vendor_id: vendorId,
+    });
+  } catch (error) {
+    console.error("Payment start error:", error);
+    showToast(error.message || "Could not start payment.");
+
+    placeOrderBtn.disabled = false;
+    placeOrderBtn.textContent = "Pay Now";
   }
-
-  await clearCart();
-  await renderCart();
-  showToast("Order placed successfully");
-
-  setTimeout(() => {
-    window.location.href = "student-dashboard.html";
-  }, 1000);
 });
 
 /* =========================
