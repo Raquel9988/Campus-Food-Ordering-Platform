@@ -170,6 +170,7 @@ window.addEventListener("load", async () => {
       .select("*")
       .eq("vendor_id", vendor.id)
       .order("created_at", { ascending: false });
+      console.log("MENU ITEMS FROM DB:", menuItems);
 
     if (error) {
       if (menuItemsContainer) {
@@ -442,6 +443,8 @@ window.addEventListener("load", async () => {
         .filter(t => t !== "");
       selectedTags.push(...extraTags);
     }
+
+    selectedTags = [...new Set(selectedTags)];
 
     /* ── Disable submit ── */
     submitBtn.disabled = true;
