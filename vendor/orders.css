@@ -339,11 +339,50 @@ body {
   font-weight: 800;
 }
 
+/* ========================================
+   Payment Information
+   ======================================== */
+
+.payment-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background-color: #f0fdf4;
+    border: 2px solid #86efac;
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+.payment-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #16a34a;
+    color: white;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.2);
+}
+
+.payment-provider {
+    font-size: 12px;
+    color: #4b5563;
+    margin: 0;
+    padding: 0;
+    font-weight: 500;
+}
+
 /* ── Order action buttons ──────────────────────────────────────────────── */
 .order-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 
 .prep-btn,
-.ready-btn {
+.ready-btn,
+.complete-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -362,6 +401,9 @@ body {
 
 .ready-btn { background: #dcfce7; color: #166534; }
 .ready-btn:hover { background: #bbf7d0; transform: translateY(-1px); }
+
+.complete-btn { background: #e0e7ff; color: #3730a3; }
+.complete-btn:hover { background: #c7d2fe; transform: translateY(-1px); }
 
 /* ── Utility ───────────────────────────────────────────────────────────── */
 .hidden { display: none; }
