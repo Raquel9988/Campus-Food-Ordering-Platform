@@ -115,6 +115,28 @@ body {
 }
 .browse-btn:hover { background: var(--green-light); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20,83,45,0.28); }
 
+/* ── Filter tabs ────────────────────────────────────────────────────────── */
+.filter-tabs {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.filter-tab {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border: 1.5px solid var(--border);
+  border-radius: 12px; background: #fff;
+  font-family: "Inter","Roboto",sans-serif; font-size: 13.5px; font-weight: 600;
+  color: var(--muted); cursor: pointer; transition: 0.2s ease;
+}
+.filter-tab:hover { border-color: var(--green); color: var(--green); background: #f0fdf4; }
+.filter-tab.active {
+  background: var(--green); color: #fff;
+  border-color: var(--green);
+  box-shadow: 0 4px 12px rgba(20,83,45,0.2);
+}
+
 /* ── Orders list ────────────────────────────────────────────────────────── */
 .orders-container { display: flex; flex-direction: column; gap: 18px; }
 

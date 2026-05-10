@@ -144,6 +144,16 @@ body {
 .place-btn:hover { background: var(--green-light); transform: translateY(-1px); box-shadow: 0 8px 22px rgba(20,83,45,0.28); }
 .place-btn:disabled { background: #9ca3af; cursor: not-allowed; box-shadow: none; transform: none; }
 
+.place-btn .btn-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+
 /* ── States ─────────────────────────────────────────────────────────────── */
 .empty-cart, .loading-text, .error-text {
   display: flex; align-items: center; gap: 10px;
@@ -152,6 +162,17 @@ body {
 .loading-text { background: #f9fafb; color: var(--muted); border: 1px solid var(--border); }
 .empty-cart   { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
 .error-text   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+/* ── Payment error banner ───────────────────────────────────────────────── */
+.payment-error-banner {
+  width: 100%;
+  padding: 12px 16px;
+  background: #fef2f2; color: #b91c1c;
+  border: 1px solid #fecaca; border-radius: 12px;
+  font-size: 0.9rem; font-weight: 600;
+  margin-bottom: 16px;
+}
+.payment-error-banner.hidden { display: none; }
 
 /* ── Toast ──────────────────────────────────────────────────────────────── */
 .toast {

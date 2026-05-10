@@ -21,7 +21,18 @@
       </nav>
     </main>
 
-    <script>
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+      const supabase = createClient(
+        "https://sqbscxfolbckikrzxqhr.supabase.co",
+        "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
+      );
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const cartKey = user ? `campus_cart_${user.id}` : "campus_cart_guest";
+      localStorage.removeItem(cartKey);
+
       setTimeout(() => {
         window.location.href = "student/student-dashboard.html";
       }, 3000);

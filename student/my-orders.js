@@ -19,10 +19,19 @@ const retryBtn = document.getElementById("retry-btn");
 const backBtn = document.getElementById("back-btn");
 
 /* ========================================
+   Constants
+======================================== */
+
+const ACTIVE_STATUSES   = ["pending", "accepted", "payment_pending", "received", "preparing", "ready"];
+const HISTORY_STATUSES  = ["completed", "collected", "cancelled", "payment_failed"];
+
+/* ========================================
    State
 ======================================== */
 
 let currentStudentId = null;
+let allOrders = [];
+let currentFilter = new URLSearchParams(window.location.search).get("filter") || "active";
 
 /* ========================================
    Utility Functions
@@ -144,6 +153,28 @@ function showToast(message) {
 }
 
 /* ========================================
+   Filter helpers
+======================================== */
+
+function filterOrders(orders, filter) {
+  if (filter === "active")  return orders.filter(o => ACTIVE_STATUSES.includes(o.status));
+  if (filter === "history") return orders.filter(o => HISTORY_STATUSES.includes(o.status));
+  return orders;
+}
+
+function setActiveTab(filter) {
+  document.querySelectorAll(".filter-tab").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === filter);
+  });
+}
+
+function getEmptyMessage(filter) {
+  if (filter === "active")  return { title: "No active orders", message: "You have no orders in progress right now." };
+  if (filter === "history") return { title: "No order history", message: "Your completed and cancelled orders will appear here." };
+  return { title: "No orders yet", message: "You haven't placed any orders yet." };
+}
+
+/* ========================================
    UI State
 ======================================== */
 
@@ -170,11 +201,15 @@ function showOrders() {
   emptyState.classList.add("hidden");
 }
 
-function showEmpty() {
+function showEmpty(filter) {
   loadingContainer.classList.add("hidden");
   errorContainer.classList.add("hidden");
   ordersContainer.classList.add("hidden");
   emptyState.classList.remove("hidden");
+
+  const { title, message } = getEmptyMessage(filter);
+  document.getElementById("empty-title").textContent = title;
+  document.getElementById("empty-message").textContent = message;
 }
 
 /* ========================================
@@ -323,15 +358,17 @@ function createOrderCard(order) {
   return card;
 }
 
-function renderOrders(orders) {
+function renderOrders(orders, filter) {
   ordersContainer.innerHTML = "";
 
-  if (!orders.length) {
-    showEmpty();
+  const filtered = filterOrders(orders, filter);
+
+  if (!filtered.length) {
+    showEmpty(filter);
     return;
   }
 
-  orders.forEach((order) => {
+  filtered.forEach((order) => {
     ordersContainer.appendChild(createOrderCard(order));
   });
 
@@ -346,8 +383,9 @@ async function loadOrders() {
   try {
     showLoading();
 
-    const orders = await fetchOrders(currentStudentId);
-    renderOrders(orders);
+    allOrders = await fetchOrders(currentStudentId);
+    setActiveTab(currentFilter);
+    renderOrders(allOrders, currentFilter);
   } catch (error) {
     console.error("Load orders error:", error);
     showError(error.message || "Could not load orders.");
@@ -376,7 +414,8 @@ function subscribeToRealtime() {
           return;
         }
 
-        await loadOrders();
+        allOrders = await fetchOrders(currentStudentId);
+        renderOrders(allOrders, currentFilter);
 
         if (
           oldOrder?.status === "preparing" &&
@@ -413,6 +452,14 @@ retryBtn.onclick = loadOrders;
 backBtn.onclick = () => {
   window.location.href = "student-dashboard.html";
 };
+
+document.querySelectorAll(".filter-tab").forEach(btn => {
+  btn.onclick = () => {
+    currentFilter = btn.dataset.filter;
+    setActiveTab(currentFilter);
+    renderOrders(allOrders, currentFilter);
+  };
+});
 
 /* ========================================
    INIT

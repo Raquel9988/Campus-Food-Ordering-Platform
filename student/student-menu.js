@@ -42,6 +42,15 @@ async function saveCart(cart) {
 async function addToCart(vendorId, item) {
   const cart = await getCart();
 
+  const existingVendors = Object.keys(cart);
+  if (existingVendors.length > 0 && !cart[vendorId]) {
+    const confirmed = confirm(
+      "Your cart has items from another vendor. Clear it and add this item instead?"
+    );
+    if (!confirmed) return;
+    Object.keys(cart).forEach((id) => delete cart[id]);
+  }
+
   if (!cart[vendorId]) {
     cart[vendorId] = { items: [] };
   }

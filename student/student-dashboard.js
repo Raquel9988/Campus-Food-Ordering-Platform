@@ -11,6 +11,9 @@ const supabase = createClient(
 const notificationDot = document.getElementById("order-notification");
 const viewOrdersBtn = document.getElementById("view-orders");
 const viewCartBtn = document.getElementById("view-cart");
+const activeOrdersBtn = document.getElementById("active-orders");
+const activeOrdersDot = document.getElementById("active-orders-dot");
+const orderHistoryBtn = document.getElementById("order-history");
 
 /* ========================================
    DOT CONTROL
@@ -138,6 +141,23 @@ function subscribeToOrders(userId) {
 }
 
 /* ========================================
+   ACTIVE ORDERS DOT
+======================================== */
+async function updateActiveOrdersDot(userId) {
+  const { data } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("student_id", userId)
+    .in("status", ["pending", "accepted", "preparing", "payment_pending"]);
+
+  if (data && data.length > 0) {
+    activeOrdersDot?.classList.remove("hidden");
+  } else {
+    activeOrdersDot?.classList.add("hidden");
+  }
+}
+
+/* ========================================
    LOAD VENDORS
 ======================================== */
 async function loadVendors() {
@@ -200,6 +220,7 @@ window.addEventListener("load", async () => {
 
   await loadVendors();
   await updateNotificationState(user.id);
+  await updateActiveOrdersDot(user.id);
   subscribeToOrders(user.id);
 
   logoutBtn.onclick = async () => {
@@ -207,12 +228,19 @@ window.addEventListener("load", async () => {
     window.location.href = "../auth/login.html";
   };
 
- 
   viewOrdersBtn.onclick = async () => {
     const readyIds = await getReadyOrderIds(user.id);
     setSeenIds(readyIds);
     hideDot();
     window.location.href = "my-orders.html";
+  };
+
+  activeOrdersBtn.onclick = () => {
+    window.location.href = "my-orders.html?filter=active";
+  };
+
+  orderHistoryBtn.onclick = () => {
+    window.location.href = "my-orders.html?filter=history";
   };
 });
 

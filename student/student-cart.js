@@ -24,6 +24,22 @@ function showToast(message) {
   }, 2500);
 }
 
+function showPaymentError(message) {
+  let banner = document.getElementById("payment-error");
+  if (!banner) {
+    banner = document.createElement("section");
+    banner.id = "payment-error";
+    banner.className = "payment-error-banner";
+    document.getElementById("cart-summary").prepend(banner);
+  }
+  banner.textContent = `Payment failed: ${message}`;
+  banner.classList.remove("hidden");
+}
+
+function clearPaymentError() {
+  document.getElementById("payment-error")?.classList.add("hidden");
+}
+
 /* =========================
    CART STORAGE
 ========================= */
@@ -259,8 +275,9 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
   const placeOrderBtn = document.getElementById("place-order");
 
   try {
+    clearPaymentError();
     placeOrderBtn.disabled = true;
-    placeOrderBtn.textContent = "Starting payment...";
+    placeOrderBtn.innerHTML = `<span class="btn-spinner"></span> Processing...`;
 
     const auth = await getStudentAuth();
 
@@ -275,7 +292,7 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
     if (vendorIds.length === 0) {
       showToast("Your cart is empty.");
       placeOrderBtn.disabled = false;
-      placeOrderBtn.textContent = "Pay Now";
+      placeOrderBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Pay Now`;
       return;
     }
 
@@ -287,7 +304,7 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
     if (vendorIds.length > 1) {
       showToast("Please order from one vendor at a time for online payment.");
       placeOrderBtn.disabled = false;
-      placeOrderBtn.textContent = "Pay Now";
+      placeOrderBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Pay Now`;
       return;
     }
 
@@ -344,10 +361,12 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
     });
   } catch (error) {
     console.error("Payment start error:", error);
-    showToast(error.message || "Could not start payment.");
+
+    const msg = error.message || "Payment could not be started. Please try again.";
+    showPaymentError(msg);
 
     placeOrderBtn.disabled = false;
-    placeOrderBtn.textContent = "Pay Now";
+    placeOrderBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Pay Now`;
   }
 });
 
