@@ -1,4 +1,4 @@
-import { isValidStatusTransition } from "../vendor/orders.js";
+const { isValidStatusTransition } = require("../vendor/vendorStatusUtils.js");
 
 test("vendor status transitions allow received to preparing", () => {
   expect(isValidStatusTransition("received", "preparing")).toBe(true);
