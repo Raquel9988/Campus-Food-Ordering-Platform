@@ -1,85 +1,94 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Your Cart – CampusEats</title>
+    <title>Your Cart – CampusEats</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap"
-    rel="stylesheet"
-  />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <link rel="stylesheet" href="student-cart.css" />
-</head>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
 
-<body>
+    <link rel="stylesheet" href="student-cart.css" />
+  </head>
 
-  <section id="toast" class="toast" aria-live="polite"></section>
+  <body>
+    <section id="toast" class="toast" aria-live="polite"></section>
 
-  <header class="header">
-    <section class="header-inner">
-      <section class="header-brand">
-        <a href="../index.html" class="logo-link">
-          <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
-        </a>
+    <header class="header">
+      <section class="header-inner">
+        <section class="header-brand">
+          <a href="../index.html" class="logo-link">
+            <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
+          </a>
 
-        <section>
-          <h1 class="header-title">Your Cart</h1>
-          <p class="header-sub">Review and pay for your order</p>
+          <section>
+            <h1 class="header-title">Your Cart</h1>
+            <p class="header-sub">Review your one-vendor order before payment</p>
+          </section>
         </section>
+
+        <button class="hdr-btn hdr-btn--ghost back-btn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <polyline
+              points="15 18 9 12 15 6"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Back
+        </button>
+      </section>
+    </header>
+
+    <main class="main-card">
+      <section id="cart-message" class="cart-message hidden" aria-live="polite"></section>
+
+      <section id="cart-items" aria-live="polite">
+        <!-- Cart items will be inserted here by student-cart.js -->
       </section>
 
-      <button class="hdr-btn hdr-btn--ghost back-btn" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <polyline
-            points="15 18 9 12 15 6"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        Back
-      </button>
-    </section>
-  </header>
+      <section id="cart-summary">
+        <section>
+          <h3 id="total" class="cart-total">Total: R0.00</h3>
+          <p class="cart-note">You can only pay for food from one vendor at a time.</p>
+        </section>
 
-  <main class="main-card">
+        <section class="summary-actions">
+          <button id="clear-cart" class="clear-btn" type="button">
+            Clear Cart
+          </button>
 
-    <section id="cart-items" aria-live="polite">
-      <!-- Cart items will be inserted here by student-cart.js -->
-    </section>
+          <button id="place-order" class="place-btn" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polyline
+                points="22 4 12 14.01 9 11.01"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Pay Now
+          </button>
+        </section>
+      </section>
+    </main>
 
-    <section id="cart-summary">
-      <h3 id="total" class="cart-total">Total: R0.00</h3>
-
-      <button id="place-order" class="place-btn" type="button">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <polyline
-            points="22 4 12 14.01 9 11.01"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        Pay Now
-      </button>
-    </section>
-
-  </main>
-
-  <script type="module" src="student-cart.js"></script>
-</body>
+    <script type="module" src="student-cart.js"></script>
+  </body>
 </html>

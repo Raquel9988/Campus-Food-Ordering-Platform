@@ -8,13 +8,59 @@ const supabase = createClient(
 const params = new URLSearchParams(window.location.search);
 const vendorId = params.get("vendorId");
 
+
 //  TOAST
 function showToast(message) {
   const toast = document.getElementById("toast");
+
+  if (!toast) {
+    alert(message);
+    return;
+  }
+
   toast.textContent = message;
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2500);
 }
+
+
+function escapeHtml(text) {
+  if (text === null || text === undefined) {
+    return "";
+  }
+
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function normalizeTag(tag) {
+  return String(tag || "")
+    .trim()
+    .toLowerCase()
+    .replaceAll("-", "_")
+    .replaceAll(" ", "_");
+}
+
+function formatTag(tag) {
+  return normalizeTag(tag)
+    .replaceAll("_", "-")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function getItemTags(item) {
+  if (!Array.isArray(item.dietary_tags)) {
+    return [];
+  }
+
+  return item.dietary_tags.map(normalizeTag);
+}
+
+/* =========================
+   CART
 
 //  CART
 async function getCartKey() {
@@ -26,7 +72,12 @@ async function getCartKey() {
 
 async function getCart() {
   const key = await getCartKey();
-  return JSON.parse(localStorage.getItem(key)) || {};
+
+  try {
+    return JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return {};
+  }
 }
 
 async function saveCart(cart) {
@@ -34,13 +85,20 @@ async function saveCart(cart) {
   localStorage.setItem(key, JSON.stringify(cart));
 }
 
-async function addToCart(vendorId, item) {
+async function addToCart(selectedVendorId, item) {
   const cart = await getCart();
 
   if (!cart[vendorId]) cart[vendorId] = { items: [] };
 
-  const items = cart[vendorId].items;
-  const existing = items.find((i) => i.menuItemId === item.menuItemId);
+  if (!cart[selectedVendorId]) {
+    cart[selectedVendorId] = { items: [] };
+  }
+
+  const items = cart[selectedVendorId].items;
+
+  const existing = items.find((cartItem) => {
+    return String(cartItem.menuItemId) === String(item.menuItemId);
+  });
 
   if (existing) {
     existing.quantity += 1;
@@ -55,12 +113,19 @@ async function addToCart(vendorId, item) {
   }
 
   await saveCart(cart);
+  return true;
 }
+
 
 /* ════════════════════════════════════════════
    LOAD VENDOR NAME  (unchanged)
 ════════════════════════════════════════════ */
 async function loadVendorName() {
+  if (!vendorId) {
+    document.getElementById("vendor-name").textContent = "Vendor Menu";
+    return;
+  }
+
   const { data } = await supabase
     .from("vendors")
     .select("business_name")
@@ -68,6 +133,21 @@ async function loadVendorName() {
     .single();
 
   const title = document.getElementById("vendor-name");
+
+async function loadMenu() {
+  const menuList = document.getElementById("menu-list");
+
+  if (!vendorId) {
+    menuList.innerHTML = `<p class="error-text">No vendor selected.</p>`;
+    return;
+  }
+
+  menuList.innerHTML = `
+    <p class="loading-text">
+      <span class="spinner-sm"></span>
+      Loading menu…
+    </p>
+  `;
   if (title) title.textContent = data?.business_name || "Vendor Menu";
 }
 
@@ -90,9 +170,11 @@ async function loadMenu() {
     .from("menu_items")
     .select("id, name, price, description, image_url, dietary_tags")
     .eq("vendor_id", vendorId)
-    .eq("is_available", true);
+    .eq("is_available", true)
+    .order("name", { ascending: true });
 
   if (error) {
+    console.error("Load menu error:", error);
     menuList.innerHTML = `<p class="error-text">Error loading menu.</p>`;
     return;
   }
@@ -105,6 +187,7 @@ async function loadMenu() {
   allMenuItems = data;
   renderMenu(allMenuItems);
 }
+
 
 /* ════════════════════════════════════════════
    RENDER MENU ITEMS  (builds cards from array)
@@ -157,13 +240,23 @@ function renderMenu(items) {
     const name = document.createElement("h3");
     name.textContent = item.name;
 
-    const desc = document.createElement("p");
-    desc.className = "description";
-    desc.textContent = item.description || "No description available.";
+    const description = document.createElement("p");
+    description.className = "description";
+    description.textContent = item.description || "No description available.";
 
     const price = document.createElement("p");
     price.className = "menu-price";
-    price.textContent = `R ${Number(item.price).toFixed(2)}`;
+    price.textContent = `R ${Number(item.price || 0).toFixed(2)}`;
+
+    const tagsRow = document.createElement("section");
+    tagsRow.className = "card-diet-tags";
+
+    getItemTags(item).forEach((tag) => {
+      const pill = document.createElement("span");
+      pill.className = "card-diet-pill";
+      pill.textContent = formatTag(tag);
+      tagsRow.appendChild(pill);
+    });
 
     // Dietary tag pills on the card
     const tagsRow = document.createElement("div");
@@ -182,7 +275,7 @@ function renderMenu(items) {
     button.textContent = "Add to Cart 🛒";
 
     button.addEventListener("click", async () => {
-      await addToCart(vendorId, {
+      const added = await addToCart(vendorId, {
         menuItemId: item.id,
         name: item.name,
         price: item.price,
@@ -192,7 +285,7 @@ function renderMenu(items) {
     });
 
     info.appendChild(name);
-    info.appendChild(desc);
+    info.appendChild(description);
     info.appendChild(price);
     if (item.dietary_tags?.length) info.appendChild(tagsRow);
     info.appendChild(button);
@@ -316,7 +409,40 @@ async function initMenu() {
   setupFilters(); // wire up filter chips after items are loaded
 }
 
-initMenu();
+function setupFilters() {
+  document.querySelectorAll(".filter-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const filter = normalizeTag(chip.dataset.filter);
+
+      if (filter === "all") {
+        resetFilters();
+        return;
+      }
+
+      if (activeFilters.has(filter)) {
+        activeFilters.delete(filter);
+        chip.classList.remove("active");
+        chip.setAttribute("aria-pressed", "false");
+      } else {
+        activeFilters.add(filter);
+        chip.classList.add("active");
+        chip.setAttribute("aria-pressed", "true");
+      }
+
+      const allChip = document.querySelector('.filter-chip[data-filter="all"]');
+
+      if (allChip) {
+        const noFiltersSelected = activeFilters.size === 0;
+
+        allChip.classList.toggle("active", noFiltersSelected);
+        allChip.setAttribute("aria-pressed", noFiltersSelected ? "true" : "false");
+      }
+
+      applyFilters();
+    });
+  });
+}
+
 
 /* ════════════════════════════════════════════
    NAV  (unchanged from original)
@@ -328,3 +454,15 @@ document.getElementById("back-btn")?.addEventListener("click", () => {
 document.getElementById("view-cart")?.addEventListener("click", () => {
   window.location.href = "student-cart.html";
 });
+
+/* =========================
+   INIT
+========================= */
+
+async function initMenu() {
+  await loadVendorName();
+  await loadMenu();
+  setupFilters();
+}
+
+initMenu();

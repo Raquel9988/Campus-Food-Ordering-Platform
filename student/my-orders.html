@@ -1,92 +1,254 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Orders – CampusEats</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="my-orders.css" />
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Orders – CampusEats</title>
 
-  <header class="header">
-    <div class="header-inner">
-      <div class="header-brand">
-        <a href="../index.html" class="logo-link">
-          <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
-        </a>
-        <div>
-          <h1 class="header-title">My Orders</h1>
-          <p class="header-sub">Track your campus food orders</p>
-        </div>
-      </div>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-      <nav class="header-actions">
-        <!-- Refresh -->
-        <button id="refresh-btn" class="hdr-btn hdr-btn--ghost" title="Refresh orders">
-          <svg id="refresh-icon" width="17" height="17" viewBox="0 0 24 24" fill="none">
-            <polyline points="23 4 23 10 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="my-orders.css" />
+  </head>
+
+  <body>
+    <header class="header">
+      <section class="header-inner">
+        <section class="header-brand">
+          <a href="../index.html" class="logo-link">
+            <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
+          </a>
+
+          <section>
+            <h1 class="header-title">My Orders</h1>
+            <p class="header-sub">Track your active and completed campus food orders</p>
+          </section>
+        </section>
+
+        <nav class="header-actions" aria-label="Order page actions">
+          <button
+            id="refresh-btn"
+            class="hdr-btn hdr-btn--ghost"
+            type="button"
+            title="Refresh orders"
+          >
+            <svg
+              id="refresh-icon"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <polyline
+                points="23 4 23 10 17 10"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Refresh
+          </button>
+
+          <button id="back-btn" class="hdr-btn hdr-btn--white" type="button">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <polyline
+                points="15 18 9 12 15 6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Dashboard
+          </button>
+        </nav>
+      </section>
+    </header>
+
+    <main class="main-card">
+      <nav class="filter-tabs" aria-label="Order filters">
+        <button class="filter-tab" data-filter="active" type="button">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+            <polyline
+              points="12 6 12 12 16 14"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
-          Refresh
+          Active Orders
         </button>
-        <!-- Back -->
-        <button id="back-btn" class="hdr-btn hdr-btn--white">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <button class="filter-tab" data-filter="history" type="button">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 8v4l3 3"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M3.05 11a9 9 0 1 1 .5 4"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <polyline
+              points="3 16 3.05 11 8.05 11"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
-          Dashboard
+          Order History
         </button>
       </nav>
-    </div>
-  </header>
 
-  <main class="main-card">
+      <section id="loading-container" class="loading-container">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Loading your orders…</p>
+      </section>
 
-    <!-- Loading -->
-    <section id="loading-container" class="loading-container">
-      <div class="spinner"></div>
-      <p>Loading your orders…</p>
-    </section>
+      <section id="error-container" class="error-container hidden">
+        <p id="error-text">An error occurred.</p>
 
-    <!-- Error -->
-    <section id="error-container" class="error-container hidden">
-      <p id="error-text">An error occurred.</p>
-      <button id="retry-btn" class="retry-btn">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-          <polyline points="1 4 1 10 7 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Try Again
-      </button>
-    </section>
+        <button id="retry-btn" class="retry-btn" type="button">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <polyline
+              points="1 4 1 10 7 10"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Try Again
+        </button>
+      </section>
 
-    <!-- Empty -->
-    <section id="empty-state" class="empty-state hidden">
-      <div class="empty-icon">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
-        </svg>
-      </div>
-      <h2>No orders yet</h2>
-      <p>You haven't placed any orders yet.</p>
-      <a href="student-dashboard.html" class="browse-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        Browse Vendors
-      </a>
-    </section>
+      <section id="empty-state" class="empty-state hidden">
+        <figure class="empty-icon">
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <rect
+              x="9"
+              y="3"
+              width="6"
+              height="4"
+              rx="1"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+          </svg>
+        </figure>
 
-    <!-- Orders list -->
-    <section id="orders-container" class="orders-container hidden"></section>
+        <h2 id="empty-title">No orders yet</h2>
+        <p id="empty-message">You haven't placed any orders yet.</p>
 
-  </main>
+        <a href="student-dashboard.html" class="browse-btn">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+            <line
+              x1="21"
+              y1="21"
+              x2="16.65"
+              y2="16.65"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+          Browse Vendors
+        </a>
+      </section>
 
-  <script type="module" src="my-orders.js"></script>
-</body>
+      <section
+        id="orders-container"
+        class="orders-container hidden"
+        aria-live="polite"
+      ></section>
+    </main>
+
+    <script type="module" src="my-orders.js"></script>
+  </body>
 </html>
