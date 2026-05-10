@@ -116,10 +116,74 @@ async function clearCart() {
   localStorage.removeItem(key);
 }
 
+function clearCartByKey(cartKey) {
+  if (cartKey) {
+    localStorage.removeItem(cartKey);
+  }
+}
+
 function getVendorIds(cart) {
   return Object.keys(cart).filter((vendorId) => {
     return cart[vendorId]?.items?.length > 0;
   });
+}
+
+/* =========================
+   PENDING PAYMENT CLEANUP
+========================= */
+
+function clearPendingPaymentStorage() {
+  sessionStorage.removeItem("campus_pending_order_id");
+  sessionStorage.removeItem("campus_pending_cart_key");
+}
+
+function isSuccessfulPaidOrder(order) {
+  if (!order) {
+    return false;
+  }
+
+  const successfulStatuses = ["received", "preparing", "ready", "complete"];
+
+  return (
+    order.payment_status === "paid" &&
+    successfulStatuses.includes(order.status)
+  );
+}
+
+async function clearCartIfPaymentCompleted() {
+  const pendingOrderId = sessionStorage.getItem("campus_pending_order_id");
+  const pendingCartKey = sessionStorage.getItem("campus_pending_cart_key");
+
+  if (!pendingOrderId || !pendingCartKey) {
+    return;
+  }
+
+  const { data: order, error } = await supabase
+    .from("orders")
+    .select("id, status, payment_status")
+    .eq("id", pendingOrderId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Payment cleanup check error:", error);
+    return;
+  }
+
+  if (isSuccessfulPaidOrder(order)) {
+    clearCartByKey(pendingCartKey);
+    clearPendingPaymentStorage();
+    showToast("Payment successful. Cart cleared.");
+    return;
+  }
+
+  if (
+    order?.payment_status === "failed" ||
+    order?.payment_status === "cancelled" ||
+    order?.status === "payment_failed" ||
+    order?.status === "cancelled"
+  ) {
+    clearPendingPaymentStorage();
+  }
 }
 
 /* =========================
@@ -530,6 +594,7 @@ window.addEventListener("load", async () => {
     return;
   }
 
+  await clearCartIfPaymentCompleted();
   await renderCart();
 });
 
