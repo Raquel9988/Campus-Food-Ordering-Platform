@@ -8,9 +8,7 @@ const supabase = createClient(
 const params = new URLSearchParams(window.location.search);
 const vendorId = params.get("vendorId");
 
-/* ════════════════════════════════════════════
-   TOAST
-════════════════════════════════════════════ */
+//  TOAST
 function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
@@ -18,9 +16,7 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove("show"), 2500);
 }
 
-/* ════════════════════════════════════════════
-   CART  (unchanged from original)
-════════════════════════════════════════════ */
+//  CART
 async function getCartKey() {
   const {
     data: { user },
