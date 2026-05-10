@@ -28,6 +28,9 @@ const filterTabs = document.querySelectorAll(".filter-tab");
 let currentStudentId = null;
 let allOrders = [];
 
+const ACTIVE_ORDER_STATUSES = ["received", "preparing", "ready"];
+const HISTORY_ORDER_STATUSES = ["complete"];
+
 const validFilters = ["active", "history"];
 
 let currentFilter =
@@ -82,16 +85,24 @@ function getSafeOrderId(orderId) {
    Order Status Helpers
 ======================================== */
 
-function isCompleteOrder(order) {
-  return order?.status === "complete";
+function isPaidOrder(order) {
+  return order?.payment_status === "paid";
+}
+
+function isActiveOrder(order) {
+  return isPaidOrder(order) && ACTIVE_ORDER_STATUSES.includes(order?.status);
+}
+
+function isHistoryOrder(order) {
+  return isPaidOrder(order) && HISTORY_ORDER_STATUSES.includes(order?.status);
 }
 
 function filterOrders(orders, filter) {
   if (filter === "history") {
-    return orders.filter((order) => isCompleteOrder(order));
+    return orders.filter((order) => isHistoryOrder(order));
   }
 
-  return orders.filter((order) => !isCompleteOrder(order));
+  return orders.filter((order) => isActiveOrder(order));
 }
 
 function getDisplayStatusKey(order) {
@@ -202,7 +213,7 @@ function getEmptyMessage(filter) {
 
   return {
     title: "No active orders",
-    message: "You have no orders in progress right now.",
+    message: "You have no paid orders in progress right now.",
   };
 }
 
@@ -323,6 +334,8 @@ async function fetchOrders(studentId) {
       "id, student_id, vendor_id, status, created_at, updated_at, payment_status, payment_provider, payment_amount, transaction_id, paid_at"
     )
     .eq("student_id", studentId)
+    .eq("payment_status", "paid")
+    .in("status", [...ACTIVE_ORDER_STATUSES, ...HISTORY_ORDER_STATUSES])
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -522,13 +535,6 @@ function subscribeToRealtime() {
           newOrder.payment_status === "paid"
         ) {
           showToast(`Payment confirmed for order #${getSafeOrderId(newOrder.id)}.`);
-        }
-
-        if (
-          oldOrder?.payment_status === "pending" &&
-          newOrder.payment_status === "failed"
-        ) {
-          showToast(`Payment failed for order #${getSafeOrderId(newOrder.id)}.`);
         }
 
         if (oldOrder?.status === "received" && newOrder.status === "preparing") {
