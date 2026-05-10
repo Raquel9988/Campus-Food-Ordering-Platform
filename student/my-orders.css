@@ -187,7 +187,7 @@ body {
 }
 
 /* Status badges */
-.status-received, .status-preparing, .status-ready, .status-default {
+.status-received, .status-preparing, .status-ready, .status-complete, .status-default {
   display: inline-block; padding: 6px 12px;
   border-radius: 20px; font-size: 11.5px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap;
@@ -195,6 +195,7 @@ body {
 .status-received  { background: #fef3c7; color: #b45309;  border: 1px solid #fcd34d; }
 .status-preparing { background: #dbeafe; color: #1d4ed8;  border: 1px solid #93c5fd; }
 .status-ready     { background: #dcfce7; color: #166534;  border: 1px solid #86efac; }
+.status-complete  { background: #e0e7ff; color: #3730a3;  border: 1px solid #a5b4fc; }
 .status-default   { background: #f3f4f6; color: var(--muted); border: 1px solid var(--border); }
 
 /* ── Utility ────────────────────────────────────────────────────────────── */

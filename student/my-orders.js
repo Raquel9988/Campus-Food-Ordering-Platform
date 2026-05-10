@@ -22,8 +22,8 @@ const backBtn = document.getElementById("back-btn");
    Constants
 ======================================== */
 
-const ACTIVE_STATUSES   = ["pending", "accepted", "payment_pending", "received", "preparing", "ready"];
-const HISTORY_STATUSES  = ["completed", "collected", "cancelled", "payment_failed"];
+const ACTIVE_STATUSES   = ["payment_pending", "received", "preparing", "ready"];
+const HISTORY_STATUSES  = ["complete", "cancelled", "payment_failed"];
 
 /* ========================================
    State
@@ -77,6 +77,10 @@ function getStatusClass(status) {
     case "ready":
       return "status-ready";
 
+    case "complete":
+      return "status-complete";
+
+    case "cancelled":
     case "payment_pending":
     case "payment_failed":
     default:
@@ -96,10 +100,16 @@ function getStatusText(status) {
       return "Order Received";
 
     case "preparing":
-      return "Preparing";
+      return "Being Prepared";
 
     case "ready":
-      return "Ready for Pickup";
+      return "Order Ready";
+
+    case "complete":
+      return "Completed";
+
+    case "cancelled":
+      return "Cancelled";
 
     default:
       return status || "Unknown";

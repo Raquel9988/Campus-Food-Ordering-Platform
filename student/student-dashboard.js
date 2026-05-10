@@ -148,7 +148,7 @@ async function updateActiveOrdersDot(userId) {
     .from("orders")
     .select("id")
     .eq("student_id", userId)
-    .in("status", ["pending", "accepted", "preparing", "payment_pending"]);
+    .in("status", ["payment_pending", "received", "preparing", "ready"]);
 
   if (data && data.length > 0) {
     activeOrdersDot?.classList.remove("hidden");
@@ -250,4 +250,3 @@ window.addEventListener("load", async () => {
 viewCartBtn?.addEventListener("click", () => {
   window.location.href = "student-cart.html";
 });
-
