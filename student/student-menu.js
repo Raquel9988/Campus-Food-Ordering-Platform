@@ -2,19 +2,14 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://sqbscxfolbckikrzxqhr.supabase.co",
-  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
+  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay",
 );
 
 const params = new URLSearchParams(window.location.search);
 const vendorId = params.get("vendorId");
 
-let allMenuItems = [];
-const activeFilters = new Set();
 
-/* =========================
-   TOAST
-========================= */
-
+//  TOAST
 function showToast(message) {
   const toast = document.getElementById("toast");
 
@@ -25,15 +20,9 @@ function showToast(message) {
 
   toast.textContent = message;
   toast.classList.add("show");
-
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2500);
+  setTimeout(() => toast.classList.remove("show"), 2500);
 }
 
-/* =========================
-   HELPERS
-========================= */
 
 function escapeHtml(text) {
   if (text === null || text === undefined) {
@@ -72,13 +61,12 @@ function getItemTags(item) {
 
 /* =========================
    CART
-========================= */
 
+//  CART
 async function getCartKey() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   return user ? `campus_cart_${user.id}` : "campus_cart_guest";
 }
 
@@ -100,27 +88,7 @@ async function saveCart(cart) {
 async function addToCart(selectedVendorId, item) {
   const cart = await getCart();
 
-  const existingVendorIds = Object.keys(cart).filter((id) => {
-    return cart[id]?.items?.length > 0;
-  });
-
-  const hasOtherVendor =
-    existingVendorIds.length > 0 && !existingVendorIds.includes(String(selectedVendorId));
-
-  if (hasOtherVendor) {
-    const shouldClear = confirm(
-      "You can only order from one vendor at a time. Clear your current cart and start a new order from this vendor?"
-    );
-
-    if (!shouldClear) {
-      showToast("Item was not added. Your cart still contains items from another vendor.");
-      return false;
-    }
-
-    existingVendorIds.forEach((id) => {
-      delete cart[id];
-    });
-  }
+  if (!cart[vendorId]) cart[vendorId] = { items: [] };
 
   if (!cart[selectedVendorId]) {
     cart[selectedVendorId] = { items: [] };
@@ -148,10 +116,10 @@ async function addToCart(selectedVendorId, item) {
   return true;
 }
 
-/* =========================
-   LOAD VENDOR NAME
-========================= */
 
+/* ════════════════════════════════════════════
+   LOAD VENDOR NAME  (unchanged)
+════════════════════════════════════════════ */
 async function loadVendorName() {
   if (!vendorId) {
     document.getElementById("vendor-name").textContent = "Vendor Menu";
@@ -165,15 +133,6 @@ async function loadVendorName() {
     .single();
 
   const title = document.getElementById("vendor-name");
-
-  if (title) {
-    title.textContent = data?.business_name || "Vendor Menu";
-  }
-}
-
-/* =========================
-   LOAD MENU
-========================= */
 
 async function loadMenu() {
   const menuList = document.getElementById("menu-list");
@@ -189,7 +148,24 @@ async function loadMenu() {
       Loading menu…
     </p>
   `;
+  if (title) title.textContent = data?.business_name || "Vendor Menu";
+}
 
+/* ════════════════════════════════════════════
+   ALL ITEMS CACHE
+   We fetch once and filter in memory so that
+   toggling filters doesn't re-hit the database.
+════════════════════════════════════════════ */
+let allMenuItems = [];
+
+/* ════════════════════════════════════════════
+   LOAD MENU FROM SUPABASE
+════════════════════════════════════════════ */
+async function loadMenu() {
+  const menuList = document.getElementById("menu-list");
+  menuList.innerHTML = `<p class="loading-text"><span class="spinner-sm"></span> Loading menu…</p>`;
+
+  // Include dietary_tags in the select so filters can work
   const { data, error } = await supabase
     .from("menu_items")
     .select("id, name, price, description, image_url, dietary_tags")
@@ -212,30 +188,28 @@ async function loadMenu() {
   renderMenu(allMenuItems);
 }
 
-/* =========================
-   RENDER MENU
-========================= */
 
+/* ════════════════════════════════════════════
+   RENDER MENU ITEMS  (builds cards from array)
+════════════════════════════════════════════ */
 function renderMenu(items) {
   const menuList = document.getElementById("menu-list");
   menuList.innerHTML = "";
 
-  if (!items.length) {
+  if (items.length === 0) {
     menuList.innerHTML = `
-      <section class="empty-filter-state">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" opacity="0.35" aria-hidden="true">
+      <div class="empty-filter-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" opacity="0.35">
           <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
           <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
         <p>No items match your filters.</p>
-        <button class="clear-filter-btn" id="clear-filter-inline" type="button">Clear filters</button>
-      </section>
-    `;
+        <button class="clear-filter-btn" id="clear-filter-inline">Clear filters</button>
+      </div>`;
 
     document
       .getElementById("clear-filter-inline")
-      ?.addEventListener("click", resetFilters);
-
+      ?.addEventListener("click", () => resetFilters());
     return;
   }
 
@@ -243,6 +217,7 @@ function renderMenu(items) {
     const card = document.createElement("article");
     card.className = "menu-item";
 
+    // Image
     const figure = document.createElement("figure");
     figure.className = item.image_url ? "image-wrapper" : "image-wrapper empty";
 
@@ -253,11 +228,12 @@ function renderMenu(items) {
       img.className = "menu-image";
       figure.appendChild(img);
     } else {
-      const caption = document.createElement("figcaption");
-      caption.textContent = "No image available";
-      figure.appendChild(caption);
+      const cap = document.createElement("figcaption");
+      cap.textContent = "No image";
+      figure.appendChild(cap);
     }
 
+    // Info section
     const info = document.createElement("section");
     info.className = "menu-info";
 
@@ -282,6 +258,18 @@ function renderMenu(items) {
       tagsRow.appendChild(pill);
     });
 
+    // Dietary tag pills on the card
+    const tagsRow = document.createElement("div");
+    tagsRow.className = "card-diet-tags";
+    if (item.dietary_tags?.length) {
+      item.dietary_tags.forEach((tag) => {
+        const pill = document.createElement("span");
+        pill.className = "card-diet-pill";
+        pill.textContent = formatTag(tag);
+        tagsRow.appendChild(pill);
+      });
+    }
+
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = "Add to Cart 🛒";
@@ -293,32 +281,27 @@ function renderMenu(items) {
         price: item.price,
         image_url: item.image_url,
       });
-
-      if (added) {
-        showToast(`${item.name} added to cart!`);
-      }
+      showToast(`${item.name} added to cart!`);
     });
 
     info.appendChild(name);
     info.appendChild(description);
     info.appendChild(price);
-
-    if (getItemTags(item).length > 0) {
-      info.appendChild(tagsRow);
-    }
-
+    if (item.dietary_tags?.length) info.appendChild(tagsRow);
     info.appendChild(button);
 
     card.appendChild(figure);
     card.appendChild(info);
-
     menuList.appendChild(card);
   });
 }
 
-/* =========================
-   FILTER LOGIC
-========================= */
+/* ════════════════════════════════════════════
+   PERSON 6 — DIETARY FILTER LOGIC
+════════════════════════════════════════════ */
+
+// Tracks which filters are currently active (Set of tag strings, or "all")
+const activeFilters = new Set();
 
 function applyFilters() {
   if (activeFilters.size === 0) {
@@ -327,40 +310,35 @@ function applyFilters() {
     return;
   }
 
-  const selectedFilters = [...activeFilters];
-
-  const filteredItems = allMenuItems.filter((item) => {
-    const itemTags = getItemTags(item);
-
-    return selectedFilters.every((filter) => {
-      return itemTags.includes(filter);
-    });
+  // Sprint spec: "only items matching ALL filters are shown"
+  const filtered = allMenuItems.filter((item) => {
+    const tags = item.dietary_tags || [];
+    return [...activeFilters].every((f) => tags.includes(f));
   });
 
-  renderMenu(filteredItems);
-  updateFilterSummary(selectedFilters);
+  renderMenu(filtered);
+  updateFilterSummary([...activeFilters]);
 }
 
 function updateFilterSummary(activeList) {
-  const summary = document.getElementById("filter-summary");
-
-  if (!summary) {
-    return;
-  }
+  const el = document.getElementById("filter-summary");
+  if (!el) return;
 
   if (activeList.length === 0) {
-    summary.innerHTML = "";
+    el.innerHTML = "";
     return;
   }
 
-  const labels = activeList.map(formatTag).join(", ");
-
-  summary.innerHTML = `
-    Showing items matching: <strong>${escapeHtml(labels)}</strong>
-    <button class="clear-filters-btn" id="clear-filters-btn" type="button" aria-label="Clear all filters">
+  const labels = activeList.map((f) => formatTag(f)).join(", ");
+  el.innerHTML = `
+    Showing items matching: <strong>${labels}</strong>
+    <button class="clear-filters-btn" id="clear-filters-btn" aria-label="Clear all filters">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+        <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
       Clear all
-    </button>
-  `;
+    </button>`;
 
   document
     .getElementById("clear-filters-btn")
@@ -370,15 +348,65 @@ function updateFilterSummary(activeList) {
 function resetFilters() {
   activeFilters.clear();
 
+  // Reset chip UI
   document.querySelectorAll(".filter-chip").forEach((chip) => {
-    const isAllChip = chip.dataset.filter === "all";
-
-    chip.classList.toggle("active", isAllChip);
-    chip.setAttribute("aria-pressed", isAllChip ? "true" : "false");
+    const isAll = chip.dataset.filter === "all";
+    chip.classList.toggle("active", isAll);
+    chip.setAttribute("aria-pressed", isAll ? "true" : "false");
   });
 
   updateFilterSummary([]);
   renderMenu(allMenuItems);
+}
+
+function setupFilters() {
+  document.querySelectorAll(".filter-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const filter = chip.dataset.filter;
+
+      if (filter === "all") {
+        resetFilters();
+        return;
+      }
+
+      // Toggle this filter in the active set
+      if (activeFilters.has(filter)) {
+        activeFilters.delete(filter);
+        chip.classList.remove("active");
+        chip.setAttribute("aria-pressed", "false");
+      } else {
+        activeFilters.add(filter);
+        chip.classList.add("active");
+        chip.setAttribute("aria-pressed", "true");
+      }
+
+      // Deactivate "All" chip when any specific filter is active
+      const allChip = document.querySelector('.filter-chip[data-filter="all"]');
+      if (allChip) {
+        const noneActive = activeFilters.size === 0;
+        allChip.classList.toggle("active", noneActive);
+        allChip.setAttribute("aria-pressed", noneActive ? "true" : "false");
+      }
+
+      applyFilters();
+    });
+  });
+}
+
+/* ════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════ */
+function formatTag(tag) {
+  return tag.replaceAll("_", "-").replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+async function initMenu() {
+  await loadVendorName();
+  await loadMenu();
+  setupFilters(); // wire up filter chips after items are loaded
 }
 
 function setupFilters() {
@@ -415,10 +443,10 @@ function setupFilters() {
   });
 }
 
-/* =========================
-   NAV
-========================= */
 
+/* ════════════════════════════════════════════
+   NAV  (unchanged from original)
+════════════════════════════════════════════ */
 document.getElementById("back-btn")?.addEventListener("click", () => {
   window.location.href = "student-dashboard.html";
 });

@@ -40,7 +40,6 @@ body {
   top: 20px;
   z-index: 100;
 }
-
 .header-inner {
   display: flex;
   align-items: center;
@@ -48,19 +47,16 @@ body {
   gap: 18px;
   flex-wrap: wrap;
 }
-
 .header-brand {
   display: flex;
   align-items: center;
   gap: 14px;
 }
-
 .logo-link {
   display: inline-flex;
   align-items: center;
   text-decoration: none;
 }
-
 .logo-img {
   height: 46px;
   width: auto;
@@ -68,7 +64,6 @@ body {
   filter: brightness(0) invert(1);
   opacity: 0.92;
 }
-
 .header-title {
   font-family: "Roboto", "Inter", sans-serif;
   font-size: 1.4rem;
@@ -76,13 +71,11 @@ body {
   color: #fff;
   letter-spacing: -0.4px;
 }
-
 .header-sub {
   font-size: 0.8rem;
   color: #bbf7d0;
   margin-top: 2px;
 }
-
 .header-actions {
   display: flex;
   gap: 10px;
@@ -103,24 +96,20 @@ body {
   transition: 0.22s ease;
   white-space: nowrap;
 }
-
 .hdr-btn--ghost {
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(4px);
 }
-
 .hdr-btn--ghost:hover {
   background: rgba(255, 255, 255, 0.25);
   transform: translateY(-1px);
 }
-
 .hdr-btn--cart {
   background: rgba(255, 255, 255, 0.92);
   color: var(--green);
 }
-
 .hdr-btn--cart:hover {
   background: #fff;
   transform: translateY(-1px);
@@ -140,7 +129,6 @@ body {
 .menu-hero {
   margin-bottom: 20px;
 }
-
 .section-heading {
   font-family: "Roboto", "Inter", sans-serif;
   font-size: 1.25rem;
@@ -150,13 +138,15 @@ body {
   border-bottom: 2px solid #d1fae5;
   margin-bottom: 6px;
 }
-
 .section-sub {
   font-size: 0.875rem;
   color: var(--muted);
 }
 
-/* ── Dietary filter bar ─────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════
+   PERSON 6 — FILTER BAR
+════════════════════════════════════════════ */
+
 .filter-bar {
   display: flex;
   align-items: center;
@@ -189,6 +179,7 @@ body {
   flex: 1;
 }
 
+/* Individual filter chip button */
 .filter-chip {
   display: inline-flex;
   align-items: center;
@@ -202,7 +193,10 @@ body {
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease,
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease,
     transform 0.15s ease;
   white-space: nowrap;
   user-select: none;
@@ -214,6 +208,7 @@ body {
   transform: translateY(-1px);
 }
 
+/* Active / selected state */
 .filter-chip.active {
   background: #ecfdf5;
   border-color: var(--green);
@@ -225,12 +220,14 @@ body {
   background: #d1fae5;
 }
 
+/* "All" chip highlighted in orange when nothing else is selected */
 .filter-chip[data-filter="all"].active {
   background: #fff7ed;
   border-color: var(--orange);
   color: #c2410c;
 }
 
+/* Filter summary line */
 .filter-summary {
   width: 100%;
   font-size: 0.82rem;
@@ -260,7 +257,6 @@ body {
   cursor: pointer;
   transition: 0.18s ease;
 }
-
 .clear-filters-btn:hover {
   background: #f3f4f6;
   color: var(--text);
@@ -280,11 +276,12 @@ body {
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.22s ease, transform 0.22s ease;
+  transition:
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
   display: flex;
   flex-direction: column;
 }
-
 .menu-item:hover {
   transform: translateY(-3px);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.09);
@@ -300,12 +297,10 @@ body {
   align-items: center;
   justify-content: center;
 }
-
 .image-wrapper.empty {
   color: var(--muted);
   font-size: 13px;
 }
-
 .menu-image {
   width: 100%;
   height: 100%;
@@ -313,7 +308,6 @@ body {
   padding: 10px;
   transition: transform 0.3s ease;
 }
-
 .menu-item:hover .menu-image {
   transform: scale(1.05);
 }
@@ -325,26 +319,24 @@ body {
   gap: 8px;
   flex: 1;
 }
-
 .menu-info h3 {
   font-size: 1rem;
   font-weight: 700;
   color: #111827;
 }
-
 .menu-info .description {
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.5;
   min-height: 38px;
 }
-
 .menu-price {
   font-size: 0.95rem;
   font-weight: 800;
   color: var(--green);
 }
 
+/* Dietary tag pills on each card */
 .card-diet-tags {
   display: flex;
   flex-wrap: wrap;
@@ -381,7 +373,6 @@ body {
   cursor: pointer;
   transition: 0.2s ease;
 }
-
 .menu-info button:hover {
   background: var(--green-light);
   transform: translateY(-1px);
@@ -417,7 +408,6 @@ body {
   cursor: pointer;
   transition: 0.2s ease;
 }
-
 .clear-filter-btn:hover {
   background: var(--green-light);
   transform: translateY(-1px);
@@ -436,19 +426,16 @@ body {
   font-weight: 600;
   font-size: 0.9rem;
 }
-
 .loading-text {
   background: #f9fafb;
   color: var(--muted);
   border: 1px solid var(--border);
 }
-
 .empty-text {
   background: #fffbeb;
   color: #b45309;
   border: 1px solid #fcd34d;
 }
-
 .error-text {
   background: #fef2f2;
   color: #b91c1c;
@@ -464,7 +451,6 @@ body {
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
-
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -489,15 +475,9 @@ body {
   font-weight: 600;
   font-size: 0.9rem;
 }
-
 .toast.show {
   opacity: 1;
   transform: translateY(0);
-}
-
-/* ── Utility ────────────────────────────────────────────────────────────── */
-.hidden {
-  display: none !important;
 }
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
@@ -505,65 +485,53 @@ body {
   body {
     padding: 14px;
   }
-
   .header {
     top: 14px;
     border-radius: 18px;
     padding: 14px 16px;
   }
-
   .header-inner {
     flex-direction: column;
     align-items: flex-start;
   }
-
   .header-actions {
     width: 100%;
   }
-
   .hdr-btn {
     flex: 1;
     justify-content: center;
   }
-
   .logo-img {
     height: 38px;
   }
-
   .main-card {
     padding: 20px 16px;
     border-radius: 18px;
   }
-
   .image-wrapper {
     height: 130px;
   }
-
   .filter-bar {
     padding: 12px 14px;
     gap: 10px;
   }
-
   .filter-label {
     display: none;
-  }
+  } /* save space on mobile */
 }
 
 @media (max-width: 480px) {
   body {
     padding: 10px;
   }
-
   .header {
     top: 10px;
     border-radius: 16px;
   }
-
   .menu-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-
   .filter-chip {
     font-size: 0.78rem;
     padding: 6px 11px;
