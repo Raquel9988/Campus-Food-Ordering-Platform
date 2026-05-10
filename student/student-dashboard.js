@@ -87,22 +87,71 @@ async function getStudentAuth() {
 }
 
 /* ========================================
-   ACTIVE ORDERS NOTIFICATION
+   READY ORDER NOTIFICATION DOT
 ======================================== */
 
-async function updateActiveOrdersDot(userId) {
+function getSeenReadyOrders() {
+  try {
+    return JSON.parse(localStorage.getItem("seen_ready_orders") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveSeenReadyOrders(orderIds) {
+  localStorage.setItem("seen_ready_orders", JSON.stringify(orderIds));
+}
+
+function showActiveOrdersDot() {
+  activeOrdersDot?.classList.remove("hidden");
+}
+
+function hideActiveOrdersDot() {
+  activeOrdersDot?.classList.add("hidden");
+}
+
+async function fetchReadyOrderIds(userId) {
   const { data, error } = await supabase
     .from("orders")
     .select("id")
     .eq("student_id", userId)
-    .neq("status", "complete");
+    .eq("payment_status", "paid")
+    .eq("status", "ready");
 
-  if (error || !data || data.length === 0) {
-    activeOrdersDot?.classList.add("hidden");
+  if (error) {
+    console.error("Ready orders check error:", error);
+    return [];
+  }
+
+  return (data || []).map((order) => order.id);
+}
+
+async function updateActiveOrdersDot(userId) {
+  const readyOrderIds = await fetchReadyOrderIds(userId);
+
+  if (readyOrderIds.length === 0) {
+    hideActiveOrdersDot();
     return;
   }
 
-  activeOrdersDot?.classList.remove("hidden");
+  const seenReadyOrders = getSeenReadyOrders();
+
+  const hasUnseenReadyOrder = readyOrderIds.some((orderId) => {
+    return !seenReadyOrders.includes(orderId);
+  });
+
+  if (hasUnseenReadyOrder) {
+    showActiveOrdersDot();
+  } else {
+    hideActiveOrdersDot();
+  }
+}
+
+async function markReadyOrdersAsSeen(userId) {
+  const readyOrderIds = await fetchReadyOrderIds(userId);
+
+  saveSeenReadyOrders(readyOrderIds);
+  hideActiveOrdersDot();
 }
 
 /* ========================================
@@ -138,6 +187,7 @@ function subscribeToOrders(userId) {
 
         if (
           newOrder &&
+          newOrder.payment_status === "paid" &&
           newOrder.status === "ready" &&
           oldOrder?.status !== "ready"
         ) {
@@ -215,7 +265,8 @@ async function loadVendors() {
 ======================================== */
 
 function setupEvents(user) {
-  activeOrdersBtn?.addEventListener("click", () => {
+  activeOrdersBtn?.addEventListener("click", async () => {
+    await markReadyOrdersAsSeen(user.id);
     window.location.href = "my-orders.html?filter=active";
   });
 
