@@ -505,4 +505,25 @@ async function initializePage() {
 
 document.addEventListener("DOMContentLoaded", initializePage);
 
-export { isValidStatusTransition };
+export {
+  ACTIVE_VENDOR_STATUSES,
+  STATUS_TRANSITIONS,
+  escapeHtml,
+  formatDate,
+  formatCurrency,
+  showLoading,
+  showError,
+  showOrders,
+  showEmpty,
+  isValidStatusTransition,
+  getApprovedVendorAuth,
+  fetchOrders,
+  updateOrderStatus,
+  createOrderCard,
+  renderOrders,
+  loadOrders,
+  silentRefresh,
+  startAutoRefresh,
+  stopAutoRefresh,
+  initializePage,
+};

@@ -1,37 +1,21 @@
 import { defineConfig } from "vitest/config";
-import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const currentFile = fileURLToPath(import.meta.url);
+const currentDir = path.dirname(currentFile);
 
 export default defineConfig({
-  plugins: [
-    cloudflareTest({
-      miniflare: {
-        compatibilityDate: "2025-01-01",
-      },
-    }),
-  ],
-
   test: {
-    globals: true,
+    environment: "jsdom",
+  },
 
-    coverage: {
-      provider: "istanbul",
-      reporter: ["text", "html", "lcov"],
-
-      include: [
-        "functions/**/*.js",
-        "payments/**/*.js",
-        "student/**/*.js",
-        "vendor/**/*.js",
-        "dietary/**/*.js"
-      ],
-
-      exclude: [
-        "tests/**",
-        "**/*.test.js",
-        "**/*.spec.js",
-        "coverage/**",
-        "node_modules/**"
-      ],
+  resolve: {
+    alias: {
+      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm": path.resolve(
+        currentDir,
+        "tests/mocks/supabaseMock.js"
+      ),
     },
   },
 });

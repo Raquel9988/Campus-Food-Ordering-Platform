@@ -602,3 +602,17 @@ function formatDietaryTag(tag) {
     .replaceAll("_", "-")
     .replace(/\b\w/g, l => l.toUpperCase());
 }
+export {
+  showFieldError,
+  clearFieldError,
+  clearAllErrors,
+  showDietaryError,
+  hideDietaryError,
+  showFormMessage,
+  clearFormMessage,
+  setupImagePreview,
+  resetImagePreview,
+  getApprovedVendorAuth,
+  escapeHtml,
+  formatDietaryTag,
+};
