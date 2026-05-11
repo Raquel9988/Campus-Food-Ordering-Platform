@@ -5,17 +5,33 @@ import { fileURLToPath } from "node:url";
 const currentFile = fileURLToPath(import.meta.url);
 const currentDir = path.dirname(currentFile);
 
+const supabaseMockPath = path.resolve(
+  currentDir,
+  "tests/mocks/supabaseMock.js"
+);
+
 export default defineConfig({
   test: {
     environment: "jsdom",
+    globals: true,
+    clearMocks: true,
+    restoreMocks: true,
   },
 
   resolve: {
-    alias: {
-      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm": path.resolve(
-        currentDir,
-        "tests/mocks/supabaseMock.js"
-      ),
-    },
+    alias: [
+      {
+        find: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm",
+        replacement: supabaseMockPath,
+      },
+      {
+        find: /^https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js.*$/,
+        replacement: supabaseMockPath,
+      },
+      {
+        find: /^https:\/\/esm\.sh\/@supabase\/supabase-js.*$/,
+        replacement: supabaseMockPath,
+      },
+    ],
   },
 });

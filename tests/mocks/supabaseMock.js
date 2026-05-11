@@ -21,6 +21,7 @@ export function createClient() {
       from() {
         return {
           upload: async () => ({
+            data: null,
             error: null,
           }),
 

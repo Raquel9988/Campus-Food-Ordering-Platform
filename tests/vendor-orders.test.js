@@ -17,6 +17,10 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.clearAllTimers();
+  vi.restoreAllMocks();
+  vi.resetModules();
+
   document.body.innerHTML = "";
 });
 
@@ -81,6 +85,8 @@ describe("vendor order formatting", () => {
     );
 
     expect(escapeHtml("Fish & Chips")).toBe("Fish &amp; Chips");
+    expect(escapeHtml('"quoted"')).toBe("&quot;quoted&quot;");
+    expect(escapeHtml("it's nice")).toBe("it&#039;s nice");
   });
 });
 
@@ -109,6 +115,8 @@ describe("vendor order cards", () => {
     expect(card.textContent).toContain("Order #order-12");
     expect(card.textContent).toContain("received");
     expect(card.textContent).toContain("Payment Received");
+    expect(card.textContent).toContain("PayFast");
+    expect(card.textContent).toContain("TX-001");
     expect(card.textContent).toContain("student@example.com");
     expect(card.textContent).toContain("Burger");
     expect(card.textContent).toContain("R25.00");
@@ -140,6 +148,7 @@ describe("vendor order cards", () => {
     expect(card.textContent).toContain("preparing");
     expect(card.textContent).toContain("Mark as Ready");
     expect(card.textContent).not.toContain("Start Preparing");
+    expect(card.textContent).not.toContain("Order Complete");
   });
 
   test("ready order card shows Order Complete button", async () => {
@@ -165,6 +174,7 @@ describe("vendor order cards", () => {
 
     expect(card.textContent).toContain("ready");
     expect(card.textContent).toContain("Order Complete");
+    expect(card.textContent).not.toContain("Start Preparing");
     expect(card.textContent).not.toContain("Mark as Ready");
   });
 
@@ -184,6 +194,34 @@ describe("vendor order cards", () => {
     });
 
     expect(card.textContent).toContain("No items found.");
+    expect(card.textContent).toContain("R0.00");
+  });
+
+  test("order card escapes unsafe HTML in displayed text", async () => {
+    const { createOrderCard } = await import("../vendor/orders.js");
+
+    const card = createOrderCard({
+      id: "order-55555555",
+      status: "received",
+      payment_provider: "PayFast",
+      transaction_id: "TX-005",
+      paid_at: "2026-05-11T10:00:00Z",
+      studentEmail: "<script>alert('bad')</script>",
+      created_at: "2026-05-11T09:50:00Z",
+      total_price: 20,
+      items: [
+        {
+          name: "<img src=x onerror=alert(1)>",
+          quantity: 1,
+          price: 20,
+        },
+      ],
+    });
+
+    expect(card.innerHTML).not.toContain("<script>");
+    expect(card.innerHTML).not.toContain("<img src=x");
+    expect(card.innerHTML).toContain("&lt;script&gt;");
+    expect(card.innerHTML).toContain("&lt;img");
   });
 });
 
@@ -312,6 +350,10 @@ describe("vendor page display states", () => {
       document.getElementById("error-container").classList.contains("hidden")
     ).toBe(false);
 
+    expect(
+      document.getElementById("loading-container").classList.contains("hidden")
+    ).toBe(true);
+
     expect(document.getElementById("error-text").textContent).toBe(
       "Something went wrong"
     );
@@ -329,6 +371,10 @@ describe("vendor page display states", () => {
     expect(
       document.getElementById("empty-state").classList.contains("hidden")
     ).toBe(true);
+
+    expect(
+      document.getElementById("error-container").classList.contains("hidden")
+    ).toBe(true);
   });
 
   test("showEmpty displays the empty state", async () => {
@@ -342,6 +388,10 @@ describe("vendor page display states", () => {
 
     expect(
       document.getElementById("orders-container").classList.contains("hidden")
+    ).toBe(true);
+
+    expect(
+      document.getElementById("error-container").classList.contains("hidden")
     ).toBe(true);
   });
 });

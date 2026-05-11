@@ -363,6 +363,16 @@ export async function setupStudentDashboardPage({
   return controller;
 }
 
-if (typeof document !== "undefined" && typeof window !== "undefined") {
+const isVitestEnvironment =
+  (typeof process !== "undefined" &&
+    (process.env?.VITEST === "true" || process.env?.NODE_ENV === "test")) ||
+  (typeof navigator !== "undefined" &&
+    navigator.userAgent.toLowerCase().includes("jsdom"));
+
+if (
+  typeof document !== "undefined" &&
+  typeof window !== "undefined" &&
+  !isVitestEnvironment
+) {
   setupStudentDashboardPage();
 }

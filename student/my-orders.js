@@ -661,6 +661,13 @@ export async function setupMyOrdersPage({
   return controller;
 }
 
-if (typeof document !== "undefined" && typeof window !== "undefined") {
+const isVitestEnvironment =
+  typeof process !== "undefined" && process.env?.VITEST === "true";
+
+if (
+  typeof document !== "undefined" &&
+  typeof window !== "undefined" &&
+  !isVitestEnvironment
+) {
   setupMyOrdersPage();
 }
