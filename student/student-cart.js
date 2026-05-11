@@ -5,9 +5,30 @@ const supabase = createClient(
   "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
 );
 
+const PAY_BUTTON_HTML = `
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <polyline
+      points="22 4 12 14.01 9 11.01"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+  Pay Now
+`;
+
 /* =========================
-   TOAST
+   TOAST + MESSAGE BANNER
 ========================= */
+
 function showToast(message) {
   const toast = document.getElementById("toast");
 
@@ -24,9 +45,49 @@ function showToast(message) {
   }, 2500);
 }
 
+function showCartMessage(message, type = "warning") {
+  const messageBox = document.getElementById("cart-message");
+
+  if (!messageBox) {
+    showToast(message);
+    return;
+  }
+
+  messageBox.textContent = message;
+  messageBox.className = `cart-message ${type}`;
+  messageBox.classList.remove("hidden");
+}
+
+function clearCartMessage() {
+  const messageBox = document.getElementById("cart-message");
+
+  if (messageBox) {
+    messageBox.classList.add("hidden");
+    messageBox.textContent = "";
+  }
+}
+
+/* =========================
+   SAFE HTML HELPERS
+========================= */
+
+function escapeHtml(text) {
+  if (text === null || text === undefined) {
+    return "";
+  }
+
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 /* =========================
    CART STORAGE
 ========================= */
+
 async function getCartKey() {
   const {
     data: { user },
@@ -37,7 +98,12 @@ async function getCartKey() {
 
 async function getCart() {
   const key = await getCartKey();
-  return JSON.parse(localStorage.getItem(key)) || {};
+
+  try {
+    return JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return {};
+  }
 }
 
 async function saveCart(cart) {
@@ -50,16 +116,89 @@ async function clearCart() {
   localStorage.removeItem(key);
 }
 
+function clearCartByKey(cartKey) {
+  if (cartKey) {
+    localStorage.removeItem(cartKey);
+  }
+}
+
+function getVendorIds(cart) {
+  return Object.keys(cart).filter((vendorId) => {
+    return cart[vendorId]?.items?.length > 0;
+  });
+}
+
+/* =========================
+   PENDING PAYMENT CLEANUP
+========================= */
+
+function clearPendingPaymentStorage() {
+  sessionStorage.removeItem("campus_pending_order_id");
+  sessionStorage.removeItem("campus_pending_cart_key");
+}
+
+function isSuccessfulPaidOrder(order) {
+  if (!order) {
+    return false;
+  }
+
+  const successfulStatuses = ["received", "preparing", "ready", "complete"];
+
+  return (
+    order.payment_status === "paid" &&
+    successfulStatuses.includes(order.status)
+  );
+}
+
+async function clearCartIfPaymentCompleted() {
+  const pendingOrderId = sessionStorage.getItem("campus_pending_order_id");
+  const pendingCartKey = sessionStorage.getItem("campus_pending_cart_key");
+
+  if (!pendingOrderId || !pendingCartKey) {
+    return;
+  }
+
+  const { data: order, error } = await supabase
+    .from("orders")
+    .select("id, status, payment_status")
+    .eq("id", pendingOrderId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Payment cleanup check error:", error);
+    return;
+  }
+
+  if (isSuccessfulPaidOrder(order)) {
+    clearCartByKey(pendingCartKey);
+    clearPendingPaymentStorage();
+    showToast("Payment successful. Cart cleared.");
+    return;
+  }
+
+  if (
+    order?.payment_status === "failed" ||
+    order?.payment_status === "cancelled" ||
+    order?.status === "payment_failed" ||
+    order?.status === "cancelled"
+  ) {
+    clearPendingPaymentStorage();
+  }
+}
+
 /* =========================
    AUTH
 ========================= */
+
 async function getStudentAuth() {
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
 
-  if (error || !user) return { ok: false };
+  if (error || !user) {
+    return { ok: false };
+  }
 
   const { data: appUser } = await supabase
     .from("users")
@@ -75,15 +214,37 @@ async function getStudentAuth() {
 }
 
 /* =========================
+   BUTTON STATE
+========================= */
+
+function setPayButtonLoading(isLoading) {
+  const placeOrderBtn = document.getElementById("place-order");
+
+  if (!placeOrderBtn) {
+    return;
+  }
+
+  if (isLoading) {
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.innerHTML = `<span class="btn-spinner"></span> Starting payment...`;
+    return;
+  }
+
+  placeOrderBtn.disabled = false;
+  placeOrderBtn.innerHTML = PAY_BUTTON_HTML;
+}
+
+/* =========================
    CART ITEM ACTIONS
 ========================= */
+
 async function removeItem(vendorId, menuItemId) {
   const cart = await getCart();
   const items = cart[vendorId]?.items || [];
 
-  const updatedItems = items.filter(
-    (item) => String(item.menuItemId) !== String(menuItemId)
-  );
+  const updatedItems = items.filter((item) => {
+    return String(item.menuItemId) !== String(menuItemId);
+  });
 
   if (updatedItems.length === 0) {
     delete cart[vendorId];
@@ -98,11 +259,13 @@ async function updateQuantity(vendorId, menuItemId, changeAmount) {
   const cart = await getCart();
   const items = cart[vendorId]?.items || [];
 
-  const item = items.find(
-    (cartItem) => String(cartItem.menuItemId) === String(menuItemId)
-  );
+  const item = items.find((cartItem) => {
+    return String(cartItem.menuItemId) === String(menuItemId);
+  });
 
-  if (!item) return;
+  if (!item) {
+    return;
+  }
 
   item.quantity += changeAmount;
 
@@ -117,22 +280,45 @@ async function updateQuantity(vendorId, menuItemId, changeAmount) {
 /* =========================
    RENDER CART
 ========================= */
+
 async function renderCart() {
   const container = document.getElementById("cart-items");
   const totalEl = document.getElementById("total");
+  const placeOrderBtn = document.getElementById("place-order");
 
   const cart = await getCart();
+  const vendorIds = getVendorIds(cart);
+
   container.innerHTML = "";
 
   let total = 0;
 
-  if (Object.keys(cart).length === 0) {
+  if (vendorIds.length === 0) {
     container.innerHTML = `<p class="empty-cart">Your cart is empty.</p>`;
     totalEl.textContent = "Total: R0.00";
+
+    if (placeOrderBtn) {
+      placeOrderBtn.disabled = true;
+    }
+
+    clearCartMessage();
     return;
   }
 
-  for (const vendorId of Object.keys(cart)) {
+  if (placeOrderBtn) {
+    placeOrderBtn.disabled = false;
+  }
+
+  if (vendorIds.length > 1) {
+    showCartMessage(
+      "You can only order from one vendor at a time. Please remove items from other vendors or clear your cart.",
+      "error"
+    );
+  } else {
+    clearCartMessage();
+  }
+
+  for (const vendorId of vendorIds) {
     const { data: vendor } = await supabase
       .from("vendors")
       .select("business_name")
@@ -145,40 +331,46 @@ async function renderCart() {
     const vendorHeader = document.createElement("header");
     vendorHeader.className = "vendor-cart-header";
     vendorHeader.innerHTML = `
-      <h3>${vendor?.business_name || "Vendor"}</h3>
+      <h3>${escapeHtml(vendor?.business_name || "Vendor")}</h3>
       <p>Items from this vendor</p>
     `;
 
     vendorSection.appendChild(vendorHeader);
 
     for (const item of cart[vendorId].items) {
-      total += Number(item.price) * Number(item.quantity);
+      total += Number(item.price || 0) * Number(item.quantity || 0);
 
       const itemCard = document.createElement("article");
       itemCard.className = "cart-item";
 
+      const safeName = escapeHtml(item.name || "Item");
+      const safeImageUrl = escapeHtml(item.image_url || "");
+      const price = Number(item.price || 0);
+      const quantity = Number(item.quantity || 0);
+      const subtotal = price * quantity;
+
       itemCard.innerHTML = `
-        <figure class="cart-item-image ${item.image_url ? "" : "empty"}">
+        <figure class="cart-item-image ${safeImageUrl ? "" : "empty"}">
           ${
-            item.image_url
-              ? `<img src="${item.image_url}" alt="${item.name}">`
+            safeImageUrl
+              ? `<img src="${safeImageUrl}" alt="${safeName}">`
               : `<figcaption>No image</figcaption>`
           }
         </figure>
 
         <section class="cart-item-details">
-          <h4>${item.name}</h4>
-          <p>Price: R ${Number(item.price).toFixed(2)}</p>
+          <h4>${safeName}</h4>
+          <p>Price: R ${price.toFixed(2)}</p>
           <p class="cart-item-price">
-            Subtotal: R ${(Number(item.price) * Number(item.quantity)).toFixed(2)}
+            Subtotal: R ${subtotal.toFixed(2)}
           </p>
         </section>
 
         <footer class="cart-item-actions">
           <section class="quantity-controls">
-            <button class="minus" type="button">-</button>
-            <span class="quantity-value">${item.quantity}</span>
-            <button class="plus" type="button">+</button>
+            <button class="minus" type="button" aria-label="Decrease quantity">-</button>
+            <span class="quantity-value">${quantity}</span>
+            <button class="plus" type="button" aria-label="Increase quantity">+</button>
           </section>
 
           <button class="remove-btn" type="button">Remove</button>
@@ -212,7 +404,12 @@ async function renderCart() {
 /* =========================
    PAYFAST PAYMENT
 ========================= */
+
 function redirectToPayFast(paymentUrl, paymentFields) {
+  if (!paymentUrl || !paymentFields) {
+    throw new Error("Invalid PayFast payment response.");
+  }
+
   const form = document.createElement("form");
   form.method = "POST";
   form.action = paymentUrl;
@@ -245,22 +442,29 @@ async function startPayFastPayment(order) {
 
   const result = await response.json();
 
-  if (!result.success) {
+  if (!response.ok || !result.success) {
     throw new Error(result.message || "Payment could not be started.");
   }
 
-  redirectToPayFast(result.paymentUrl, result.paymentFields);
+  const paymentUrl = result.paymentUrl || result.payment_url;
+  const paymentFields = result.paymentFields || result.payment_fields;
+
+  sessionStorage.setItem("campus_pending_order_id", order.id);
+  sessionStorage.setItem("campus_pending_cart_key", await getCartKey());
+
+  redirectToPayFast(paymentUrl, paymentFields);
 }
 
 /* =========================
    PLACE ORDER + START PAYFAST PAYMENT
 ========================= */
+
 document.getElementById("place-order")?.addEventListener("click", async () => {
-  const placeOrderBtn = document.getElementById("place-order");
+  let createdOrderId = null;
 
   try {
-    placeOrderBtn.disabled = true;
-    placeOrderBtn.textContent = "Starting payment...";
+    clearCartMessage();
+    setPayButtonLoading(true);
 
     const auth = await getStudentAuth();
 
@@ -270,24 +474,20 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
     }
 
     const cart = await getCart();
-    const vendorIds = Object.keys(cart);
+    const vendorIds = getVendorIds(cart);
 
     if (vendorIds.length === 0) {
       showToast("Your cart is empty.");
-      placeOrderBtn.disabled = false;
-      placeOrderBtn.textContent = "Pay Now";
+      setPayButtonLoading(false);
       return;
     }
 
-    /*
-      Current Sprint 3 payment setup:
-      One PayFast payment request = one vendor order.
-      This prevents one payment from being attached to multiple vendors.
-    */
     if (vendorIds.length > 1) {
-      showToast("Please order from one vendor at a time for online payment.");
-      placeOrderBtn.disabled = false;
-      placeOrderBtn.textContent = "Pay Now";
+      showCartMessage(
+        "You can only order from one vendor at a time. Please clear your cart or remove items from other vendors.",
+        "error"
+      );
+      setPayButtonLoading(false);
       return;
     }
 
@@ -295,8 +495,12 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
     const vendorCart = cart[vendorId];
 
     const totalAmount = vendorCart.items.reduce((sum, item) => {
-      return sum + Number(item.price) * Number(item.quantity);
+      return sum + Number(item.price || 0) * Number(item.quantity || 0);
     }, 0);
+
+    if (totalAmount <= 0) {
+      throw new Error("Your cart total must be greater than R0.00.");
+    }
 
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -304,11 +508,7 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
         {
           student_id: auth.user.id,
           vendor_id: vendorId,
-
-          // Food order status
           status: "payment_pending",
-
-          // Payment-specific fields
           payment_status: "pending",
           payment_provider: "payfast_sandbox",
           payment_amount: Number(totalAmount.toFixed(2)),
@@ -321,6 +521,8 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
       console.error("Order insert error:", orderError);
       throw new Error("Could not create order.");
     }
+
+    createdOrderId = order.id;
 
     const items = vendorCart.items.map((item) => ({
       order_id: order.id,
@@ -344,16 +546,46 @@ document.getElementById("place-order")?.addEventListener("click", async () => {
     });
   } catch (error) {
     console.error("Payment start error:", error);
-    showToast(error.message || "Could not start payment.");
 
-    placeOrderBtn.disabled = false;
-    placeOrderBtn.textContent = "Pay Now";
+    if (createdOrderId) {
+      await supabase
+        .from("orders")
+        .update({
+          status: "payment_failed",
+          payment_status: "failed",
+        })
+        .eq("id", createdOrderId);
+    }
+
+    showCartMessage(
+      error.message || "Payment could not be started. Please try again.",
+      "error"
+    );
+
+    setPayButtonLoading(false);
   }
+});
+
+/* =========================
+   CLEAR CART
+========================= */
+
+document.getElementById("clear-cart")?.addEventListener("click", async () => {
+  const shouldClear = confirm("Are you sure you want to clear your cart?");
+
+  if (!shouldClear) {
+    return;
+  }
+
+  await clearCart();
+  await renderCart();
+  showToast("Cart cleared.");
 });
 
 /* =========================
    INIT
 ========================= */
+
 window.addEventListener("load", async () => {
   const auth = await getStudentAuth();
 
@@ -362,12 +594,14 @@ window.addEventListener("load", async () => {
     return;
   }
 
+  await clearCartIfPaymentCompleted();
   await renderCart();
 });
 
 /* =========================
    NAV
 ========================= */
+
 document.querySelector(".back-btn")?.addEventListener("click", () => {
   window.location.href = "student-dashboard.html";
 });

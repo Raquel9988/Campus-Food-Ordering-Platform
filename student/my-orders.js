@@ -17,19 +17,37 @@ const emptyState = document.getElementById("empty-state");
 const refreshBtn = document.getElementById("refresh-btn");
 const retryBtn = document.getElementById("retry-btn");
 const backBtn = document.getElementById("back-btn");
+const emptyTitle = document.getElementById("empty-title");
+const emptyMessage = document.getElementById("empty-message");
+const filterTabs = document.querySelectorAll(".filter-tab");
 
 /* ========================================
    State
 ======================================== */
 
 let currentStudentId = null;
+let allOrders = [];
+
+const ACTIVE_ORDER_STATUSES = ["received", "preparing", "ready"];
+const HISTORY_ORDER_STATUSES = ["complete"];
+
+const validFilters = ["active", "history"];
+
+let currentFilter =
+  new URLSearchParams(window.location.search).get("filter") || "active";
+
+if (!validFilters.includes(currentFilter)) {
+  currentFilter = "active";
+}
 
 /* ========================================
    Utility Functions
 ======================================== */
 
 function escapeHtml(text) {
-  if (!text) return "";
+  if (text === null || text === undefined) {
+    return "";
+  }
 
   return String(text)
     .replace(/&/g, "&amp;")
@@ -40,7 +58,9 @@ function escapeHtml(text) {
 }
 
 function formatDate(dateString) {
-  if (!dateString) return "N/A";
+  if (!dateString) {
+    return "N/A";
+  }
 
   const date = new Date(dateString);
 
@@ -54,10 +74,56 @@ function formatDate(dateString) {
 }
 
 function formatCurrency(amount) {
-  return `R${parseFloat(amount || 0).toFixed(2)}`;
+  return `R${Number(amount || 0).toFixed(2)}`;
 }
 
-function getStatusClass(status) {
+function getSafeOrderId(orderId) {
+  return String(orderId || "").substring(0, 6);
+}
+
+/* ========================================
+   Order Status Helpers
+======================================== */
+
+function isPaidOrder(order) {
+  return order?.payment_status === "paid";
+}
+
+function isActiveOrder(order) {
+  return isPaidOrder(order) && ACTIVE_ORDER_STATUSES.includes(order?.status);
+}
+
+function isHistoryOrder(order) {
+  return isPaidOrder(order) && HISTORY_ORDER_STATUSES.includes(order?.status);
+}
+
+function filterOrders(orders, filter) {
+  if (filter === "history") {
+    return orders.filter((order) => isHistoryOrder(order));
+  }
+
+  return orders.filter((order) => isActiveOrder(order));
+}
+
+function getDisplayStatusKey(order) {
+  if (order.payment_status === "pending" || order.status === "payment_pending") {
+    return "payment_pending";
+  }
+
+  if (order.payment_status === "failed" || order.status === "payment_failed") {
+    return "payment_failed";
+  }
+
+  if (order.payment_status === "cancelled" || order.status === "cancelled") {
+    return "cancelled";
+  }
+
+  return order.status || "unknown";
+}
+
+function getStatusClass(order) {
+  const status = getDisplayStatusKey(order);
+
   switch (status) {
     case "received":
       return "status-received";
@@ -68,32 +134,49 @@ function getStatusClass(status) {
     case "ready":
       return "status-ready";
 
+    case "complete":
+      return "status-complete";
+
     case "payment_pending":
     case "payment_failed":
+    case "cancelled":
     default:
       return "status-default";
   }
 }
 
-function getStatusText(status) {
-  switch (status) {
-    case "payment_pending":
-      return "Waiting for Payment";
+function getStudentOrderStatusText(order) {
+  if (order.payment_status === "pending" || order.status === "payment_pending") {
+    return "Waiting for Payment";
+  }
 
-    case "payment_failed":
-      return "Payment Failed";
+  if (order.payment_status === "failed" || order.status === "payment_failed") {
+    return "Payment Failed";
+  }
 
+  if (order.payment_status === "cancelled" || order.status === "cancelled") {
+    return "Payment Cancelled";
+  }
+
+  if (order.payment_status === "paid" && order.status === "received") {
+    return "Payment Received / Order Received";
+  }
+
+  switch (order.status) {
     case "received":
       return "Order Received";
 
     case "preparing":
-      return "Preparing";
+      return "Being Prepared";
 
     case "ready":
-      return "Ready for Pickup";
+      return "Order Ready";
+
+    case "complete":
+      return "Completed";
 
     default:
-      return status || "Unknown";
+      return order.status || "Unknown";
   }
 }
 
@@ -117,6 +200,21 @@ function getPaymentStatusText(status) {
     default:
       return status || "Unknown";
   }
+}
+
+function getEmptyMessage(filter) {
+  if (filter === "history") {
+    return {
+      title: "No order history",
+      message:
+        "Completed orders will appear here after the vendor marks them as complete.",
+    };
+  }
+
+  return {
+    title: "No active orders",
+    message: "You have no paid orders in progress right now.",
+  };
 }
 
 /* ========================================
@@ -170,11 +268,33 @@ function showOrders() {
   emptyState.classList.add("hidden");
 }
 
-function showEmpty() {
+function showEmpty(filter) {
   loadingContainer.classList.add("hidden");
   errorContainer.classList.add("hidden");
   ordersContainer.classList.add("hidden");
   emptyState.classList.remove("hidden");
+
+  const emptyText = getEmptyMessage(filter);
+
+  if (emptyTitle) {
+    emptyTitle.textContent = emptyText.title;
+  }
+
+  if (emptyMessage) {
+    emptyMessage.textContent = emptyText.message;
+  }
+}
+
+function setActiveTab(filter) {
+  filterTabs.forEach((button) => {
+    button.classList.toggle("active", button.dataset.filter === filter);
+  });
+}
+
+function updateUrlFilter(filter) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("filter", filter);
+  window.history.replaceState({}, "", url);
 }
 
 /* ========================================
@@ -186,7 +306,14 @@ async function checkStudentAuth() {
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  if (error) {
+    console.error("Auth error:", error);
+    showError("Could not check your login session.");
+    return null;
+  }
 
   if (!user) {
     window.location.href = "../auth/login.html";
@@ -204,9 +331,11 @@ async function fetchOrders(studentId) {
   const { data: orders, error } = await supabase
     .from("orders")
     .select(
-      "id, vendor_id, status, created_at, updated_at, payment_status, payment_provider, payment_amount, transaction_id, paid_at"
+      "id, student_id, vendor_id, status, created_at, updated_at, payment_status, payment_provider, payment_amount, transaction_id, paid_at"
     )
     .eq("student_id", studentId)
+    .eq("payment_status", "paid")
+    .in("status", [...ACTIVE_ORDER_STATUSES, ...HISTORY_ORDER_STATUSES])
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -229,12 +358,14 @@ async function fetchOrders(studentId) {
         console.error("Fetch order items error:", itemsError);
       }
 
-      const total = (items || []).reduce((sum, item) => {
-        return sum + Number(item.price) * Number(item.quantity);
+      const orderItems = items || [];
+
+      const total = orderItems.reduce((sum, item) => {
+        return sum + Number(item.price || 0) * Number(item.quantity || 0);
       }, 0);
 
       const itemsWithNames = await Promise.all(
-        (items || []).map(async (item) => {
+        orderItems.map(async (item) => {
           const { data: menu } = await supabase
             .from("menu_items")
             .select("name")
@@ -274,13 +405,22 @@ function createOrderCard(order) {
 
   const itemsHtml = order.items
     .map((item) => {
-      return `<li>${escapeHtml(item.name)} × ${item.quantity}</li>`;
+      const itemName = escapeHtml(item.name);
+      const quantity = Number(item.quantity || 0);
+      const price = formatCurrency(Number(item.price || 0));
+
+      return `<li>${itemName} × ${quantity} <span>(${price} each)</span></li>`;
     })
     .join("");
 
   const readyTime =
     order.status === "ready"
       ? `<p><strong>Ready Time:</strong> ${formatDate(order.updated_at)}</p>`
+      : "";
+
+  const completedTime =
+    order.status === "complete"
+      ? `<p><strong>Completed Time:</strong> ${formatDate(order.updated_at)}</p>`
       : "";
 
   const transactionHtml = order.transaction_id
@@ -291,25 +431,32 @@ function createOrderCard(order) {
     ? `<p><strong>Paid At:</strong> ${formatDate(order.paid_at)}</p>`
     : "";
 
+  const providerHtml = order.payment_provider
+    ? `<p><strong>Payment Provider:</strong> ${escapeHtml(order.payment_provider)}</p>`
+    : `<p><strong>Payment Provider:</strong> N/A</p>`;
+
+  const paymentAmount = order.payment_amount || order.total_price;
+
   card.innerHTML = `
     <header>
-      <h3>Order #${order.id.substring(0, 6)}</h3>
+      <h3>Order #${getSafeOrderId(order.id)}</h3>
 
-      <span class="${getStatusClass(order.status)}">
-        ${getStatusText(order.status)}
+      <span class="${getStatusClass(order)}">
+        ${getStudentOrderStatusText(order)}
       </span>
     </header>
 
-    <p><strong>Vendor:</strong> ${escapeHtml(order.vendorName)}</p>
-    <p><strong>Order Time:</strong> ${formatDate(order.created_at)}</p>
-
-    <p><strong>Payment:</strong> ${getPaymentStatusText(order.payment_status)}</p>
-    <p><strong>Payment Provider:</strong> ${escapeHtml(order.payment_provider || "N/A")}</p>
-    <p><strong>Payment Amount:</strong> ${formatCurrency(order.payment_amount || order.total_price)}</p>
-
-    ${transactionHtml}
-    ${paidAtHtml}
-    ${readyTime}
+    <section class="order-meta">
+      <p><strong>Vendor:</strong> ${escapeHtml(order.vendorName)}</p>
+      <p><strong>Order Time:</strong> ${formatDate(order.created_at)}</p>
+      <p><strong>Payment:</strong> ${getPaymentStatusText(order.payment_status)}</p>
+      ${providerHtml}
+      <p><strong>Payment Amount:</strong> ${formatCurrency(paymentAmount)}</p>
+      ${transactionHtml}
+      ${paidAtHtml}
+      ${readyTime}
+      ${completedTime}
+    </section>
 
     <ul>
       ${itemsHtml}
@@ -323,15 +470,19 @@ function createOrderCard(order) {
   return card;
 }
 
-function renderOrders(orders) {
+function renderOrders(orders, filter) {
   ordersContainer.innerHTML = "";
 
-  if (!orders.length) {
-    showEmpty();
+  setActiveTab(filter);
+
+  const filteredOrders = filterOrders(orders, filter);
+
+  if (!filteredOrders.length) {
+    showEmpty(filter);
     return;
   }
 
-  orders.forEach((order) => {
+  filteredOrders.forEach((order) => {
     ordersContainer.appendChild(createOrderCard(order));
   });
 
@@ -346,8 +497,8 @@ async function loadOrders() {
   try {
     showLoading();
 
-    const orders = await fetchOrders(currentStudentId);
-    renderOrders(orders);
+    allOrders = await fetchOrders(currentStudentId);
+    renderOrders(allOrders, currentFilter);
   } catch (error) {
     console.error("Load orders error:", error);
     showError(error.message || "Could not load orders.");
@@ -355,12 +506,12 @@ async function loadOrders() {
 }
 
 /* ========================================
-   REAL-TIME
+   Real-time Updates
 ======================================== */
 
 function subscribeToRealtime() {
   supabase
-    .channel("orders-realtime")
+    .channel("student-orders-realtime")
     .on(
       "postgres_changes",
       {
@@ -376,27 +527,26 @@ function subscribeToRealtime() {
           return;
         }
 
-        await loadOrders();
-
-        if (
-          oldOrder?.status === "preparing" &&
-          newOrder.status === "ready"
-        ) {
-          showToast(`Order #${newOrder.id.substring(0, 6)} is ready!`);
-        }
+        allOrders = await fetchOrders(currentStudentId);
+        renderOrders(allOrders, currentFilter);
 
         if (
           oldOrder?.payment_status === "pending" &&
           newOrder.payment_status === "paid"
         ) {
-          showToast(`Payment confirmed for order #${newOrder.id.substring(0, 6)}.`);
+          showToast(`Payment confirmed for order #${getSafeOrderId(newOrder.id)}.`);
         }
 
-        if (
-          oldOrder?.payment_status === "pending" &&
-          newOrder.payment_status === "failed"
-        ) {
-          showToast(`Payment failed for order #${newOrder.id.substring(0, 6)}.`);
+        if (oldOrder?.status === "received" && newOrder.status === "preparing") {
+          showToast(`Order #${getSafeOrderId(newOrder.id)} is being prepared.`);
+        }
+
+        if (oldOrder?.status === "preparing" && newOrder.status === "ready") {
+          showToast(`Order #${getSafeOrderId(newOrder.id)} is ready for collection.`);
+        }
+
+        if (oldOrder?.status !== "complete" && newOrder.status === "complete") {
+          showToast(`Order #${getSafeOrderId(newOrder.id)} has moved to Order History.`);
         }
       }
     )
@@ -407,15 +557,35 @@ function subscribeToRealtime() {
    Events
 ======================================== */
 
-refreshBtn.onclick = loadOrders;
-retryBtn.onclick = loadOrders;
+if (refreshBtn) {
+  refreshBtn.onclick = loadOrders;
+}
 
-backBtn.onclick = () => {
-  window.location.href = "student-dashboard.html";
-};
+if (retryBtn) {
+  retryBtn.onclick = loadOrders;
+}
+
+if (backBtn) {
+  backBtn.onclick = () => {
+    window.location.href = "student-dashboard.html";
+  };
+}
+
+filterTabs.forEach((button) => {
+  button.onclick = () => {
+    currentFilter = button.dataset.filter || "active";
+
+    if (!validFilters.includes(currentFilter)) {
+      currentFilter = "active";
+    }
+
+    updateUrlFilter(currentFilter);
+    renderOrders(allOrders, currentFilter);
+  };
+});
 
 /* ========================================
-   INIT
+   Init
 ======================================== */
 
 async function initializePage() {
@@ -424,6 +594,8 @@ async function initializePage() {
   if (!currentStudentId) {
     return;
   }
+
+  updateUrlFilter(currentFilter);
 
   await loadOrders();
   subscribeToRealtime();

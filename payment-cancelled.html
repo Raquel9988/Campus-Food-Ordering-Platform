@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Payment Cancelled</title>
+
     <link rel="stylesheet" href="payment-result.css" />
   </head>
 
@@ -12,12 +14,18 @@
       <h1>Payment Cancelled</h1>
 
       <p>Your payment was cancelled or not completed.</p>
-      <p>You can return to your cart and try again.</p>
+      <p>Your cart has not been cleared, so you can return and try again.</p>
+
+      <p id="payment-cancelled-text">
+        Updating your order status...
+      </p>
 
       <nav>
         <a href="student/student-cart.html">Back to Cart</a>
         <a href="student/student-dashboard.html">Back to Dashboard</a>
       </nav>
     </main>
+
+    <script type="module" src="payment-cancelled.js"></script>
   </body>
 </html>

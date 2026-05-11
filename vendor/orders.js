@@ -18,12 +18,22 @@ let currentVendorId = null;
 let isRefreshing = false;
 let autoRefreshInterval = null;
 
+const ACTIVE_VENDOR_STATUSES = ["received", "preparing", "ready"];
+
+const STATUS_TRANSITIONS = {
+  received: ["preparing"],
+  preparing: ["ready"],
+  ready: ["complete"],
+  complete: [],
+};
+
 dashboardBtn?.addEventListener("click", () => {
   window.location.href = "../vendor/vendor-dashboard.html";
 });
 
 function escapeHtml(unsafe) {
   if (!unsafe) return "";
+
   return String(unsafe)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -34,6 +44,7 @@ function escapeHtml(unsafe) {
 
 function formatDate(dateString) {
   if (!dateString) return "N/A";
+
   try {
     const date = new Date(dateString);
     return date.toLocaleString();
@@ -75,6 +86,10 @@ function showEmpty() {
   emptyState.classList.remove("hidden");
 }
 
+function isValidStatusTransition(currentStatus, nextStatus) {
+  return STATUS_TRANSITIONS[currentStatus]?.includes(nextStatus) || false;
+}
+
 async function getApprovedVendorAuth() {
   const {
     data: { user },
@@ -82,7 +97,10 @@ async function getApprovedVendorAuth() {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { ok: false, message: "Please log in first." };
+    return {
+      ok: false,
+      message: "Please log in first.",
+    };
   }
 
   const { data: appUser, error: userError } = await supabase
@@ -92,11 +110,17 @@ async function getApprovedVendorAuth() {
     .single();
 
   if (userError || !appUser) {
-    return { ok: false, message: "Unable to verify user profile." };
+    return {
+      ok: false,
+      message: "Unable to verify user profile.",
+    };
   }
 
   if (appUser.role !== "vendor") {
-    return { ok: false, message: "Access denied. Vendors only." };
+    return {
+      ok: false,
+      message: "Access denied. Vendors only.",
+    };
   }
 
   const { data: vendor, error: vendorError } = await supabase
@@ -106,31 +130,49 @@ async function getApprovedVendorAuth() {
     .single();
 
   if (vendorError || !vendor) {
-    return { ok: false, message: "Vendor profile not found." };
+    return {
+      ok: false,
+      message: "Vendor profile not found.",
+    };
   }
 
   if (vendor.status === "pending") {
-    return { ok: false, message: "Your vendor account is pending approval." };
+    return {
+      ok: false,
+      message: "Your vendor account is pending approval.",
+    };
   }
 
   if (vendor.status === "suspended") {
-    return { ok: false, message: "Your vendor account has been suspended." };
+    return {
+      ok: false,
+      message: "Your vendor account has been suspended.",
+    };
   }
 
   if (vendor.status !== "approved") {
-    return { ok: false, message: "Unknown vendor status." };
+    return {
+      ok: false,
+      message: "Unknown vendor status.",
+    };
   }
 
-  return { ok: true, vendor, user };
+  return {
+    ok: true,
+    vendor,
+    user,
+  };
 }
 
 async function fetchOrders(vendorId) {
   const { data: orders, error: ordersError } = await supabase
     .from("orders")
-    .select("id, student_id, status, payment_status, payment_provider, created_at, updated_at")
+    .select(
+      "id, student_id, vendor_id, status, payment_status, payment_provider, transaction_id, paid_at, created_at, updated_at"
+    )
     .eq("vendor_id", vendorId)
     .eq("payment_status", "paid")
-    .in("status", ["received", "preparing", "ready"])
+    .in("status", ACTIVE_VENDOR_STATUSES)
     .order("created_at", { ascending: false });
 
   if (ordersError) {
@@ -172,10 +214,9 @@ async function fetchOrders(vendorId) {
         })
       );
 
-      const totalPrice = itemsWithNames.reduce(
-        (sum, item) => sum + Number(item.price) * Number(item.quantity),
-        0
-      );
+      const totalPrice = itemsWithNames.reduce((sum, item) => {
+        return sum + Number(item.price) * Number(item.quantity);
+      }, 0);
 
       const { data: student } = await supabase
         .from("users")
@@ -195,34 +236,41 @@ async function fetchOrders(vendorId) {
   return enrichedOrders;
 }
 
-function isValidStatusTransition(currentStatus, newStatus) {
-  const validTransitions = {
-    received: ["preparing"],
-    preparing: ["ready"],
-    ready: ["complete"],
-    complete: [],
-  };
+async function updateOrderStatus(orderId, nextStatus, currentStatus) {
+  if (!currentVendorId) {
+    alert("Vendor not loaded. Please refresh the page.");
+    return;
+  }
 
-  return validTransitions[currentStatus]?.includes(newStatus);
-}
-
-async function updateOrderStatus(orderId, newStatus, currentStatus) {
-  if (!isValidStatusTransition(currentStatus, newStatus)) {
+  if (!isValidStatusTransition(currentStatus, nextStatus)) {
     alert("Invalid status change.");
     return;
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("orders")
     .update({
-      status: newStatus,
+      status: nextStatus,
       updated_at: new Date().toISOString(),
     })
     .eq("id", orderId)
-    .eq("vendor_id", currentVendorId);
+    .eq("vendor_id", currentVendorId)
+    .eq("payment_status", "paid")
+    .eq("status", currentStatus)
+    .select("id, status, payment_status")
+    .maybeSingle();
 
   if (error) {
+    console.error("Update order status error:", error);
     alert("Failed to update order.");
+    return;
+  }
+
+  if (!data) {
+    alert(
+      "Order could not be updated. It may be unpaid, already completed, or already changed by another user."
+    );
+    await loadOrders();
     return;
   }
 
@@ -241,7 +289,7 @@ function createOrderCard(order) {
           (item) => `
             <li>
               <span class="item-name">${escapeHtml(item.name)}</span>
-              <span class="item-qty">× ${item.quantity}</span>
+              <span class="item-qty">× ${escapeHtml(item.quantity)}</span>
               <span class="item-price">${formatCurrency(item.price)}</span>
             </li>
           `
@@ -252,24 +300,50 @@ function createOrderCard(order) {
   card.innerHTML = `
     <div class="order-header">
       <h3>Order #${escapeHtml(order.id.slice(0, 8))}</h3>
-      <span class="status-badge ${statusClass}">${escapeHtml(order.status)}</span>
+      <span class="status-badge ${statusClass}">
+        ${escapeHtml(order.status)}
+      </span>
     </div>
 
-    ${order.payment_status === "paid" ? `
     <div class="payment-info">
       <p class="payment-badge">✓ Payment Received</p>
-      ${order.payment_provider ? `<p class="payment-provider">via ${escapeHtml(order.payment_provider)}</p>` : ``}
+
+      ${
+        order.payment_provider
+          ? `<p class="payment-provider">via ${escapeHtml(order.payment_provider)}</p>`
+          : ``
+      }
+
+      ${
+        order.transaction_id
+          ? `<p class="payment-provider">Transaction: ${escapeHtml(order.transaction_id)}</p>`
+          : ``
+      }
+
+      ${
+        order.paid_at
+          ? `<p class="payment-provider">Paid at: ${formatDate(order.paid_at)}</p>`
+          : ``
+      }
     </div>
-    ` : ``}
 
     <div class="order-info">
-      <p><strong>Student:</strong> <span class="order-value">${escapeHtml(order.studentEmail)}</span></p>
-      <p><strong>Placed:</strong> <span class="order-value">${formatDate(order.created_at)}</span></p>
+      <p>
+        <strong>Student:</strong>
+        <span class="order-value">${escapeHtml(order.studentEmail)}</span>
+      </p>
+
+      <p>
+        <strong>Placed:</strong>
+        <span class="order-value">${formatDate(order.created_at)}</span>
+      </p>
     </div>
 
     <div class="items-section">
       <strong>Items:</strong>
-      <ul class="items-list">${itemsHtml}</ul>
+      <ul class="items-list">
+        ${itemsHtml}
+      </ul>
     </div>
 
     <div class="order-total">
@@ -278,14 +352,29 @@ function createOrderCard(order) {
     </div>
 
     <div class="order-actions">
-      ${order.status === "received" ? `<button class="prep-btn">Start Preparing</button>` : ""}
-      ${order.status === "preparing" ? `<button class="ready-btn">Mark as Ready</button>` : ""}
-      ${order.status === "ready" ? `<button class="complete-btn">Order Complete</button>` : ""}
+      ${
+        order.status === "received"
+          ? `<button class="prep-btn" type="button">Start Preparing</button>`
+          : ``
+      }
+
+      ${
+        order.status === "preparing"
+          ? `<button class="ready-btn" type="button">Mark as Ready</button>`
+          : ``
+      }
+
+      ${
+        order.status === "ready"
+          ? `<button class="complete-btn" type="button">Order Complete</button>`
+          : ``
+      }
     </div>
   `;
 
   const prepBtn = card.querySelector(".prep-btn");
   const readyBtn = card.querySelector(".ready-btn");
+  const completeBtn = card.querySelector(".complete-btn");
 
   if (prepBtn) {
     prepBtn.addEventListener("click", async () => {
@@ -299,7 +388,6 @@ function createOrderCard(order) {
     });
   }
 
-  const completeBtn = card.querySelector(".complete-btn");
   if (completeBtn) {
     completeBtn.addEventListener("click", async () => {
       await updateOrderStatus(order.id, "complete", order.status);
@@ -317,10 +405,13 @@ function renderOrders(orders) {
     return;
   }
 
-  const activeOrders = orders.filter(
-    (order) => order.status === "received" || order.status === "preparing"
-  );
-  const readyOrders = orders.filter((order) => order.status === "ready");
+  const activeOrders = orders.filter((order) => {
+    return order.status === "received" || order.status === "preparing";
+  });
+
+  const readyOrders = orders.filter((order) => {
+    return order.status === "ready";
+  });
 
   if (activeOrders.length > 0) {
     const activeTitle = document.createElement("h2");
@@ -380,10 +471,6 @@ async function silentRefresh() {
   }
 }
 
-export {
-  isValidStatusTransition,
-};
-
 function startAutoRefresh() {
   autoRefreshInterval = setInterval(() => {
     silentRefresh();
@@ -412,7 +499,10 @@ async function initializePage() {
 
   await loadOrders();
   startAutoRefresh();
+
   window.addEventListener("beforeunload", stopAutoRefresh);
 }
 
 document.addEventListener("DOMContentLoaded", initializePage);
+
+export { isValidStatusTransition };
