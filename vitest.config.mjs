@@ -1,37 +1,37 @@
 import { defineConfig } from "vitest/config";
-import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const currentFile = fileURLToPath(import.meta.url);
+const currentDir = path.dirname(currentFile);
+
+const supabaseMockPath = path.resolve(
+  currentDir,
+  "tests/mocks/supabaseMock.js"
+);
 
 export default defineConfig({
-  plugins: [
-    cloudflareTest({
-      miniflare: {
-        compatibilityDate: "2025-01-01",
-      },
-    }),
-  ],
-
   test: {
+    environment: "jsdom",
     globals: true,
+    clearMocks: true,
+    restoreMocks: true,
+  },
 
-    coverage: {
-      provider: "istanbul",
-      reporter: ["text", "html", "lcov"],
-
-      include: [
-        "functions/**/*.js",
-        "payments/**/*.js",
-        "student/**/*.js",
-        "vendor/**/*.js",
-        "dietary/**/*.js"
-      ],
-
-      exclude: [
-        "tests/**",
-        "**/*.test.js",
-        "**/*.spec.js",
-        "coverage/**",
-        "node_modules/**"
-      ],
-    },
+  resolve: {
+    alias: [
+      {
+        find: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm",
+        replacement: supabaseMockPath,
+      },
+      {
+        find: /^https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js.*$/,
+        replacement: supabaseMockPath,
+      },
+      {
+        find: /^https:\/\/esm\.sh\/@supabase\/supabase-js.*$/,
+        replacement: supabaseMockPath,
+      },
+    ],
   },
 });

@@ -23,12 +23,18 @@ function encodePayFastValue(value) {
 }
 
 async function createMd5Hash(value) {
-  const data = new TextEncoder().encode(value);
-  const hashBuffer = await crypto.subtle.digest("MD5", data);
+  try {
+    const data = new TextEncoder().encode(value);
+    const hashBuffer = await crypto.subtle.digest("MD5", data);
 
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+    return Array.from(new Uint8Array(hashBuffer))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    const { createHash } = await import("node:crypto");
+
+    return createHash("md5").update(value).digest("hex");
+  }
 }
 
 function shouldUsePassphrase(passphrase) {
@@ -153,12 +159,7 @@ export async function onRequest(context) {
 
     const body = await request.json();
 
-    const {
-      amount,
-      orderReference,
-      payerReference,
-      vendorReference,
-    } = body;
+    const { amount, orderReference, payerReference, vendorReference } = body;
 
     const numericAmount = Number(amount);
 

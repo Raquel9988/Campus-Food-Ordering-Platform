@@ -7,13 +7,23 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+
     "test:payment": "vitest run tests/payment-api.test.js",
     "test:notify": "vitest run tests/payfast-notify.test.js",
+
     "test:login": "vitest run tests/login.test.js",
     "test:register": "vitest run tests/register.test.js",
+
     "test:cart": "vitest run tests/cart.test.js",
     "test:my-orders": "vitest run tests/my-orders.test.js",
     "test:student-dashboard": "vitest run tests/student-dashboard.test.js",
+    "test:student-menu": "vitest run tests/student-menu.test.js",
+
+    "test:vendor-orders": "vitest run tests/vendor-orders.test.js",
+    "test:vendor-menu": "vitest run tests/vendor-menu-creation.test.js",
+    "test:vendor-dashboard": "vitest run tests/vendor-dashboard.test.js",
+    "test:vendor": "vitest run tests/vendor-orders.test.js tests/vendor-menu-creation.test.js tests/vendor-dashboard.test.js",
+
     "coverage": "vitest run --coverage"
   },
   "repository": {
@@ -30,6 +40,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.16.3",
     "@vitest/coverage-istanbul": "^4.1.5",
-    "vitest": "^4.1.5"
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.6"
   }
 }
