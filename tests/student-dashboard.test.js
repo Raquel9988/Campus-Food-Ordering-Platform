@@ -518,3 +518,483 @@ describe("actual student dashboard logic", () => {
     expect(documentRef.elements.logout.addEventListener).toHaveBeenCalled();
   });
 });
+describe("additional student dashboard coverage", () => {
+  test("showToast displays message and hides it after timeout", () => {
+    const documentRef = createDocumentMock();
+    const setTimeoutRef = vi.fn((callback) => callback());
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef,
+    });
+
+    controller.showToast("Payment confirmed.");
+
+    expect(documentRef.elements.toast.textContent).toBe("Payment confirmed.");
+    expect(documentRef.elements.toast.classList.remove).toHaveBeenCalledWith(
+      "hidden"
+    );
+    expect(documentRef.elements.toast.classList.add).toHaveBeenCalledWith(
+      "show"
+    );
+
+    expect(documentRef.elements.toast.classList.remove).toHaveBeenCalledWith(
+      "show"
+    );
+    expect(documentRef.elements.toast.classList.add).toHaveBeenCalledWith(
+      "hidden"
+    );
+  });
+
+  test("showToast does nothing when toast element is missing", () => {
+    const documentRef = createDocumentMock();
+    documentRef.elements.toast = null;
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    expect(() => {
+      controller.showToast("No toast element.");
+    }).not.toThrow();
+  });
+
+  test("showActiveOrdersDot removes hidden class", () => {
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.showActiveOrdersDot();
+
+    expect(
+      documentRef.elements["active-orders-dot"].classList.remove
+    ).toHaveBeenCalledWith("hidden");
+  });
+
+  test("hideActiveOrdersDot adds hidden class", () => {
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.hideActiveOrdersDot();
+
+    expect(
+      documentRef.elements["active-orders-dot"].classList.add
+    ).toHaveBeenCalledWith("hidden");
+  });
+
+  test("updateActiveOrdersDot hides dot when there are no ready orders", async () => {
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock({
+        readyOrders: [],
+      }),
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    await controller.updateActiveOrdersDot("student-1");
+
+    expect(
+      documentRef.elements["active-orders-dot"].classList.add
+    ).toHaveBeenCalledWith("hidden");
+  });
+
+  test("fetchReadyOrderIds returns empty list and logs error when query fails", async () => {
+    const consoleRef = {
+      error: vi.fn(),
+    };
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock({
+        readyOrdersError: {
+          message: "Database error",
+        },
+      }),
+      documentRef: createDocumentMock(),
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+      consoleRef,
+    });
+
+    const result = await controller.fetchReadyOrderIds("student-1");
+
+    expect(result).toEqual([]);
+    expect(consoleRef.error).toHaveBeenCalledWith("Ready orders check error:", {
+      message: "Database error",
+    });
+  });
+
+  test("loadVendors does nothing when vendors-list element is missing", async () => {
+    const documentRef = createDocumentMock();
+    documentRef.elements["vendors-list"] = null;
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    await expect(controller.loadVendors()).resolves.toBeUndefined();
+  });
+
+  test("vendor card button redirects to selected vendor menu", async () => {
+    const documentRef = createDocumentMock();
+    const windowRef = createWindowMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock({
+        vendors: [
+          {
+            id: "vendor-123",
+            business_name: "Campus Burgers",
+          },
+        ],
+      }),
+      documentRef,
+      windowRef,
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    await controller.loadVendors();
+
+    const vendorCard = documentRef.elements["vendors-list"].children[0];
+
+    vendorCard.button.onclick();
+
+    expect(windowRef.location.href).toBe(
+      "student-menu.html?vendorId=vendor-123"
+    );
+  });
+
+  test("active orders button marks ready orders as seen and redirects to active orders page", async () => {
+    const documentRef = createDocumentMock();
+    const windowRef = createWindowMock();
+    const localStorageRef = createStorageMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock({
+        readyOrders: [
+          {
+            id: "ORDER-1",
+          },
+        ],
+      }),
+      documentRef,
+      windowRef,
+      localStorageRef,
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.setupEvents({
+      id: "student-1",
+      email: "student@test.com",
+    });
+
+    await documentRef.elements["active-orders"].onclick();
+
+    expect(localStorageRef.setItem).toHaveBeenCalledWith(
+      "seen_ready_orders",
+      JSON.stringify(["ORDER-1"])
+    );
+
+    expect(windowRef.location.href).toBe("my-orders.html?filter=active");
+  });
+
+  test("order history button redirects to history orders page", () => {
+    const documentRef = createDocumentMock();
+    const windowRef = createWindowMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef,
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.setupEvents({
+      id: "student-1",
+      email: "student@test.com",
+    });
+
+    documentRef.elements["order-history"].onclick();
+
+    expect(windowRef.location.href).toBe("my-orders.html?filter=history");
+  });
+
+  test("view cart button redirects to student cart page", () => {
+    const documentRef = createDocumentMock();
+    const windowRef = createWindowMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef,
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.setupEvents({
+      id: "student-1",
+      email: "student@test.com",
+    });
+
+    documentRef.elements["view-cart"].onclick();
+
+    expect(windowRef.location.href).toBe("student-cart.html");
+  });
+
+  test("logout button signs out and redirects to login", async () => {
+    const documentRef = createDocumentMock();
+    const windowRef = createWindowMock();
+    const supabaseClient = createSupabaseMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient,
+      documentRef,
+      windowRef,
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.setupEvents({
+      id: "student-1",
+      email: "student@test.com",
+    });
+
+    await documentRef.elements.logout.onclick();
+
+    expect(supabaseClient.auth.signOut).toHaveBeenCalled();
+    expect(windowRef.location.href).toBe("../auth/login.html");
+  });
+
+  test("subscribeToOrders ignores unrelated student orders", async () => {
+    const supabaseClient = createSupabaseMock();
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient,
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.subscribeToOrders("student-1");
+
+    await supabaseClient.realtimeCallback({
+      new: {
+        id: "ORDER-2",
+        student_id: "student-2",
+        payment_status: "paid",
+        status: "ready",
+      },
+      old: {
+        status: "preparing",
+      },
+    });
+
+    expect(documentRef.elements.toast.textContent).toBe("");
+  });
+
+  test("subscribeToOrders shows payment confirmed toast", async () => {
+    const supabaseClient = createSupabaseMock();
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient,
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.subscribeToOrders("student-1");
+
+    await supabaseClient.realtimeCallback({
+      new: {
+        id: "ORDER-1",
+        student_id: "student-1",
+        payment_status: "paid",
+        status: "received",
+      },
+      old: {
+        payment_status: "pending",
+        status: "payment_pending",
+      },
+    });
+
+    expect(documentRef.elements.toast.textContent).toBe(
+      "Payment confirmed. Your order has been received."
+    );
+  });
+
+  test("subscribeToOrders shows ready for pickup toast", async () => {
+    const supabaseClient = createSupabaseMock();
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient,
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.subscribeToOrders("student-1");
+
+    await supabaseClient.realtimeCallback({
+      new: {
+        id: "ORDER-1",
+        student_id: "student-1",
+        payment_status: "paid",
+        status: "ready",
+      },
+      old: {
+        payment_status: "paid",
+        status: "preparing",
+      },
+    });
+
+    expect(documentRef.elements.toast.textContent).toBe(
+      "Your order is ready for pickup."
+    );
+  });
+
+  test("subscribeToOrders shows complete order toast", async () => {
+    const supabaseClient = createSupabaseMock();
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient,
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.subscribeToOrders("student-1");
+
+    await supabaseClient.realtimeCallback({
+      new: {
+        id: "ORDER-1",
+        student_id: "student-1",
+        payment_status: "paid",
+        status: "complete",
+      },
+      old: {
+        payment_status: "paid",
+        status: "ready",
+      },
+    });
+
+    expect(documentRef.elements.toast.textContent).toBe(
+      "Your order has moved to Order History."
+    );
+  });
+
+  test("handlePageLoad stops when authentication fails", async () => {
+    const documentRef = createDocumentMock();
+    const windowRef = createWindowMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock({
+        user: null,
+      }),
+      documentRef,
+      windowRef,
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    await controller.handlePageLoad();
+
+    expect(windowRef.location.href).toBe("../auth/login.html");
+    expect(documentRef.elements["vendors-list"].children).toHaveLength(0);
+  });
+
+  test("handlePageLoad loads user info, vendors, ready dot, realtime, and events", async () => {
+    const documentRef = createDocumentMock();
+    const supabaseClient = createSupabaseMock({
+      readyOrders: [
+        {
+          id: "ORDER-1",
+        },
+      ],
+      vendors: [
+        {
+          id: "vendor-1",
+          business_name: "Campus Burgers",
+        },
+      ],
+    });
+
+    const controller = createStudentDashboardController({
+      supabaseClient,
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    await controller.handlePageLoad();
+
+    expect(documentRef.elements["user-info"].textContent).toBe(
+      "Logged in as: student@test.com"
+    );
+    expect(documentRef.elements["vendors-list"].children).toHaveLength(1);
+    expect(
+      documentRef.elements["active-orders-dot"].classList.remove
+    ).toHaveBeenCalledWith("hidden");
+    expect(supabaseClient.channel).toHaveBeenCalledWith(
+      "student-dashboard-orders"
+    );
+    expect(documentRef.elements["active-orders"].addEventListener).toHaveBeenCalled();
+  });
+
+  test("setupStudentDashboardPage registers load event", () => {
+    const windowRef = createWindowMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef: createDocumentMock(),
+      windowRef,
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.setupStudentDashboardPage();
+
+    expect(windowRef.addEventListener).toHaveBeenCalledWith(
+      "load",
+      controller.handlePageLoad
+    );
+  });
+});

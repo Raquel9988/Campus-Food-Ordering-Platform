@@ -27,11 +27,119 @@ function setupDom() {
   `;
 }
 
+function setupFullMenuDom() {
+  document.body.innerHTML = `
+    <form id="menu-item-form">
+      <h2 id="form-card-title">Add Menu Item</h2>
+
+      <section class="field-group">
+        <input id="item-name" />
+      </section>
+
+      <section class="field-group">
+        <textarea id="item-description"></textarea>
+      </section>
+
+      <section class="field-group">
+        <input id="item-price" />
+      </section>
+
+      <section class="field-group">
+        <select id="item-availability">
+          <option value="true">Available</option>
+          <option value="false">Sold Out</option>
+        </select>
+      </section>
+
+      <section class="field-group">
+        <input id="item-image" type="file" />
+      </section>
+
+      <label class="file-drop">
+        <span>Click to upload image</span>
+      </label>
+
+      <label>
+        <input class="dietary-tag" type="checkbox" value="halal" />
+        Halal
+      </label>
+
+      <label>
+        <input class="dietary-tag" type="checkbox" value="vegetarian" />
+        Vegetarian
+      </label>
+
+      <label>
+        <input class="dietary-tag" type="checkbox" value="vegan" />
+        Vegan
+      </label>
+
+      <label>
+        <input class="dietary-tag" type="checkbox" value="nut_free" />
+        Nut free
+      </label>
+
+      <label>
+        <input class="dietary-tag" type="checkbox" value="gluten_free" />
+        Gluten free
+      </label>
+
+      <label>
+        <input class="dietary-tag" type="checkbox" value="dairy_free" />
+        Dairy free
+      </label>
+
+      <label>
+        <input id="other-checkbox" type="checkbox" />
+        Other
+      </label>
+
+      <section id="other-input-wrap" style="display:none;">
+        <input id="other-input" />
+      </section>
+
+      <p id="dietary-error" style="display:none;"></p>
+      <p id="form-message" style="display:none;"></p>
+
+      <button id="submit-btn" type="submit">Add Item</button>
+      <button id="cancel-edit-btn" type="button" style="display:none;">
+        Cancel
+      </button>
+    </form>
+
+    <section id="menu-items-container"></section>
+  `;
+
+  document.getElementById("menu-item-form").scrollIntoView = vi.fn();
+}
+
+function flushPromises() {
+  return Promise.resolve()
+    .then(() => Promise.resolve())
+    .then(() => Promise.resolve())
+    .then(() => Promise.resolve());
+}
+
+function submitMenuForm() {
+  const form = document.getElementById("menu-item-form");
+
+  form.dispatchEvent(
+    new Event("submit", {
+      bubbles: true,
+      cancelable: true,
+    })
+  );
+
+  return flushPromises();
+}
+
 function createQueryBuilder(tableName, mockState) {
   return {
     tableName,
     filters: [],
     selectedColumns: "",
+    operation: null,
+    updateData: null,
 
     select(columns) {
       this.selectedColumns = columns;
@@ -39,8 +147,26 @@ function createQueryBuilder(tableName, mockState) {
     },
 
     eq(column, value) {
-      this.filters.push({ column, value });
+      this.filters.push({
+        column,
+        value,
+      });
+
       return this;
+    },
+
+    order() {
+      if (this.tableName === "menu_items") {
+        return Promise.resolve({
+          data: mockState.menuItems,
+          error: mockState.menuItemsError,
+        });
+      }
+
+      return Promise.resolve({
+        data: [],
+        error: null,
+      });
     },
 
     single() {
@@ -62,6 +188,61 @@ function createQueryBuilder(tableName, mockState) {
         data: null,
         error: null,
       });
+    },
+
+    insert(rows) {
+      mockState.insertedRows.push({
+        tableName: this.tableName,
+        rows,
+      });
+
+      return Promise.resolve({
+        data: mockState.insertData,
+        error: mockState.insertError,
+      });
+    },
+
+    update(data) {
+      this.operation = "update";
+      this.updateData = data;
+      return this;
+    },
+
+    delete() {
+      this.operation = "delete";
+      return this;
+    },
+
+    then(resolve, reject) {
+      if (this.operation === "update") {
+        mockState.updatedRows.push({
+          tableName: this.tableName,
+          data: this.updateData,
+          filters: [...this.filters],
+        });
+
+        return Promise.resolve({
+          data: null,
+          error: mockState.updateError,
+        }).then(resolve, reject);
+      }
+
+      if (this.operation === "delete") {
+        mockState.deletedRows.push({
+          tableName: this.tableName,
+          filters: [...this.filters],
+        });
+
+        return Promise.resolve({
+          data: null,
+          error: mockState.deleteError,
+        }).then(resolve, reject);
+      }
+
+      return Promise.resolve({
+        data: null,
+        error: null,
+      }).then(resolve, reject);
     },
   };
 }
@@ -89,6 +270,22 @@ function createMockSupabase(overrides = {}) {
 
     vendorError: null,
 
+    menuItems: [],
+    menuItemsError: null,
+
+    insertedRows: [],
+    updatedRows: [],
+    deletedRows: [],
+    uploads: [],
+
+    insertData: null,
+    insertError: null,
+    updateError: null,
+    deleteError: null,
+
+    uploadError: null,
+    publicUrl: "https://example.com/menu-image.png",
+
     ...overrides,
   };
 
@@ -108,6 +305,28 @@ function createMockSupabase(overrides = {}) {
       })),
     },
 
+    storage: {
+      from: vi.fn(() => ({
+        upload: vi.fn(async (fileName, file, options) => {
+          mockState.uploads.push({
+            fileName,
+            file,
+            options,
+          });
+
+          return {
+            error: mockState.uploadError,
+          };
+        }),
+
+        getPublicUrl: vi.fn(() => ({
+          data: {
+            publicUrl: mockState.publicUrl,
+          },
+        })),
+      })),
+    },
+
     from: vi.fn((tableName) => {
       return createQueryBuilder(tableName, mockState);
     }),
@@ -119,18 +338,59 @@ async function importMenuCreationFile(mockSupabase = createMockSupabase()) {
 
   globalThis.__mockSupabase = mockSupabase;
 
-  return await import("../vendor/menuCreation.js");
+  const loadHandlers = [];
+
+  vi.spyOn(window, "addEventListener").mockImplementation((event, handler) => {
+    if (event === "load") {
+      loadHandlers.push(handler);
+    }
+  });
+
+  const menuModule = await import("../vendor/menuCreation.js");
+
+  return {
+    ...menuModule,
+
+    async __runLoad() {
+      const handler = loadHandlers.at(-1);
+
+      if (!handler) {
+        throw new Error("No window load handler was registered.");
+      }
+
+      await handler();
+      await flushPromises();
+    },
+  };
 }
 
 beforeEach(() => {
   vi.useFakeTimers();
   setupDom();
+
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    })
+  );
 });
 
 afterEach(() => {
   vi.clearAllTimers();
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   vi.resetModules();
 
   delete globalThis.__mockSupabase;
@@ -324,7 +584,7 @@ describe("vendor menu creation image preview", () => {
       }
     }
 
-    globalThis.FileReader = MockFileReader;
+    vi.stubGlobal("FileReader", MockFileReader);
 
     const menuModule = await importMenuCreationFile();
 
@@ -517,5 +777,440 @@ describe("vendor menu creation utility functions", () => {
     expect(menuModule.formatDietaryTag("gluten_free")).toBe("Gluten-Free");
     expect(menuModule.formatDietaryTag("dairy_free")).toBe("Dairy-Free");
     expect(menuModule.formatDietaryTag("halal")).toBe("Halal");
+  });
+});
+
+describe("vendor menu creation page load and menu rendering", () => {
+  test("page load shows auth error message when vendor auth fails", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      user: null,
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    const message = document.getElementById("form-message");
+
+    expect(message.textContent).toBe("Please log in first.");
+    expect(message.className).toBe("form-message form-message--error");
+  });
+
+  test("page load shows empty message when vendor has no menu items", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [],
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    expect(document.getElementById("menu-items-container").innerHTML).toContain(
+      "No menu items yet"
+    );
+  });
+
+  test("page load shows database error when menu items cannot be loaded", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: null,
+      menuItemsError: {
+        message: "Database error",
+      },
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    expect(document.getElementById("menu-items-container").innerHTML).toContain(
+      "Failed to load menu items: Database error"
+    );
+  });
+
+  test("page load renders available and sold out menu item cards", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [
+        {
+          id: "item-1",
+          name: "Burger",
+          description: "Beef burger",
+          price: 50,
+          image_url: "https://example.com/burger.png",
+          is_available: true,
+          dietary_tags: ["halal", "gluten_free"],
+        },
+        {
+          id: "item-2",
+          name: "Wrap",
+          description: "",
+          price: 35,
+          image_url: "",
+          is_available: false,
+          dietary_tags: [],
+        },
+      ],
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    const container = document.getElementById("menu-items-container");
+
+    expect(container.querySelectorAll(".menu-item-card")).toHaveLength(2);
+    expect(container.textContent).toContain("Burger");
+    expect(container.textContent).toContain("Beef burger");
+    expect(container.textContent).toContain("R 50.00");
+    expect(container.textContent).toContain("Available");
+    expect(container.textContent).toContain("Halal");
+    expect(container.textContent).toContain("Gluten-Free");
+    expect(container.textContent).toContain("Wrap");
+    expect(container.textContent).toContain("Sold Out");
+    expect(container.textContent).toContain("No description.");
+    expect(container.textContent).toContain("None");
+  });
+});
+
+describe("vendor menu creation delete and edit behaviour", () => {
+  test("delete button opens confirmation and cancel removes it", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [
+        {
+          id: "item-1",
+          name: "Burger",
+          description: "Beef burger",
+          price: 50,
+          image_url: "",
+          is_available: true,
+          dietary_tags: ["halal"],
+        },
+      ],
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    document.querySelector(".delete-btn").click();
+
+    const confirmBar = document.querySelector(".delete-confirm");
+
+    expect(confirmBar).not.toBe(null);
+    expect(confirmBar.textContent).toContain('Delete "Burger"?');
+
+    confirmBar.querySelector(".confirm-no").click();
+
+    expect(document.querySelector(".delete-confirm")).toBe(null);
+  });
+
+  test("confirm delete calls Supabase delete for the selected item", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [
+        {
+          id: "item-1",
+          name: "Burger",
+          description: "Beef burger",
+          price: 50,
+          image_url: "",
+          is_available: true,
+          dietary_tags: ["halal"],
+        },
+      ],
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    document.querySelector(".delete-btn").click();
+    document.querySelector(".confirm-yes").click();
+
+    await flushPromises();
+
+    expect(mockSupabase.__state.deletedRows).toHaveLength(1);
+    expect(mockSupabase.__state.deletedRows[0].tableName).toBe("menu_items");
+    expect(mockSupabase.__state.deletedRows[0].filters).toEqual([
+      {
+        column: "id",
+        value: "item-1",
+      },
+      {
+        column: "vendor_id",
+        value: "vendor-1",
+      },
+    ]);
+  });
+
+  test("edit button fills the form and cancel edit resets the form state", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [
+        {
+          id: "item-1",
+          name: "Burger",
+          description: "Beef burger",
+          price: 50,
+          image_url: "https://example.com/burger.png",
+          is_available: false,
+          dietary_tags: ["halal", "kosher"],
+        },
+      ],
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    document.querySelector(".edit-btn").click();
+
+    expect(document.getElementById("item-name").value).toBe("Burger");
+    expect(document.getElementById("item-description").value).toBe(
+      "Beef burger"
+    );
+    expect(document.getElementById("item-price").value).toBe("50");
+    expect(document.getElementById("item-availability").value).toBe("false");
+    expect(document.querySelector('.dietary-tag[value="halal"]').checked).toBe(
+      true
+    );
+    expect(document.getElementById("other-checkbox").checked).toBe(true);
+    expect(document.getElementById("other-input-wrap").style.display).toBe(
+      "block"
+    );
+    expect(document.getElementById("other-input").value).toBe("kosher");
+    expect(document.getElementById("form-card-title").textContent).toBe(
+      "Edit Menu Item"
+    );
+    expect(document.getElementById("submit-btn").innerHTML).toContain(
+      "Save Changes"
+    );
+
+    document.getElementById("cancel-edit-btn").click();
+
+    expect(document.getElementById("cancel-edit-btn").style.display).toBe(
+      "none"
+    );
+    expect(document.getElementById("form-card-title").textContent).toBe(
+      "Add Menu Item"
+    );
+    expect(document.getElementById("submit-btn").innerHTML).toContain(
+      "Add Item"
+    );
+  });
+});
+
+describe("vendor menu creation form submission", () => {
+  test("submitting an empty form shows field and dietary validation errors", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [],
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+    await submitMenuForm();
+
+    expect(document.getElementById("item-name").classList.contains("field-error")).toBe(
+      true
+    );
+    expect(
+      document.getElementById("item-description").classList.contains("field-error")
+    ).toBe(true);
+    expect(document.getElementById("item-price").classList.contains("field-error")).toBe(
+      true
+    );
+    expect(document.getElementById("dietary-error").textContent).toBe(
+      "Please select at least one dietary tag."
+    );
+    expect(document.getElementById("dietary-error").style.display).toBe(
+      "block"
+    );
+  });
+
+  test("submitting Other with empty custom tag shows dietary error", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [],
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    document.getElementById("item-name").value = "Burger";
+    document.getElementById("item-description").value = "Beef burger";
+    document.getElementById("item-price").value = "50";
+    document.getElementById("item-availability").value = "true";
+    document.getElementById("other-checkbox").checked = true;
+    document.getElementById("other-input").value = "";
+
+    await submitMenuForm();
+
+    expect(document.getElementById("dietary-error").textContent).toBe(
+      "Please enter a custom dietary tag, or uncheck 'Other'."
+    );
+    expect(mockSupabase.__state.insertedRows).toHaveLength(0);
+  });
+
+  test("successful submit inserts a new menu item and calls dietary API", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [],
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    document.getElementById("item-name").value = "Burger";
+    document.getElementById("item-description").value = "Beef burger";
+    document.getElementById("item-price").value = "50";
+    document.getElementById("item-availability").value = "true";
+    document.querySelector('.dietary-tag[value="halal"]').checked = true;
+
+    await submitMenuForm();
+
+    expect(mockSupabase.__state.insertedRows).toHaveLength(1);
+    expect(mockSupabase.__state.insertedRows[0]).toEqual({
+      tableName: "menu_items",
+      rows: [
+        {
+          vendor_id: "vendor-1",
+          name: "Burger",
+          description: "Beef burger",
+          price: 50,
+          is_available: true,
+          image_url: null,
+          dietary_tags: ["halal"],
+        },
+      ],
+    });
+
+    expect(fetch).toHaveBeenCalledWith("http://localhost:3000/api/dietary-tags", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        item_name: "Burger",
+        tags: ["halal"],
+      }),
+    });
+
+    expect(document.getElementById("form-message").textContent).toBe(
+      "Item added successfully!"
+    );
+  });
+
+  test("image upload failure shows form error and does not insert item", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [],
+      uploadError: {
+        message: "Upload failed",
+      },
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    const fileInput = document.getElementById("item-image");
+    const imageFile = new File(["fake image"], "burger.png", {
+      type: "image/png",
+    });
+
+    Object.defineProperty(fileInput, "files", {
+      value: [imageFile],
+      configurable: true,
+    });
+
+    document.getElementById("item-name").value = "Burger";
+    document.getElementById("item-description").value = "Beef burger";
+    document.getElementById("item-price").value = "50";
+    document.getElementById("item-availability").value = "true";
+    document.querySelector('.dietary-tag[value="halal"]').checked = true;
+
+    await submitMenuForm();
+
+    expect(mockSupabase.__state.uploads).toHaveLength(1);
+    expect(mockSupabase.__state.insertedRows).toHaveLength(0);
+    expect(document.getElementById("form-message").textContent).toBe(
+      "Image upload failed: Upload failed"
+    );
+  });
+
+  test("editing an existing item updates the menu item with selected and custom tags", async () => {
+    setupFullMenuDom();
+
+    const mockSupabase = createMockSupabase({
+      menuItems: [
+        {
+          id: "item-1",
+          name: "Burger",
+          description: "Beef burger",
+          price: 50,
+          image_url: "",
+          is_available: true,
+          dietary_tags: ["halal", "kosher"],
+        },
+      ],
+    });
+
+    const menuModule = await importMenuCreationFile(mockSupabase);
+
+    await menuModule.__runLoad();
+
+    document.querySelector(".edit-btn").click();
+
+    document.getElementById("item-name").value = "Updated Burger";
+    document.getElementById("item-description").value = "Updated description";
+    document.getElementById("item-price").value = "65";
+    document.getElementById("item-availability").value = "false";
+    document.getElementById("other-input").value = "kosher, low_sugar";
+
+    await submitMenuForm();
+
+    expect(mockSupabase.__state.updatedRows).toHaveLength(1);
+    expect(mockSupabase.__state.updatedRows[0].tableName).toBe("menu_items");
+    expect(mockSupabase.__state.updatedRows[0].filters).toEqual([
+      {
+        column: "id",
+        value: "item-1",
+      },
+      {
+        column: "vendor_id",
+        value: "vendor-1",
+      },
+    ]);
+
+    expect(mockSupabase.__state.updatedRows[0].data).toMatchObject({
+      name: "Updated Burger",
+      description: "Updated description",
+      price: 65,
+      is_available: false,
+      dietary_tags: ["halal", "kosher", "low_sugar"],
+    });
+
+    expect(document.getElementById("form-message").textContent).toBe(
+      "Item updated successfully."
+    );
   });
 });
