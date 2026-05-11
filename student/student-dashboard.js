@@ -1,30 +1,37 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+const SUPABASE_URL = "https://sqbscxfolbckikrzxqhr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay";
 
-const supabase = createClient(
-  "https://sqbscxfolbckikrzxqhr.supabase.co",
-  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
-);
+const fallbackStorage = {
+  getItem() {
+    return null;
+  },
+  setItem() {},
+  removeItem() {},
+};
 
-/* ========================================
-   ELEMENTS
-======================================== */
+const fallbackWindow = {
+  location: {
+    href: "",
+  },
+  addEventListener() {},
+};
 
-const userInfo = document.getElementById("user-info");
-const vendorsList = document.getElementById("vendors-list");
-const toast = document.getElementById("toast");
+async function createDefaultSupabaseClient() {
+  const supabaseModuleUrl =
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const activeOrdersBtn = document.getElementById("active-orders");
-const orderHistoryBtn = document.getElementById("order-history");
-const viewCartBtn = document.getElementById("view-cart");
-const logoutBtn = document.getElementById("logout");
+  const { createClient } = await import(
+    /* @vite-ignore */ supabaseModuleUrl
+  );
 
-const activeOrdersDot = document.getElementById("active-orders-dot");
+  return createClient(SUPABASE_URL, SUPABASE_KEY);
+}
 
 /* ========================================
    SAFE HTML
 ======================================== */
 
-function escapeHtml(text) {
+export function escapeHtml(text) {
   if (text === null || text === undefined) {
     return "";
   }
@@ -38,269 +45,324 @@ function escapeHtml(text) {
 }
 
 /* ========================================
-   TOAST
+   DASHBOARD CONTROLLER
 ======================================== */
 
-function showToast(message) {
-  if (!toast) {
-    return;
+export function createStudentDashboardController({
+  supabaseClient,
+  documentRef = typeof document !== "undefined" ? document : null,
+  windowRef = typeof window !== "undefined" ? window : fallbackWindow,
+  localStorageRef =
+    typeof localStorage !== "undefined" ? localStorage : fallbackStorage,
+  setTimeoutRef = typeof setTimeout !== "undefined" ? setTimeout : () => {},
+  consoleRef = console,
+}) {
+  function getElement(id) {
+    return documentRef?.getElementById(id) || null;
   }
 
-  toast.textContent = message;
-  toast.classList.remove("hidden");
-  toast.classList.add("show");
+  function showToast(message) {
+    const toast = getElement("toast");
 
-  setTimeout(() => {
-    toast.classList.remove("show");
-    toast.classList.add("hidden");
-  }, 3000);
-}
+    if (!toast) {
+      return;
+    }
 
-/* ========================================
-   AUTH
-======================================== */
+    toast.textContent = message;
+    toast.classList.remove("hidden");
+    toast.classList.add("show");
 
-async function getStudentAuth() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    window.location.href = "../auth/login.html";
-    return null;
+    setTimeoutRef(() => {
+      toast.classList.remove("show");
+      toast.classList.add("hidden");
+    }, 3000);
   }
 
-  const { data: appUser, error: userError } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  async function getStudentAuth() {
+    const {
+      data: { user },
+      error,
+    } = await supabaseClient.auth.getUser();
 
-  if (userError || !appUser || appUser.role !== "student") {
-    await supabase.auth.signOut();
-    window.location.href = "../auth/login.html";
-    return null;
+    if (error || !user) {
+      windowRef.location.href = "../auth/login.html";
+      return null;
+    }
+
+    const { data: appUser, error: userError } = await supabaseClient
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !appUser || appUser.role !== "student") {
+      await supabaseClient.auth.signOut();
+      windowRef.location.href = "../auth/login.html";
+      return null;
+    }
+
+    return user;
   }
 
-  return user;
-}
-
-/* ========================================
-   READY ORDER NOTIFICATION DOT
-======================================== */
-
-function getSeenReadyOrders() {
-  try {
-    return JSON.parse(localStorage.getItem("seen_ready_orders") || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveSeenReadyOrders(orderIds) {
-  localStorage.setItem("seen_ready_orders", JSON.stringify(orderIds));
-}
-
-function showActiveOrdersDot() {
-  activeOrdersDot?.classList.remove("hidden");
-}
-
-function hideActiveOrdersDot() {
-  activeOrdersDot?.classList.add("hidden");
-}
-
-async function fetchReadyOrderIds(userId) {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("id")
-    .eq("student_id", userId)
-    .eq("payment_status", "paid")
-    .eq("status", "ready");
-
-  if (error) {
-    console.error("Ready orders check error:", error);
-    return [];
+  function getSeenReadyOrders() {
+    try {
+      return JSON.parse(localStorageRef.getItem("seen_ready_orders") || "[]");
+    } catch {
+      return [];
+    }
   }
 
-  return (data || []).map((order) => order.id);
-}
+  function saveSeenReadyOrders(orderIds) {
+    localStorageRef.setItem("seen_ready_orders", JSON.stringify(orderIds));
+  }
 
-async function updateActiveOrdersDot(userId) {
-  const readyOrderIds = await fetchReadyOrderIds(userId);
+  function showActiveOrdersDot() {
+    getElement("active-orders-dot")?.classList.remove("hidden");
+  }
 
-  if (readyOrderIds.length === 0) {
+  function hideActiveOrdersDot() {
+    getElement("active-orders-dot")?.classList.add("hidden");
+  }
+
+  async function fetchReadyOrderIds(userId) {
+    const { data, error } = await supabaseClient
+      .from("orders")
+      .select("id")
+      .eq("student_id", userId)
+      .eq("payment_status", "paid")
+      .eq("status", "ready");
+
+    if (error) {
+      consoleRef.error("Ready orders check error:", error);
+      return [];
+    }
+
+    return (data || []).map((order) => order.id);
+  }
+
+  async function updateActiveOrdersDot(userId) {
+    const readyOrderIds = await fetchReadyOrderIds(userId);
+
+    if (readyOrderIds.length === 0) {
+      hideActiveOrdersDot();
+      return;
+    }
+
+    const seenReadyOrders = getSeenReadyOrders();
+
+    const hasUnseenReadyOrder = readyOrderIds.some((orderId) => {
+      return !seenReadyOrders.includes(orderId);
+    });
+
+    if (hasUnseenReadyOrder) {
+      showActiveOrdersDot();
+      return;
+    }
+
     hideActiveOrdersDot();
-    return;
   }
 
-  const seenReadyOrders = getSeenReadyOrders();
+  async function markReadyOrdersAsSeen(userId) {
+    const readyOrderIds = await fetchReadyOrderIds(userId);
 
-  const hasUnseenReadyOrder = readyOrderIds.some((orderId) => {
-    return !seenReadyOrders.includes(orderId);
-  });
-
-  if (hasUnseenReadyOrder) {
-    showActiveOrdersDot();
-  } else {
+    saveSeenReadyOrders(readyOrderIds);
     hideActiveOrdersDot();
   }
-}
 
-async function markReadyOrdersAsSeen(userId) {
-  const readyOrderIds = await fetchReadyOrderIds(userId);
+  function subscribeToOrders(userId) {
+    return supabaseClient
+      .channel("student-dashboard-orders")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+        },
+        async (payload) => {
+          const newOrder = payload.new;
+          const oldOrder = payload.old;
+          const relatedOrder = newOrder || oldOrder;
 
-  saveSeenReadyOrders(readyOrderIds);
-  hideActiveOrdersDot();
-}
+          if (!relatedOrder || relatedOrder.student_id !== userId) {
+            return;
+          }
 
-/* ========================================
-   REAL-TIME ORDERS
-======================================== */
+          if (
+            newOrder &&
+            newOrder.payment_status === "paid" &&
+            oldOrder?.payment_status !== "paid"
+          ) {
+            showToast("Payment confirmed. Your order has been received.");
+          }
 
-function subscribeToOrders(userId) {
-  supabase
-    .channel("student-dashboard-orders")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "orders",
-      },
-      async (payload) => {
-        const newOrder = payload.new;
-        const oldOrder = payload.old;
-        const relatedOrder = newOrder || oldOrder;
+          if (
+            newOrder &&
+            newOrder.payment_status === "paid" &&
+            newOrder.status === "ready" &&
+            oldOrder?.status !== "ready"
+          ) {
+            showToast("Your order is ready for pickup.");
+          }
 
-        if (!relatedOrder || relatedOrder.student_id !== userId) {
-          return;
+          if (
+            newOrder &&
+            newOrder.status === "complete" &&
+            oldOrder?.status !== "complete"
+          ) {
+            showToast("Your order has moved to Order History.");
+          }
+
+          await updateActiveOrdersDot(userId);
         }
-
-        if (
-          newOrder &&
-          newOrder.payment_status === "paid" &&
-          oldOrder?.payment_status !== "paid"
-        ) {
-          showToast("Payment confirmed. Your order has been received.");
-        }
-
-        if (
-          newOrder &&
-          newOrder.payment_status === "paid" &&
-          newOrder.status === "ready" &&
-          oldOrder?.status !== "ready"
-        ) {
-          showToast("Your order is ready for pickup.");
-        }
-
-        if (
-          newOrder &&
-          newOrder.status === "complete" &&
-          oldOrder?.status !== "complete"
-        ) {
-          showToast("Your order has moved to Order History.");
-        }
-
-        await updateActiveOrdersDot(userId);
-      }
-    )
-    .subscribe();
-}
-
-/* ========================================
-   LOAD VENDORS
-======================================== */
-
-async function loadVendors() {
-  if (!vendorsList) {
-    return;
+      )
+      .subscribe();
   }
 
-  vendorsList.innerHTML = `
-    <p class="loading-text">
-      <span class="spinner-sm"></span>
-      Loading vendors…
-    </p>
-  `;
+  async function loadVendors() {
+    const vendorsList = getElement("vendors-list");
 
-  const { data: vendors, error } = await supabase
-    .from("vendors")
-    .select("id, business_name")
-    .eq("status", "approved")
-    .order("business_name", { ascending: true });
+    if (!vendorsList) {
+      return;
+    }
 
-  if (error || !vendors) {
-    vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
-    return;
-  }
-
-  if (vendors.length === 0) {
-    vendorsList.innerHTML = `<p class="empty-text">No vendors available.</p>`;
-    return;
-  }
-
-  vendorsList.innerHTML = "";
-
-  vendors.forEach((vendor) => {
-    const card = document.createElement("section");
-    card.className = "vendor-card";
-
-    card.innerHTML = `
-      <h4>${escapeHtml(vendor.business_name)}</h4>
-      <p>Browse this vendor's menu and add food to your cart.</p>
-      <button type="button">View Menu</button>
+    vendorsList.innerHTML = `
+      <p class="loading-text">
+        <span class="spinner-sm"></span>
+        Loading vendors…
+      </p>
     `;
 
-    card.querySelector("button").onclick = () => {
-      window.location.href = `student-menu.html?vendorId=${vendor.id}`;
-    };
+    const { data: vendors, error } = await supabaseClient
+      .from("vendors")
+      .select("id, business_name")
+      .eq("status", "approved")
+      .order("business_name", { ascending: true });
 
-    vendorsList.appendChild(card);
-  });
+    if (error || !vendors) {
+      vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
+      return;
+    }
+
+    if (vendors.length === 0) {
+      vendorsList.innerHTML = `<p class="empty-text">No vendors available.</p>`;
+      return;
+    }
+
+    vendorsList.innerHTML = "";
+
+    vendors.forEach((vendor) => {
+      const card = documentRef.createElement("section");
+      card.className = "vendor-card";
+
+      card.innerHTML = `
+        <h4>${escapeHtml(vendor.business_name)}</h4>
+        <p>Browse this vendor's menu and add food to your cart.</p>
+        <button type="button">View Menu</button>
+      `;
+
+      const button = card.querySelector("button");
+
+      if (button) {
+        button.onclick = () => {
+          windowRef.location.href = `student-menu.html?vendorId=${vendor.id}`;
+        };
+      }
+
+      vendorsList.appendChild(card);
+    });
+  }
+
+  function setupEvents(user) {
+    getElement("active-orders")?.addEventListener("click", async () => {
+      await markReadyOrdersAsSeen(user.id);
+      windowRef.location.href = "my-orders.html?filter=active";
+    });
+
+    getElement("order-history")?.addEventListener("click", () => {
+      windowRef.location.href = "my-orders.html?filter=history";
+    });
+
+    getElement("view-cart")?.addEventListener("click", () => {
+      windowRef.location.href = "student-cart.html";
+    });
+
+    getElement("logout")?.addEventListener("click", async () => {
+      await supabaseClient.auth.signOut();
+      windowRef.location.href = "../auth/login.html";
+    });
+  }
+
+  async function handlePageLoad() {
+    const user = await getStudentAuth();
+
+    if (!user) {
+      return;
+    }
+
+    const userInfo = getElement("user-info");
+
+    if (userInfo) {
+      userInfo.textContent = `Logged in as: ${user.email}`;
+    }
+
+    await loadVendors();
+    await updateActiveOrdersDot(user.id);
+    subscribeToOrders(user.id);
+    setupEvents(user);
+  }
+
+  function setupStudentDashboardPage() {
+    windowRef.addEventListener("load", handlePageLoad);
+  }
+
+  return {
+    showToast,
+    getStudentAuth,
+    getSeenReadyOrders,
+    saveSeenReadyOrders,
+    showActiveOrdersDot,
+    hideActiveOrdersDot,
+    fetchReadyOrderIds,
+    updateActiveOrdersDot,
+    markReadyOrdersAsSeen,
+    subscribeToOrders,
+    loadVendors,
+    setupEvents,
+    handlePageLoad,
+    setupStudentDashboardPage,
+  };
 }
 
 /* ========================================
-   EVENTS
+   BROWSER INIT
 ======================================== */
 
-function setupEvents(user) {
-  activeOrdersBtn?.addEventListener("click", async () => {
-    await markReadyOrdersAsSeen(user.id);
-    window.location.href = "my-orders.html?filter=active";
+export async function setupStudentDashboardPage({
+  supabaseClient,
+  documentRef = typeof document !== "undefined" ? document : null,
+  windowRef = typeof window !== "undefined" ? window : fallbackWindow,
+  localStorageRef =
+    typeof localStorage !== "undefined" ? localStorage : fallbackStorage,
+  setTimeoutRef = typeof setTimeout !== "undefined" ? setTimeout : () => {},
+  consoleRef = console,
+} = {}) {
+  const client = supabaseClient || (await createDefaultSupabaseClient());
+
+  const controller = createStudentDashboardController({
+    supabaseClient: client,
+    documentRef,
+    windowRef,
+    localStorageRef,
+    setTimeoutRef,
+    consoleRef,
   });
 
-  orderHistoryBtn?.addEventListener("click", () => {
-    window.location.href = "my-orders.html?filter=history";
-  });
+  controller.setupStudentDashboardPage();
 
-  viewCartBtn?.addEventListener("click", () => {
-    window.location.href = "student-cart.html";
-  });
-
-  logoutBtn?.addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    window.location.href = "../auth/login.html";
-  });
+  return controller;
 }
 
-/* ========================================
-   INIT
-======================================== */
-
-window.addEventListener("load", async () => {
-  const user = await getStudentAuth();
-
-  if (!user) {
-    return;
-  }
-
-  if (userInfo) {
-    userInfo.textContent = `Logged in as: ${user.email}`;
-  }
-
-  await loadVendors();
-  await updateActiveOrdersDot(user.id);
-  subscribeToOrders(user.id);
-  setupEvents(user);
-});
+if (typeof document !== "undefined" && typeof window !== "undefined") {
+  setupStudentDashboardPage();
+}

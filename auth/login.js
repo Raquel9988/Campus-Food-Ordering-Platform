@@ -1,128 +1,142 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+const SUPABASE_URL = "https://sqbscxfolbckikrzxqhr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay";
 
-const supabase = createClient(
-  "https://sqbscxfolbckikrzxqhr.supabase.co",
-  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
-);
+async function createDefaultSupabaseClient() {
+  const supabaseModuleUrl =
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const form = document.getElementById("login-form");
-const message = document.getElementById("message");
+  const { createClient } = await import(
+    /* @vite-ignore */ supabaseModuleUrl
+  );
 
-document.addEventListener("DOMContentLoaded", async () => {
-  await handleAuthenticatedLogin();
-});
+  return createClient(SUPABASE_URL, SUPABASE_KEY);
+}
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+function setMessage(messageElement, color, text) {
+  if (!messageElement) return;
 
-  const email = document.getElementById("email").value.trim().toLowerCase();
+  messageElement.style.color = color;
+  messageElement.textContent = text;
+}
 
-  if (!email) {
-    message.style.color = "red";
-    message.textContent = "Please enter your email.";
+export async function sendLoginLink({
+  supabaseClient,
+  email,
+  messageElement,
+  browserWindow,
+}) {
+  const cleanEmail = String(email || "").trim().toLowerCase();
+
+  if (!cleanEmail) {
+    setMessage(messageElement, "red", "Please enter your email.");
     return;
   }
 
-  message.style.color = "black";
-  message.textContent = "Sending login link...";
+  setMessage(messageElement, "black", "Sending login link...");
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: cleanEmail,
     options: {
       shouldCreateUser: false,
-      emailRedirectTo: window.location.origin + "/auth/login.html",
+      emailRedirectTo: browserWindow.location.origin + "/auth/login.html",
     },
   });
 
   if (error) {
-    message.style.color = "red";
-    message.textContent =
-      error.message || "Could not send login link. Make sure you are registered.";
+    setMessage(
+      messageElement,
+      "red",
+      error.message || "Could not send login link. Make sure you are registered."
+    );
     return;
   }
 
-  message.style.color = "green";
-  message.textContent = "Login link sent. Check your email.";
-});
+  setMessage(messageElement, "green", "Login link sent. Check your email.");
+}
 
-async function handleAuthenticatedLogin() {
+export async function handleAuthenticatedLogin({
+  supabaseClient,
+  messageElement,
+  browserWindow,
+}) {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await supabaseClient.auth.getUser();
 
   if (userError || !user) {
     return;
   }
 
-  message.style.color = "black";
-  message.textContent = "Signing you in...";
+  setMessage(messageElement, "black", "Signing you in...");
 
-  const { data: appUser, error: roleError } = await supabase
+  const { data: appUser, error: roleError } = await supabaseClient
     .from("users")
     .select("id, role")
     .eq("id", user.id)
     .single();
 
   if (roleError || !appUser) {
-    message.style.color = "red";
-    message.textContent = "User role not found.";
+    setMessage(messageElement, "red", "User role not found.");
     return;
   }
 
   if (appUser.role === "student") {
-    window.location.href = "../student/student-dashboard.html";
+    browserWindow.location.href = "../student/student-dashboard.html";
     return;
   }
 
   if (appUser.role === "vendor") {
-    const { data: vendor, error: vendorError } = await supabase
+    const { data: vendor, error: vendorError } = await supabaseClient
       .from("vendors")
       .select("status")
       .eq("user_id", user.id)
       .single();
 
     if (vendorError || !vendor) {
-      message.style.color = "red";
-      message.textContent = "Vendor profile not found.";
+      setMessage(messageElement, "red", "Vendor profile not found.");
       return;
     }
 
     if (vendor.status === "pending") {
-      message.style.color = "orange";
-      message.textContent = "Your vendor account is waiting for admin approval.";
-      await supabase.auth.signOut();
+      setMessage(
+        messageElement,
+        "orange",
+        "Your vendor account is waiting for admin approval."
+      );
+      await supabaseClient.auth.signOut();
       return;
     }
 
     if (vendor.status === "suspended") {
-      message.style.color = "red";
-      message.textContent = "Your vendor account has been suspended.";
-      await supabase.auth.signOut();
+      setMessage(
+        messageElement,
+        "red",
+        "Your vendor account has been suspended."
+      );
+      await supabaseClient.auth.signOut();
       return;
     }
 
     if (vendor.status === "approved") {
-      window.location.href = "../vendor/vendor-dashboard.html";
+      browserWindow.location.href = "../vendor/vendor-dashboard.html";
       return;
     }
 
-    message.style.color = "red";
-    message.textContent = "Unknown vendor status.";
-    await supabase.auth.signOut();
+    setMessage(messageElement, "red", "Unknown vendor status.");
+    await supabaseClient.auth.signOut();
     return;
   }
 
   if (appUser.role === "admin") {
-    const { data: admin, error: adminError } = await supabase
+    const { data: admin, error: adminError } = await supabaseClient
       .from("admins")
       .select("status, is_master")
       .eq("user_id", user.id)
       .single();
 
     if (adminError || !admin) {
-      message.style.color = "red";
-      message.textContent = "Admin profile not found.";
+      setMessage(messageElement, "red", "Admin profile not found.");
       return;
     }
 
@@ -130,25 +144,69 @@ async function handleAuthenticatedLogin() {
 
     if (!hasAdminAccess) {
       if (admin.status === "pending") {
-        message.style.color = "orange";
-        message.textContent = "Your admin account is waiting for master admin approval.";
+        setMessage(
+          messageElement,
+          "orange",
+          "Your admin account is waiting for master admin approval."
+        );
       } else if (admin.status === "suspended") {
-        message.style.color = "red";
-        message.textContent = "Your admin account has been suspended.";
+        setMessage(
+          messageElement,
+          "red",
+          "Your admin account has been suspended."
+        );
       } else {
-        message.style.color = "red";
-        message.textContent = "Admin access denied.";
+        setMessage(messageElement, "red", "Admin access denied.");
       }
 
-      await supabase.auth.signOut();
+      await supabaseClient.auth.signOut();
       return;
     }
 
-    window.location.href = "../adminControls/admin-controls.html";
+    browserWindow.location.href = "../adminControls/admin-controls.html";
     return;
   }
 
-  message.style.color = "red";
-  message.textContent = "Unknown user role.";
-  await supabase.auth.signOut();
+  setMessage(messageElement, "red", "Unknown user role.");
+  await supabaseClient.auth.signOut();
+}
+
+export async function setupLoginPage({
+  documentRef = document,
+  browserWindow = window,
+  supabaseClient,
+} = {}) {
+  const client = supabaseClient || (await createDefaultSupabaseClient());
+
+  const form = documentRef.getElementById("login-form");
+  const message = documentRef.getElementById("message");
+
+  if (!form || !message) {
+    return;
+  }
+
+  await handleAuthenticatedLogin({
+    supabaseClient: client,
+    messageElement: message,
+    browserWindow,
+  });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const emailInput = documentRef.getElementById("email");
+
+    await sendLoginLink({
+      supabaseClient: client,
+      email: emailInput ? emailInput.value : "",
+      messageElement: message,
+      browserWindow,
+    });
+  });
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", async () => {
+    await setupLoginPage();
+  });
 }
