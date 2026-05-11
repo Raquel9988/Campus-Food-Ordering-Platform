@@ -57,9 +57,7 @@ async function addToCart(vendorId, item) {
   await saveCart(cart);
 }
 
-/* ════════════════════════════════════════════
-   LOAD VENDOR NAME  (unchanged)
-════════════════════════════════════════════ */
+//  LOAD VENDOR NAME
 async function loadVendorName() {
   const { data } = await supabase
     .from("vendors")
@@ -71,16 +69,14 @@ async function loadVendorName() {
   if (title) title.textContent = data?.business_name || "Vendor Menu";
 }
 
-/* ════════════════════════════════════════════
+/* 
    ALL ITEMS CACHE
    We fetch once and filter in memory so that
    toggling filters doesn't re-hit the database.
-════════════════════════════════════════════ */
+ */
 let allMenuItems = [];
 
-/* ════════════════════════════════════════════
-   LOAD MENU FROM SUPABASE
-════════════════════════════════════════════ */
+//  LOAD MENU FROM SUPABASE
 async function loadMenu() {
   const menuList = document.getElementById("menu-list");
   menuList.innerHTML = `<p class="loading-text"><span class="spinner-sm"></span> Loading menu…</p>`;
@@ -106,9 +102,7 @@ async function loadMenu() {
   renderMenu(allMenuItems);
 }
 
-/* ════════════════════════════════════════════
-   RENDER MENU ITEMS  (builds cards from array)
-════════════════════════════════════════════ */
+//  RENDER MENU ITEMS  (builds cards from array)
 function renderMenu(items) {
   const menuList = document.getElementById("menu-list");
   menuList.innerHTML = "";
@@ -203,10 +197,7 @@ function renderMenu(items) {
   });
 }
 
-/* ════════════════════════════════════════════
-   PERSON 6 — DIETARY FILTER LOGIC
-════════════════════════════════════════════ */
-
+// DIETARY FILTER LOGIC
 // Tracks which filters are currently active (Set of tag strings, or "all")
 const activeFilters = new Set();
 
@@ -300,16 +291,12 @@ function setupFilters() {
   });
 }
 
-/* ════════════════════════════════════════════
-   UTILS
-════════════════════════════════════════════ */
+//  UTILS
 function formatTag(tag) {
   return tag.replaceAll("_", "-").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
-/* ════════════════════════════════════════════
-   INIT
-════════════════════════════════════════════ */
+//  INIT
 async function initMenu() {
   await loadVendorName();
   await loadMenu();
@@ -318,9 +305,7 @@ async function initMenu() {
 
 initMenu();
 
-/* ════════════════════════════════════════════
-   NAV  (unchanged from original)
-════════════════════════════════════════════ */
+//  NAV
 document.getElementById("back-btn")?.addEventListener("click", () => {
   window.location.href = "student-dashboard.html";
 });
