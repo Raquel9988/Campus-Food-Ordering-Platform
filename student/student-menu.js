@@ -2,7 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   "https://sqbscxfolbckikrzxqhr.supabase.co",
-  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay",
+  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
 );
 
 const params = new URLSearchParams(window.location.search);
@@ -101,12 +101,12 @@ async function addToCart(selectedVendorId, item) {
 
   if (hasOtherVendor) {
     const shouldClear = confirm(
-      "You can only order from one vendor at a time. Clear your current cart and start a new order from this vendor?",
+      "You can only order from one vendor at a time. Clear your current cart and start a new order from this vendor?"
     );
 
     if (!shouldClear) {
       showToast(
-        "Item was not added. Your cart still has items from another vendor.",
+        "Item was not added. Your cart still has items from another vendor."
       );
       return false;
     }
@@ -142,15 +142,19 @@ async function addToCart(selectedVendorId, item) {
   return true;
 }
 
-//  LOAD VENDOR NAME
+/* =========================
+   LOAD VENDOR NAME
+========================= */
+
 async function loadVendorName() {
-  const title = document.getElementById("vendor-name");
+  const vendorNameTitle = document.getElementById("vendor-name");
+
+  if (!vendorNameTitle) {
+    return;
+  }
 
   if (!vendorId) {
-    if (title) {
-      title.textContent = "Vendor Menu";
-    }
-
+    vendorNameTitle.textContent = "Vendor Menu";
     return;
   }
 
@@ -160,18 +164,19 @@ async function loadVendorName() {
     .eq("id", vendorId)
     .single();
 
-  const title = document.getElementById("vendor-name");
-  if (title) title.textContent = data?.business_name || "Vendor Menu";
+  if (error) {
+    console.error("Load vendor name error:", error);
+    vendorNameTitle.textContent = "Vendor Menu";
+    return;
+  }
+
+  vendorNameTitle.textContent = data?.business_name || "Vendor Menu";
 }
 
-/* 
-   ALL ITEMS CACHE
-   We fetch once and filter in memory so that
-   toggling filters doesn't re-hit the database.
- */
-let allMenuItems = [];
+/* =========================
+   LOAD MENU FROM SUPABASE
+========================= */
 
-//  LOAD MENU FROM SUPABASE
 async function loadMenu() {
   const menuList = document.getElementById("menu-list");
 
@@ -211,6 +216,7 @@ async function loadMenu() {
   }
 
   if (!data || data.length === 0) {
+    allMenuItems = [];
     menuList.innerHTML = `<p class="empty-text">No menu items available.</p>`;
     return;
   }
@@ -219,9 +225,17 @@ async function loadMenu() {
   renderMenu(allMenuItems);
 }
 
-//  RENDER MENU ITEMS  (builds cards from array)
+/* =========================
+   RENDER MENU ITEMS
+========================= */
+
 function renderMenu(items) {
   const menuList = document.getElementById("menu-list");
+
+  if (!menuList) {
+    return;
+  }
+
   menuList.innerHTML = "";
 
   if (!items.length) {
@@ -257,7 +271,7 @@ function renderMenu(items) {
     if (item.image_url) {
       const img = document.createElement("img");
       img.src = item.image_url;
-      img.alt = item.name;
+      img.alt = item.name || "Menu item image";
       img.className = "menu-image";
       figure.appendChild(img);
     } else {
@@ -270,7 +284,7 @@ function renderMenu(items) {
     info.className = "menu-info";
 
     const name = document.createElement("h3");
-    name.textContent = item.name;
+    name.textContent = item.name || "Unnamed item";
 
     const description = document.createElement("p");
     description.className = "description";
@@ -326,9 +340,9 @@ function renderMenu(items) {
   });
 }
 
-// DIETARY FILTER LOGIC
-// Tracks which filters are currently active (Set of tag strings, or "all")
-const activeFilters = new Set();
+/* =========================
+   DIETARY FILTER LOGIC
+========================= */
 
 function applyFilters() {
   if (activeFilters.size === 0) {
@@ -424,7 +438,7 @@ function setupFilters() {
         allChip.classList.toggle("active", noFiltersSelected);
         allChip.setAttribute(
           "aria-pressed",
-          noFiltersSelected ? "true" : "false",
+          noFiltersSelected ? "true" : "false"
         );
       }
 
@@ -433,28 +447,19 @@ function setupFilters() {
   });
 }
 
-//  UTILS
-function formatTag(tag) {
-  return tag.replaceAll("_", "-").replace(/\b\w/g, (l) => l.toUpperCase());
+/* =========================
+   NAVIGATION
+========================= */
+
+function setupNavigation() {
+  document.getElementById("back-btn")?.addEventListener("click", () => {
+    window.location.href = "student-dashboard.html";
+  });
+
+  document.getElementById("view-cart")?.addEventListener("click", () => {
+    window.location.href = "student-cart.html";
+  });
 }
-
-//  INIT
-async function initMenu() {
-  await loadVendorName();
-  await loadMenu();
-  setupFilters(); // wire up filter chips after items are loaded
-}
-
-initMenu();
-
-//  NAV
-document.getElementById("back-btn")?.addEventListener("click", () => {
-  window.location.href = "student-dashboard.html";
-});
-
-document.getElementById("view-cart")?.addEventListener("click", () => {
-  window.location.href = "student-cart.html";
-});
 
 /* =========================
    INIT
@@ -464,6 +469,7 @@ async function initMenu() {
   await loadVendorName();
   await loadMenu();
   setupFilters();
+  setupNavigation();
 }
 
-initMenu();
+document.addEventListener("DOMContentLoaded", initMenu);
