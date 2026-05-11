@@ -27,8 +27,11 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Run coverage
+        run: npm run coverage
+
       - name: Check coverage file exists
-        run: ls -R coverage || true
+        run: ls -R coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
