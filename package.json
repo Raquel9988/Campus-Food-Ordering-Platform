@@ -10,6 +10,7 @@
 
     "test:payment": "vitest run tests/payment-api.test.js",
     "test:notify": "vitest run tests/payfast-notify.test.js",
+    "test:analytics": "vitest run tests/analytics-api.test.js",
 
     "test:login": "vitest run tests/login.test.js",
     "test:register": "vitest run tests/register.test.js",
