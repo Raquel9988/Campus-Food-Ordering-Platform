@@ -242,3 +242,9 @@ body{
         padding: 1.2rem;
     }
 }
+
+
+.error-message{
+    color: #dc2626;
+    font-weight: 300;
+}
