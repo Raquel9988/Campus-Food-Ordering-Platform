@@ -11,13 +11,13 @@ window.addEventListener("load", async()=>{
 
         await simulateLoading();
 
-        /*//Mock Analytics Data
+        //Mock Analytics Data
         const analyticsData = {
             totalOrders: 124,
-            totalRevenue: "R18,450",
-            peakHour: "13:00 - 14:00",
+            totalRevenue: "R12,230",
+            peakHour: "13:00-14:00",
             activeVendors: 12
-        };*/
+        };
         updateSummaryCards(analyticsData);
         showDashboardReadyState();
     }
@@ -49,20 +49,79 @@ window.addEventListener("load", async()=>{
         `;
     }
 
-    function showDashboardReadyState(){
-        salesReportOutput.innerHTML = `
-            <p>Sales analytics module connected successfully</p>
-        `;
-        peakHoursOutput.innerHTML = `
-            <p>Peak ordering hours module connected successfully</p>
-        `;
-        customViewOutput.innerHTML = `
-            <p>Custom analytics module connected successfully</p>
-        `;
-        exportOutput.innerHTML = `
-            <p>Export reporting tools connected successfully</p>
-        `;
-    }
+function showDashboardReadyState(){
+
+    salesReportOutput.innerHTML = `
+        <table class="analytics-table">
+
+            <thead>
+                <tr>
+                    <th>Vendor</th>
+                    <th>Total Sales</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>Campus Grill</td>
+                    <td>R5,400</td>
+                    <td>
+                        <span class="status-badge success">Active</span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Burger Spot</td>
+                    <td>R3,850</td>
+                    <td>
+                        <span class="status-badge success">Active</span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Pizza Hub</td>
+                    <td>R2,980</td>
+                    <td>
+                        <span class="status-badge warning">Low Orders</span>
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    `;
+
+    peakHoursOutput.innerHTML = `
+        <section class="analytics-highlight">
+
+            <h3>Most Active Ordering Time</h3>
+
+            <p class="highlight-hour">13:00-14:00</p>
+
+            <span>Highest student ordering activity detected.</span>
+
+        </section>
+    `;
+
+    customViewOutput.innerHTML = `
+        <section class="empty-state">
+
+            <h3>No Custom Filters Applied</h3>
+
+            <p>Select filters to generate custom analytics reports.</p>
+
+        </section>
+    `;
+
+    exportOutput.innerHTML = `
+        <section class="export-actions">
+
+            <button class="export-btn">Export CSV</button>
+            <button class="export-btn">Export PDF</button>
+
+        </section>
+    `;
+}
 
     function showErrorState(){
         salesReportOutput.innerHTML = `

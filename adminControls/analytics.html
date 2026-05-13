@@ -31,7 +31,7 @@
 
                 </section>
 
-                <nav class="sidebar-nav">
+                <nav class="sidebar-nav" aria-label="Analytics Navigation">
                     <a href="#" class="nav-item active">
                         Dashboard
                     </a>
@@ -61,38 +61,39 @@
 
         <!--Main Content-->
         <main class="dashboard-main">
-            <header class="dashboard-header">
+
+            <section class="welcome-banner">
 
                 <section>
-                    <h1>Analytics Dashboard</h1>
-                    <p>Monitor reports, sales trends, and ordering activity.</p>
+                    <h2>Analytics Overview</h2>
+                    <p>Track platform activity, vendor performance, and ordering behaviour in real time.</p>
                 </section>
-            </header>
+
+                <section class="banner-badge">
+                    Live Dashboard
+                </section>
+            </section>
 
             <!--Summary Cards-->
             <section class="summary-grid">
                 <section class="summary-card featured-card">
                     <h3>Total Orders</h3>
                     <p class="summary-number">--</p>
-                    <em>Analytics data loading...</em>
                 </section>
 
                 <section class="summary-card">
                     <h3>Total Revenue</h3>
                     <p class="summary-number">--</p>
-                    <em>Waiting for analytics data...</em>
                 </section>
 
                 <section class="summary-card">
                     <h3>Peak Ordering Hour</h3>
                     <p class="summary-number">--</p>
-                    <em>Peak hour report loading...</em>
                 </section>
 
                 <section class="summary-card">
                     <h3>Active Vendors</h3>
                     <p class="summary-number">--</p>
-                    <em>Vendor analytics loading</em>
                 </section>
 
             </section>
@@ -100,17 +101,18 @@
             <!--Report Grid-->
             <section class="reports-grid">
                 <section class="report-card" id="sales-report-section">
-                    <h2>Sales Per Vendor Over Time</h2>
+                    <h2 id="sales-report-title">Sales Per Vendor Over Time</h2>
 
                     <section id="sales-report-output">
                         <p class="loading-message">Loading sales analytics...</p>
                     </section>
+                </section>
 
             </section>
 
             <!--Peak Hours-->
             <section class="report-card" id="peak-hours-section">
-                <h2>Peak Ordering Hours</h2>
+                <h2 id="peak-hours-title">Peak Ordering Hours</h2>
 
                 <section id="peak-hours-output">
                     <p class="loading-message">Loading peak hours report..</p>
@@ -120,7 +122,7 @@
 
             <!--Custom View-->
             <section class="report-card" id="custom-view-section">
-                <h2>Custom Analytics View</h2>
+                <h2 id="custom-view-title">Custom Analytics View</h2>
 
                 <section id="custom-view-output">
                     <p class="loading-message">Loading custom analytics...</p>
@@ -130,7 +132,7 @@
 
             <!--Export-->
             <section class="report-card" id="export-section">
-                <h2>Export Reports</h2>
+                <h2 id="export-title">Export Reports</h2>
 
                 <section id="export-output">
                     <p class="loading-message">Export options will appear here...</p>
@@ -139,7 +141,7 @@
             </section>
 
         </main>
-        
+
     </section>
 
     <script src="analytics.js"></script>
