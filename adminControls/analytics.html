@@ -16,85 +16,131 @@
 </head>
 
 <body>
-    <header class="header">
+    <section class="dashboard-layout">
+        <!--Sidebar-->
+        <aside class="sidebar">
+            <section class="sidebar-top">
 
-        <section class="header-inner">
+                <section class="brand">
+                    <img src="../assets/logo.png" alt="CampusEats" class="logo-img">
 
-            <section class="hearder-brand">
-                <a href="../index.html" class="logo-link">
-                    <img src="../assets/logo.png" alt="CampusEats Logo" class="logo-img"/>
-                </a>
+                    <section>
+                        <h2>CampusEats</h2>
+                        <p>Analytics</p>
+                    </section>
+
+                </section>
+
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item active">
+                        Dashboard
+                    </a>
+                    <a href="#sales-report-section" class="nav-item">
+                        Sales Report
+                    </a>
+                    <a href="#peak-hours-section" class="nav-item">
+                        Peak Hours
+                    </a>
+                    <a href="#custom-view-section" class="nav-item">
+                        Custom View
+                    </a>
+                    <a href="#export-section" class="nav-item">
+                        Export Reports
+                    </a>
+                </nav>
+
+            </section>
+
+            <section class="sidebar-bottom">
+                <a href="../adminDashboard/admin-dashboard.html" class="back-btn">
+                    Back to Dashboard
+                </a> 
+            </section>
+
+        </aside>
+
+        <!--Main Content-->
+        <main class="dashboard-main">
+            <header class="dashboard-header">
 
                 <section>
-                    <h1 class="header-title">Analytics Dashboard</h1>
-                    <p class="header-sub">
-                        View Analytics Reports and Sales Insights
-                    </p>
+                    <h1>Analytics Dashboard</h1>
+                    <p>Monitor reports, sales trends, and ordering activity.</p>
+                </section>
+            </header>
+
+            <!--Summary Cards-->
+            <section class="summary-grid">
+                <section class="summary-card featured-card">
+                    <h3>Total Orders</h3>
+                    <p class="summary-number">--</p>
+                    <em>Analytics data loading...</em>
+                </section>
+
+                <section class="summary-card">
+                    <h3>Total Revenue</h3>
+                    <p class="summary-number">--</p>
+                    <em>Waiting for analytics data...</em>
+                </section>
+
+                <section class="summary-card">
+                    <h3>Peak Ordering Hour</h3>
+                    <p class="summary-number">--</p>
+                    <em>Peak hour report loading...</em>
+                </section>
+
+                <section class="summary-card">
+                    <h3>Active Vendors</h3>
+                    <p class="summary-number">--</p>
+                    <em>Vendor analytics loading</em>
                 </section>
 
             </section>
 
-            <section class="header-actions">
-                <a href="../adminDashboard/admin-dashboard.html" class="hdr-btn hdr-btn--ghost">
-                    Back to Dashboard
-                </a>
-            </section>
+            <!--Report Grid-->
+            <section class="reports-grid">
+                <section class="report-card" id="sales-report-section">
+                    <h2>Sales Per Vendor Over Time</h2>
 
-        </section>
-
-    </header>
-
-    <main class="analytics-main">
-
-        <section class="analytics-grid">
-
-            <section class="analytics-card" id="sales-report-section">
-                <h2>Sales Per Vendor Over Time</h2>
-
-                <section id="sales-report-output">
-                    <p class="loading-message">
-                        Loading sales report...
-                    </p>
-                </section>
+                    <section id="sales-report-output">
+                        <p class="loading-message">Loading sales analytics...</p>
+                    </section>
 
             </section>
 
-            <section class="analytics-card" id="peak-hours-section">
+            <!--Peak Hours-->
+            <section class="report-card" id="peak-hours-section">
                 <h2>Peak Ordering Hours</h2>
 
                 <section id="peak-hours-output">
-                    <p class="loading-message">
-                        Loading peakordering report...
-                    </p>
+                    <p class="loading-message">Loading peak hours report..</p>
                 </section>
 
             </section>
 
-            <section class="analytics-card" id="custom-view-section">
+            <!--Custom View-->
+            <section class="report-card" id="custom-view-section">
                 <h2>Custom Analytics View</h2>
 
                 <section id="custom-view-output">
-                    <p class="loading-message">
-                        Loading custom analytics...
-                    </p>
+                    <p class="loading-message">Loading custom analytics...</p>
                 </section>
 
             </section>
 
-            <section class="analytics-card" id="export-section">
+            <!--Export-->
+            <section class="report-card" id="export-section">
                 <h2>Export Reports</h2>
 
                 <section id="export-output">
-                    <p class="loading-message">
-                        Export options will appear here...
-                    </p>
+                    <p class="loading-message">Export options will appear here...</p>
                 </section>
 
             </section>
 
-        </section>
-
-    </main>
+        </main>
+        
+    </section>
 
     <script src="analytics.js"></script>
     <script src="sales-report.js"></script>
