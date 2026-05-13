@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Analytics Dashboard – CampusEats</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+
+    <link 
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap" 
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="analytics.css"/>
+</head>
+
+<body>
+    <header class="header">
+
+        <section class="header-inner">
+
+            <section class="hearder-brand">
+                <a href="../index.html" class="logo-link">
+                    <img src="../assets/logo.png" alt="CampusEats Logo" class="logo-img"/>
+                </a>
+
+                <section>
+                    <h1 class="header-title">Analytics Dashboard</h1>
+                    <p class="header-sub">
+                        View Analytics Reports and Sales Insights
+                    </p>
+                </section>
+
+            </section>
+
+            <section class="header-actions">
+                <a href="../adminDashboard/admin-dashboard.html" class="hdr-btn hdr-btn--ghost">
+                    Back to Dashboard
+                </a>
+            </section>
+
+        </section>
+
+    </header>
+
+    <main class="analytics-main">
+
+        <section class="analytics-grid">
+
+            <section class="analytics-card" id="sales-report-section">
+                <h2>Sales Per Vendor Over Time</h2>
+
+                <section id="sales-report-output">
+                    <p class="loading-message">
+                        Loading sales report...
+                    </p>
+                </section>
+
+            </section>
+
+            <section class="analytics-card" id="peak-hours-section">
+                <h2>Peak Ordering Hours</h2>
+
+                <section id="peak-hours-output">
+                    <p class="loading-message">
+                        Loading peakordering report...
+                    </p>
+                </section>
+
+            </section>
+
+            <section class="analytics-card" id="custom-view-section">
+                <h2>Custom Analytics View</h2>
+
+                <section id="custom-view-output">
+                    <p class="loading-message">
+                        Loading custom analytics...
+                    </p>
+                </section>
+
+            </section>
+
+            <section class="analytics-card" id="export-section">
+                <h2>Export Reports</h2>
+
+                <section id="export-output">
+                    <p class="loading-message">
+                        Export options will appear here...
+                    </p>
+                </section>
+
+            </section>
+
+        </section>
+
+    </main>
+
+    <script src="analytics.js"></script>
+    <script src="sales-report.js"></script>
+    <script src="peak-hours-report.js"></script>
+    <script src="custom-view.js"></script>
+    <script src="export-reports.js"></script>
+</body>
+
+</html>
