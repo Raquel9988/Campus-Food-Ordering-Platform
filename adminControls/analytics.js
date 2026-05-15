@@ -9,15 +9,52 @@ window.addEventListener("load", async()=>{
     try{
         showLoadingState();
 
-        await simulateLoading();
+        const response = await fetch('https://campus-food-ordering.pages.dev/api/analytics');
 
-        //Mock Analytics Data
+        if(!response.ok){
+            throw new Error("Failed to fetch analytics data");
+        }
+
+        const result = await response.json();
+        const orders = result.data;
+        if(!orders || orders.length === 0){
+            showEmptyState();
+            return;
+        }
+
+        const totalOrders = orders.length;
+        const totalRevenue = orders.reduce((total, order) => {
+            return total + order.order_total;
+        }, 0);
+
+        const activeVendors = new Set(
+            orders.map(order => order.vendor_name)
+        ).size;
+
+        const hourCounts = {};
+        orders.forEach(order => {
+            const hour = order.order_hour;
+            if (hour !== null) {
+                hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+            }
+        });
+
+        let peakHour = null;
+        let highestCount = 0;
+
+        for (const hour in hourCounts) {
+            if (hourCounts[hour] > highestCount) {
+                highestCount = hourCounts[hour];
+                peakHour = hour;
+            }
+        }
         const analyticsData = {
-            totalOrders: 124,
-            totalRevenue: "R12,230",
-            peakHour: "13:00-14:00",
-            activeVendors: 12
+            totalOrders,
+            totalRevenue: `R${totalRevenue.toFixed(2)}`,
+            peakHour: `${peakHour}:00`,
+            activeVendors
         };
+
         updateSummaryCards(analyticsData);
         showDashboardReadyState();
     }
@@ -52,51 +89,21 @@ window.addEventListener("load", async()=>{
 function showDashboardReadyState(){
 
     salesReportOutput.innerHTML = `
-        <table class="analytics-table">
+    <section class="empty-state">
 
-            <thead>
-                <tr>
-                    <th>Vendor</th>
-                    <th>Total Sales</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
+        <h3>Sales Report Ready</h3>
 
-            <tbody>
-                <tr>
-                    <td>Campus Grill</td>
-                    <td>R5,400</td>
-                    <td>
-                        <span class="status-badge success">Active</span>
-                    </td>
-                </tr>
+        <p>Sales analytics will appear here.</p>
 
-                <tr>
-                    <td>Burger Spot</td>
-                    <td>R3,850</td>
-                    <td>
-                        <span class="status-badge success">Active</span>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Pizza Hub</td>
-                    <td>R2,980</td>
-                    <td>
-                        <span class="status-badge warning">Low Orders</span>
-                    </td>
-                </tr>
-            </tbody>
-
-        </table>
-    `;
+    </section>
+`;
 
     peakHoursOutput.innerHTML = `
         <section class="analytics-highlight">
 
             <h3>Most Active Ordering Time</h3>
 
-            <p class="highlight-hour">13:00-14:00</p>
+            <p class="highlight-hour">${summaryNumbers[2].textContent}</p>
 
             <span>Highest student ordering activity detected.</span>
 
@@ -123,26 +130,35 @@ function showDashboardReadyState(){
     `;
 }
 
-    function showErrorState(){
+    function showEmptyState(){
         salesReportOutput.innerHTML = `
-            <p class="error-message">Failed to load sales analytics</p>
+            <p class="loading-message">No analytics data available.</p>
         `;
         peakHoursOutput.innerHTML = `
-            <p class="error-message">Failed to load peak hours analytics</p>
+            <p class="loading-message">No peak hours data available.</p>
         `;
         customViewOutput.innerHTML = `
-            <p class="error-message">Failed to load custom analytics</p>
+            <p class="loading-message">No custom analytics available.</p>
         `;
         exportOutput.innerHTML = `
-            <p class="error-message">Failed to load export tools</p>
+            <p class="loading-message">No export data available.</p>
         `;
     }
 
-    function simulateLoading(){
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve();
-            }, 1500);
-        });
+    function showErrorState() {
+
+        salesReportOutput.innerHTML = `
+            <p class="error-message">Failed to load sales analytics.</p>
+        `;
+        peakHoursOutput.innerHTML = `
+            <p class="error-message">Failed to load peak hours analytics.</p>
+        `;
+        customViewOutput.innerHTML = `
+            <p class="error-message">Failed to load custom analytics.</p>
+        `;
+        exportOutput.innerHTML = `
+            <p class="error-message">Failed to load export tools.</p>
+        `;
     }
+
 });
