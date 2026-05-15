@@ -305,27 +305,46 @@ function createOrderCard(order) {
       </span>
     </div>
 
-    <div class="payment-info">
-      <p class="payment-badge">✓ Payment Received</p>
+    <section class="payment-info" aria-label="Payment information">
+      <section class="payment-main">
+        <p class="payment-badge">✓ Payment Received</p>
 
-      ${
-        order.payment_provider
-          ? `<p class="payment-provider">via ${escapeHtml(order.payment_provider)}</p>`
-          : ``
-      }
+        ${
+          order.payment_provider
+            ? `
+              <p class="payment-provider-pill">
+                <span>via</span>
+                ${escapeHtml(order.payment_provider)}
+              </p>
+            `
+            : ``
+        }
+      </section>
 
-      ${
-        order.transaction_id
-          ? `<p class="payment-provider">Transaction: ${escapeHtml(order.transaction_id)}</p>`
-          : ``
-      }
+      <section class="payment-meta">
+        ${
+          order.transaction_id
+            ? `
+              <p class="payment-detail">
+                <span class="payment-label">Transaction ID</span>
+                <span class="payment-value">${escapeHtml(order.transaction_id)}</span>
+              </p>
+            `
+            : ``
+        }
 
-      ${
-        order.paid_at
-          ? `<p class="payment-provider">Paid at: ${formatDate(order.paid_at)}</p>`
-          : ``
-      }
-    </div>
+        ${
+          order.paid_at
+            ? `
+              <p class="payment-detail">
+                <span class="payment-label">Paid at</span>
+                <span class="payment-value">${formatDate(order.paid_at)}</span>
+              </p>
+            `
+            : ``
+        }
+      </section>
+    </section>
 
     <div class="order-info">
       <p>
