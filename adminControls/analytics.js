@@ -88,15 +88,7 @@ window.addEventListener("load", async()=>{
 
 function showDashboardReadyState(){
 
-    salesReportOutput.innerHTML = `
-    <section class="empty-state">
-
-        <h3>Sales Report Ready</h3>
-
-        <p>Sales analytics will appear here.</p>
-
-    </section>
-`;
+  // Sales Report Card
 
     peakHoursOutput.innerHTML = `
         <section class="analytics-highlight">
