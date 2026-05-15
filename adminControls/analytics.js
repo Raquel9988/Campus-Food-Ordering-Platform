@@ -98,17 +98,13 @@ function showDashboardReadyState(){
     </section>
 `;
 
-    peakHoursOutput.innerHTML = `
-        <section class="analytics-highlight">
-
-            <h3>Most Active Ordering Time</h3>
-
-            <p class="highlight-hour">${summaryNumbers[2].textContent}</p>
-
-            <span>Highest student ordering activity detected.</span>
-
-        </section>
-    `;
+    // Initialize peak hours report table
+    if (typeof initPeakHoursReport === 'function') {
+        initPeakHoursReport();
+    } else {
+        console.error('Peak hours report module not loaded');
+        peakHoursOutput.innerHTML = '<p>Error loading peak hours report.</p>';
+    }
 
     customViewOutput.innerHTML = `
         <section class="empty-state">
