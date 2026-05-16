@@ -1,15 +1,3 @@
-// sales-report.js
-// Person 3 – Sales Per Vendor Over Time Report
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-// Colours are taken directly from analytics.css:
-//   #166534  – dark green (primary)
-//   #22c55e  – bright green (accent)
-//   #16a34a  – mid green (highlight text)
-//   #dcfce7  – light green tint (backgrounds)
-//   #e5e7eb  – border grey (matches dashboard borders)
-//   #6b7280  – muted text (matches dashboard secondary text)
-//   #111827  – primary text (matches body colour)
 
 const SALES_REPORT_STYLES = `
   #sales-report-section * { box-sizing: border-box; }
@@ -325,26 +313,6 @@ async function loadAnalyticsData(startDate = null, endDate = null, forceRefresh 
 
 // ─── Data processing ──────────────────────────────────────────────────────────
 
-/**
- * Builds a vendor map from raw orders.
- *
- * Structure produced:
- * {
- *   "Campus Café": {
- *     vendorName: "Campus Café",
- *     totalSales: 1240,       // sum across ALL dates
- *     totalOrders: 22,        // count across ALL dates
- *     dates: [
- *       { date: "2026-05-10", orders: 6, sales: 680 },
- *       { date: "2026-05-11", orders: 8, sales: 560 },
- *       ...sorted oldest → newest
- *     ]
- *   },
- *   ...
- * }
- *
- * Top vendor = vendor with highest totalSales across all dates.
- */
 function buildVendorMap(orders) {
   const map = {};
 
@@ -395,21 +363,6 @@ function sortVendorsByTotalSales(vendorMap) {
 
 // ─── Rendering ────────────────────────────────────────────────────────────────
 
-/**
- * Renders the vendor-over-time report into #sales-report-output.
- *
- * Table structure:
- *   Vendor header row  (all-time totals for this vendor)
- *     └─ Date row – oldest
- *     └─ Date row
- *     └─ Date row – newest
- *   Next vendor header row
- *     └─ ...
- *
- * Vendors: sorted by total sales descending.
- * Dates within each vendor: sorted oldest → newest.
- * Top vendor (by total sales across all time): green tint highlight.
- */
 function renderSalesReport(vendorMap) {
   const container = document.getElementById("sales-report-output");
   if (!container) { console.error("Missing #sales-report-output"); return; }
