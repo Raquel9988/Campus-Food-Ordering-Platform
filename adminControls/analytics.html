@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analytics Dashboard – CampusEats</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="analytics.css" />
+    <link rel="stylesheet" href="custom-view.css" />
+    <link rel="stylesheet" href="export-reports.css" />
+  </head>
+
+  <body>
+    <section class="dashboard-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <section class="sidebar-top">
+          <section class="brand">
+            <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
+
+            <section>
+              <h2>CampusEats</h2>
+              <p>Analytics</p>
+            </section>
+          </section>
+
+          <nav class="sidebar-nav" aria-label="Analytics Navigation">
+            <a href="#sales-report-section" class="nav-item"> Sales Report </a>
+
+            <a href="#peak-hours-section" class="nav-item"> Peak Hours </a>
+
+            <a href="#custom-view-section" class="nav-item"> Custom View </a>
+
+            <a href="#export-section" class="nav-item"> Export Reports </a>
+          </nav>
+        </section>
+
+        <section class="sidebar-bottom">
+          <a href="../adminControls/admin-controls.html" class="back-btn">
+            Back to Dashboard
+          </a>
+        </section>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="dashboard-main">
+        <section class="welcome-banner">
+          <section>
+            <h2>Analytics Overview</h2>
+            <p>
+              Track platform activity, vendor performance, and ordering
+              behaviour in real time.
+            </p>
+          </section>
+
+          <section class="banner-badge">Live Dashboard</section>
+        </section>
+
+        <!-- Summary Cards -->
+        <section class="summary-grid">
+          <section class="summary-card featured-card">
+            <h3>Total Orders</h3>
+            <p class="summary-number">--</p>
+          </section>
+
+          <section class="summary-card">
+            <h3>Total Revenue</h3>
+            <p class="summary-number">--</p>
+          </section>
+
+          <section class="summary-card">
+            <h3>Peak Ordering Hour</h3>
+            <p class="summary-number">--</p>
+          </section>
+
+          <section class="summary-card">
+            <h3>Active Vendors</h3>
+            <p class="summary-number">--</p>
+          </section>
+        </section>
+
+        <!-- Sales Report -->
+        <section class="reports-grid">
+          <section class="report-card" id="sales-report-section">
+            <h2 id="sales-report-title">Sales Per Vendor Over Time</h2>
+
+            <section id="sales-report-output">
+              <p class="loading-message">Loading sales analytics...</p>
+            </section>
+          </section>
+        </section>
+
+        <!-- Peak Hours -->
+        <section class="report-card" id="peak-hours-section">
+          <h2 id="peak-hours-title">Peak Ordering Hours</h2>
+
+          <section id="peak-hours-output">
+            <p class="loading-message">Loading peak hours report...</p>
+          </section>
+        </section>
+
+        <!-- Custom View -->
+        <section class="report-card" id="custom-view-section">
+          <h2 id="custom-view-title">Custom Analytics View</h2>
+
+          <section id="custom-view-output">
+            <p class="loading-message">Loading custom analytics...</p>
+          </section>
+        </section>
+
+        <!-- Export -->
+        <section class="report-card" id="export-section">
+          <h2 id="export-title">Export Reports</h2>
+
+          <section id="export-output">
+            <p class="loading-message">Export options will appear here...</p>
+          </section>
+        </section>
+      </main>
+    </section>
+
+    <script src="analytics.js"></script>
+    <script src="sales-report.js"></script>
+    <script src="peak-hours-report.js"></script>
+    <script src="custom-view.js"></script>
+    <script src="export-reports.js"></script>
+  </body>
+</html>
