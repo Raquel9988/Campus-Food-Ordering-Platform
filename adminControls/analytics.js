@@ -46,6 +46,8 @@ window.addEventListener('load', async () => {
       return
     }
 
+    window.analyticsOrders = orders
+
     const totalOrders = orders.length
 
     const totalRevenue = orders.reduce((total, order) => {
@@ -53,7 +55,7 @@ window.addEventListener('load', async () => {
     }, 0)
 
     const activeVendors = new Set(
-      orders.map(order => order.vendor_name)
+      orders.map(order => order.vendor_name).filter(Boolean)
     ).size
 
     const hourCounts = {}
@@ -174,12 +176,15 @@ window.addEventListener('load', async () => {
       `
     }
 
-    exportOutput.innerHTML = `
-      <section class="export-actions">
-        <button class="export-btn" id="export-csv-btn">Export CSV</button>
-        <button class="export-btn" id="export-pdf-btn">Export PDF</button>
-      </section>
-    `
+    if (typeof initExportReports === 'function') {
+      initExportReports()
+    } else {
+      console.error('Export reports module not loaded')
+
+      exportOutput.innerHTML = `
+        <p class="error-message">Error loading export reports.</p>
+      `
+    }
   }
 
   function showEmptyState() {
