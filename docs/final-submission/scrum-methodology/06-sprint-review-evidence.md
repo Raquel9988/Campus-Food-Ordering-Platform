@@ -44,7 +44,7 @@ All sprint evidence documents are stored in:
 
 | Sprint 3 | \[Sprint 3 Meeting Evidence](<evidence/Sprint 3.docx>) | Screenshots and notes for Sprint 3 planning, progress meetings, merge preparation, and Sprint 3 review. |
 
-| Sprint 4 | \[Sprint 4 Meeting Evidence](<evidence/Sprint 4.docx>) | Screenshots and notes for Sprint 4 planning and analytics branch coordination meeting. |
+| Sprint 4 | \[Sprint 4 Meeting Evidence](<evidence/Sprint 4.docx>) | Screenshots and notes for Sprint 4 planning, analytics branch coordination, final preparation, and Sprint 4 review evidence once completed. |
 
 
 
@@ -252,8 +252,6 @@ Sprint 3 was successful because the payment and dietary systems were completed a
 
 \---
 
-
-
 \# Sprint 4 Review Evidence Summary
 
 
@@ -262,7 +260,7 @@ Sprint 3 was successful because the payment and dietary systems were completed a
 
 
 
-The Sprint 4 evidence document includes screenshots for:
+The Sprint 4 evidence document includes screenshots and notes for:
 
 
 
@@ -270,13 +268,17 @@ The Sprint 4 evidence document includes screenshots for:
 
 \- Sprint 4 Daily Scrum / Branch Coordination Meeting — 15 May 2026
 
+\- Sprint 4 Daily Scrum / Final Sprint Preparation Meeting — 17 May 2026
+
+\- Sprint 4 Sprint Review / Methodology Review Meeting — 18 May 2026
+
 
 
 \## What the Evidence Shows
 
 
 
-The Sprint 4 screenshots show that the team discussed:
+The Sprint 4 screenshots and notes show that the team discussed:
 
 
 
@@ -302,61 +304,37 @@ The Sprint 4 screenshots show that the team discussed:
 
 \- Avoiding merge conflicts
 
+\- Final PDF export work
+
+\- UML diagram collection
+
+\- Final video preparation
+
+\- Final report preparation
+
+\- Sprint 4 review preparation
+
 
 
 \## Sprint 4 Notes
 
 
 
-Sprint 4 is still in progress at the time this evidence was prepared. The evidence shows the current analytics planning and progress, including Person 1’s completed analytics backend work and the team’s branch coordination plan.
+Sprint 4 focused on adding the analytics section and preparing the final project submission.
 
 
 
-\---
+The 12 May meeting shows the initial Sprint 4 planning and task breakdown. The team agreed on the analytics features, assigned roles, and confirmed the dependency order for the sprint.
 
 
 
-\# Overall Evidence Summary
+The 15 May meeting shows the team’s branch coordination and analytics integration planning. Person 1’s analytics backend work was confirmed as complete, and the team agreed that everyone should pull the latest analytics branch before continuing work.
 
 
 
-The meeting evidence documents support the Scrum methodology section by showing that the team:
+The 17 May meeting shows that Sprint 4 was almost complete. The remaining work was focused on final polishing, exporting PDF documents, collecting UML diagrams, preparing the final video, and finalising the final report.
 
 
 
-\- Held sprint planning meetings.
-
-\- Broke work into user stories and tasks.
-
-\- Discussed dependencies between team members.
-
-\- Used GitHub Issues and GitHub Projects.
-
-\- Used branches and pull requests.
-
-\- Held progress meetings and daily Scrum-style check-ins.
-
-\- Discussed blockers and risks.
-
-\- Reflected on completed work.
-
-\- Prepared for sprint reviews.
-
-\- Improved Scrum organisation across the project.
-
-
-
-The evidence also supports the other Scrum documents in this folder:
-
-
-
-\- Product Backlog
-
-\- Sprint Backlogs
-
-\- Burndown Charts
-
-\- Retrospective Reports
-
-\- Daily Stand-Up Summaries
+The final Sprint 4 methodology/review evidence will be added after the review meeting has taken place.
 

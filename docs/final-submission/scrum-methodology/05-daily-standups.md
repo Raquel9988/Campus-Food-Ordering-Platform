@@ -1350,7 +1350,7 @@ Before making changes or pushing code, each person must first pull the latest ve
 
 
 
-The team should regularly use:
+During analytics branch integration, the team agreed to regularly use:
 
 
 
@@ -1359,4 +1359,108 @@ The team should regularly use:
 git checkout feature/analytics-dashboard-UI
 
 git pull origin feature/analytics-dashboard-UI
+
+---
+
+
+
+\## Sprint 4 Meeting 3 — Daily Scrum / Final Sprint Preparation Meeting
+
+
+
+| Field | Details |
+
+|---|---|
+
+| Date | 17 May 2026 |
+
+| Type | Daily Scrum Meeting |
+
+| Duration | 10 minutes |
+
+| Sprint | Sprint 4 |
+
+| Main Focus | Final Sprint 4 progress, export work, UML diagrams, video preparation, and final report |
+
+| Sprint Status | Almost complete / preparing for Sprint 4 review |
+
+
+
+\### Main Purpose
+
+
+
+The purpose of this meeting was to discuss the current progress of Sprint 4 and prepare for the final Sprint 4 review and final project submission.
+
+
+
+\### Main Points Discussed
+
+
+
+\- The team confirmed that almost all Sprint 4 parts had been completed.
+
+\- The project is nearly ready for the final Sprint 4 review.
+
+\- The remaining work is mainly focused on:
+
+&#x20; - Final documentation
+
+&#x20; - Exporting PDF documents
+
+&#x20; - Collecting and updating UML diagrams
+
+&#x20; - Preparing the final presentation video
+
+&#x20; - Finalising the final report
+
+\- Sthembile is still working on exporting the PDF documents.
+
+\- The PDF export work still needs to be completed so that the final report and submission files can be prepared properly.
+
+\- The team was reminded to send and update their UML diagrams.
+
+\- The UML diagrams are needed for the final documentation and sprint evidence.
+
+\- The team discussed the final sprint video.
+
+\- Sthembile will be responsible for creating the final sprint video.
+
+\- Raquel will be responsible for implementing and finalising the final report.
+
+\- The team is almost ready for the final sprint review, with only a few final items left to complete.
+
+
+
+
+
+\### Blockers / Risks Discussed
+
+
+
+| Blocker or Risk | Solution |
+
+|---|---|
+
+| PDF exports not finished yet | Sthembile will complete the exports |
+
+| UML diagrams still missing from some members | All members were reminded to send or update diagrams |
+
+| Final report still needs completion | Raquel will finalise the report |
+
+| Final video still needs to be created | Sthembile will create the video |
+
+| Sprint 4 review is close | Team will focus on final polishing and evidence preparation |
+
+
+
+\### Outcome
+
+
+
+The meeting confirmed that Sprint 4 is almost complete. The remaining focus is on final polishing, completing PDF exports, collecting UML diagrams, preparing the final video, and finalising the report.
+
+
+
+The team is nearly ready for the Sprint 4 review and final project submission.
 
