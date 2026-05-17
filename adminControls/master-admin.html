@@ -4,28 +4,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Master Admin – CampusEats</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
   <link rel="stylesheet" href="master-admin.css" />
 </head>
 
 <body>
 
   <header class="header">
-    <div class="header-inner">
-      <div class="header-brand">
+    <section class="header-inner">
+
+      <section class="header-brand">
         <a href="../index.html" class="logo-link">
           <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
         </a>
-        <div>
+
+        <section>
           <h1 class="header-title">Master Admin</h1>
           <p class="header-sub">Approve or suspend admin accounts</p>
-        </div>
-      </div>
+        </section>
+      </section>
 
-      <div class="header-actions">
+      <section class="header-actions">
+
+        <a href="analytics.html" class="hdr-btn hdr-btn--ghost">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M3 3v18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="7" y="12" width="3" height="5" rx="1" stroke="currentColor" stroke-width="2"/>
+            <rect x="12" y="8" width="3" height="9" rx="1" stroke="currentColor" stroke-width="2"/>
+            <rect x="17" y="5" width="3" height="12" rx="1" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          Analytics
+        </a>
+
         <a href="admin-controls.html" class="hdr-btn hdr-btn--ghost">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
@@ -35,6 +55,7 @@
           </svg>
           Vendor Controls
         </a>
+
         <button id="logout-btn" class="hdr-btn hdr-btn--danger">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -43,15 +64,16 @@
           </svg>
           Logout
         </button>
-      </div>
-    </div>
+
+      </section>
+    </section>
   </header>
 
   <main class="main-card">
 
     <p id="message" class="status-message"></p>
 
-    <div class="table-wrapper">
+    <section class="table-wrapper">
       <table>
         <thead>
           <tr>
@@ -64,6 +86,7 @@
             <th>Actions</th>
           </tr>
         </thead>
+
         <tbody id="admin-table-body">
           <tr>
             <td colspan="7" class="loading">
@@ -73,11 +96,12 @@
           </tr>
         </tbody>
       </table>
-    </div>
+    </section>
 
   </main>
 
   <script type="module" src="master-admin.js"></script>
+
 </body>
 
 </html>
