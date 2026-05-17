@@ -1,152 +1,228 @@
-window.addEventListener("load", async()=>{
-    const summaryNumbers = document.querySelectorAll(".summary-number");
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const salesReportOutput = document.getElementById("sales-report-output");
-    const peakHoursOutput = document.getElementById("peak-hours-output");
-    const customViewOutput = document.getElementById("custom-view-output");
-    const exportOutput = document.getElementById("export-output");
+const supabaseUrl = 'https://sqbscxfolbckikrzxqhr.supabase.co'
+const supabaseKey = 'sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay'
+const supabase = createClient(supabaseUrl, supabaseKey)
 
-    try{
-        showLoadingState();
+window.addEventListener('load', async () => {
+  const summaryNumbers = document.querySelectorAll('.summary-number')
 
-        const response = await fetch('https://campus-food-ordering.pages.dev/api/analytics');
+  const salesReportOutput = document.getElementById('sales-report-output')
+  const peakHoursOutput = document.getElementById('peak-hours-output')
+  const customViewOutput = document.getElementById('custom-view-output')
+  const exportOutput = document.getElementById('export-output')
 
-        if(!response.ok){
-            throw new Error("Failed to fetch analytics data");
-        }
+  const hasAccess = await checkAnalyticsAccess()
 
-        const result = await response.json();
-        const orders = result.data;
-        if(!orders || orders.length === 0){
-            showEmptyState();
-            return;
-        }
+  if (!hasAccess) {
+    showAccessDeniedState()
 
-        const totalOrders = orders.length;
-        const totalRevenue = orders.reduce((total, order) => {
-            return total + order.order_total;
-        }, 0);
+    setTimeout(() => {
+      window.location.href = '../auth/login.html'
+    }, 1500)
 
-        const activeVendors = new Set(
-            orders.map(order => order.vendor_name)
-        ).size;
+    return
+  }
 
-        const hourCounts = {};
-        orders.forEach(order => {
-            const hour = order.order_hour;
-            if (hour !== null) {
-                hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-            }
-        });
+  try {
+    showLoadingState()
 
-        let peakHour = null;
-        let highestCount = 0;
+    const response = await fetch('https://campus-food-ordering.pages.dev/api/analytics')
 
-        for (const hour in hourCounts) {
-            if (hourCounts[hour] > highestCount) {
-                highestCount = hourCounts[hour];
-                peakHour = hour;
-            }
-        }
-        const analyticsData = {
-            totalOrders,
-            totalRevenue: `R${totalRevenue.toFixed(2)}`,
-            peakHour: `${peakHour}:00`,
-            activeVendors
-        };
-
-        updateSummaryCards(analyticsData);
-        showDashboardReadyState();
+    if (!response.ok) {
+      throw new Error('Failed to fetch analytics data')
     }
 
-    catch(error){
-        console.error("Analytics dashboard failed to load:", error);
-        showErrorState();
+    const result = await response.json()
+
+    if (!result.success) {
+      throw new Error(result.message || 'Analytics API returned an error')
     }
 
-    function updateSummaryCards(data){
-        summaryNumbers[0].textContent = data.totalOrders;
-        summaryNumbers[1].textContent = data.totalRevenue;
-        summaryNumbers[2].textContent = data.peakHour;
-        summaryNumbers[3].textContent = data.activeVendors;
+    const orders = result.data
+
+    if (!orders || orders.length === 0) {
+      showEmptyState()
+      return
     }
 
-    function showLoadingState(){
-        salesReportOutput.innerHTML = `
-            <p class="loading-message">Loading sales analytics...</p>
-        `;
-        peakHoursOutput.innerHTML = `
-            <p class="loading-message">Loading peak ordering data...</p>
-        `;
-        customViewOutput.innerHTML = `
-            <p class="loading-message">Loading custom analytics...</p>
-        `;
-        exportOutput.innerHTML = `
-            <p class="loading-message">Loading export tools...</p>
-        `;
+    const totalOrders = orders.length
+
+    const totalRevenue = orders.reduce((total, order) => {
+      return total + Number(order.order_total || 0)
+    }, 0)
+
+    const activeVendors = new Set(
+      orders.map(order => order.vendor_name)
+    ).size
+
+    const hourCounts = {}
+
+    orders.forEach(order => {
+      const hour = order.order_hour
+
+      if (hour !== null && hour !== undefined) {
+        hourCounts[hour] = (hourCounts[hour] || 0) + 1
+      }
+    })
+
+    let peakHour = null
+    let highestCount = 0
+
+    for (const hour in hourCounts) {
+      if (hourCounts[hour] > highestCount) {
+        highestCount = hourCounts[hour]
+        peakHour = hour
+      }
     }
 
-function showDashboardReadyState(){
-
-  // Sales Report Card
-
-    // Initialize peak hours report table
-    if (typeof initPeakHoursReport === 'function') {
-        initPeakHoursReport();
-    } else {
-        console.error('Peak hours report module not loaded');
-        peakHoursOutput.innerHTML = '<p>Error loading peak hours report.</p>';
+    const analyticsData = {
+      totalOrders,
+      totalRevenue: `R${totalRevenue.toFixed(2)}`,
+      peakHour: peakHour === null ? 'N/A' : `${String(peakHour).padStart(2, '0')}:00`,
+      activeVendors
     }
+
+    updateSummaryCards(analyticsData)
+    showDashboardReadyState()
+  } catch (error) {
+    console.error('Analytics dashboard failed to load:', error)
+    showErrorState()
+  }
+
+  async function checkAnalyticsAccess() {
+    const { data: authData, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !authData.user) {
+      return false
+    }
+
+    const { data: appUser, error: userError } = await supabase
+      .from('users')
+      .select('id, role')
+      .eq('id', authData.user.id)
+      .single()
+
+    if (userError || !appUser) {
+      return false
+    }
+
+    if (appUser.role !== 'admin') {
+      return false
+    }
+
+    const { data: adminProfile, error: adminError } = await supabase
+      .from('admins')
+      .select('id, user_id, status, is_master')
+      .eq('user_id', authData.user.id)
+      .single()
+
+    if (adminError || !adminProfile) {
+      return false
+    }
+
+    if (adminProfile.status !== 'approved') {
+      return false
+    }
+
+    return true
+  }
+
+  function updateSummaryCards(data) {
+    summaryNumbers[0].textContent = data.totalOrders
+    summaryNumbers[1].textContent = data.totalRevenue
+    summaryNumbers[2].textContent = data.peakHour
+    summaryNumbers[3].textContent = data.activeVendors
+  }
+
+  function showLoadingState() {
+    salesReportOutput.innerHTML = `
+      <p class="loading-message">Loading sales analytics...</p>
+    `
+
+    peakHoursOutput.innerHTML = `
+      <p class="loading-message">Loading peak ordering data...</p>
+    `
 
     customViewOutput.innerHTML = `
-        <section class="empty-state">
-
-            <h3>No Custom Filters Applied</h3>
-
-            <p>Select filters to generate custom analytics reports.</p>
-
-        </section>
-    `;
+      <p class="loading-message">Loading custom analytics...</p>
+    `
 
     exportOutput.innerHTML = `
-        <section class="export-actions">
+      <p class="loading-message">Loading export tools...</p>
+    `
+  }
 
-            <button class="export-btn">Export CSV</button>
-            <button class="export-btn">Export PDF</button>
+  function showDashboardReadyState() {
+    if (typeof initPeakHoursReport === 'function') {
+      initPeakHoursReport()
+    } else {
+      console.error('Peak hours report module not loaded')
 
-        </section>
-    `;
-}
-
-    function showEmptyState(){
-        salesReportOutput.innerHTML = `
-            <p class="loading-message">No analytics data available.</p>
-        `;
-        peakHoursOutput.innerHTML = `
-            <p class="loading-message">No peak hours data available.</p>
-        `;
-        customViewOutput.innerHTML = `
-            <p class="loading-message">No custom analytics available.</p>
-        `;
-        exportOutput.innerHTML = `
-            <p class="loading-message">No export data available.</p>
-        `;
+      peakHoursOutput.innerHTML = `
+        <p class="error-message">Error loading peak hours report.</p>
+      `
     }
 
-    function showErrorState() {
+    exportOutput.innerHTML = `
+      <section class="export-actions">
+        <button class="export-btn" id="export-csv-btn">Export CSV</button>
+        <button class="export-btn" id="export-pdf-btn">Export PDF</button>
+      </section>
+    `
+  }
 
-        salesReportOutput.innerHTML = `
-            <p class="error-message">Failed to load sales analytics.</p>
-        `;
-        peakHoursOutput.innerHTML = `
-            <p class="error-message">Failed to load peak hours analytics.</p>
-        `;
-        customViewOutput.innerHTML = `
-            <p class="error-message">Failed to load custom analytics.</p>
-        `;
-        exportOutput.innerHTML = `
-            <p class="error-message">Failed to load export tools.</p>
-        `;
-    }
+  function showEmptyState() {
+    salesReportOutput.innerHTML = `
+      <p class="loading-message">No analytics data available.</p>
+    `
 
-});
+    peakHoursOutput.innerHTML = `
+      <p class="loading-message">No peak hours data available.</p>
+    `
+
+    customViewOutput.innerHTML = `
+      <p class="loading-message">No custom analytics available.</p>
+    `
+
+    exportOutput.innerHTML = `
+      <p class="loading-message">No export data available.</p>
+    `
+  }
+
+  function showErrorState() {
+    salesReportOutput.innerHTML = `
+      <p class="error-message">Failed to load sales analytics.</p>
+    `
+
+    peakHoursOutput.innerHTML = `
+      <p class="error-message">Failed to load peak hours analytics.</p>
+    `
+
+    customViewOutput.innerHTML = `
+      <p class="error-message">Failed to load custom analytics.</p>
+    `
+
+    exportOutput.innerHTML = `
+      <p class="error-message">Failed to load export tools.</p>
+    `
+  }
+
+  function showAccessDeniedState() {
+    salesReportOutput.innerHTML = `
+      <p class="error-message">Access denied. Approved admins only.</p>
+    `
+
+    peakHoursOutput.innerHTML = `
+      <p class="error-message">Access denied. Approved admins only.</p>
+    `
+
+    customViewOutput.innerHTML = `
+      <p class="error-message">Access denied. Approved admins only.</p>
+    `
+
+    exportOutput.innerHTML = `
+      <p class="error-message">Access denied. Approved admins only.</p>
+    `
+  }
+})
