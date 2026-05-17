@@ -164,6 +164,16 @@ window.addEventListener('load', async () => {
       `
     }
 
+    if (typeof initCustomView === 'function') {
+      initCustomView()
+    } else {
+      console.error('Custom view module not loaded')
+
+      customViewOutput.innerHTML = `
+        <p class="error-message">Error loading custom analytics view.</p>
+      `
+    }
+
     exportOutput.innerHTML = `
       <section class="export-actions">
         <button class="export-btn" id="export-csv-btn">Export CSV</button>
