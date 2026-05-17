@@ -1,209 +1,207 @@
 /**
  * Peak Hours Report Styling
  * Styles for the peak ordering hours table
- * Part of the Analytics Dashboard (Person 4)
+ * Part of the Analytics Dashboard
  */
 
 /* Peak Hours Table Container */
 #peak-hours-output {
-    width: 100%;
-    overflow-x: auto;
+  width: 100%;
+  overflow-x: auto;
 }
 
 /* Table Styling */
 .peak-hours-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Inter', sans-serif;
-    background-color: #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    border-radius: 8px;
-    overflow: hidden;
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Inter", sans-serif;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  animation: fadeInTable 0.3s ease-out;
 }
 
 /* Table Header */
 .peak-hours-table thead {
-    background: linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 100%);
-    border-bottom: 2px solid #e1e8ed;
+  background: linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 100%);
+  border-bottom: 2px solid #e1e8ed;
 }
 
 .peak-hours-table th {
-    padding: 14px 16px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 13px;
-    letter-spacing: 0.5px;
-    color: #475569;
-    text-transform: uppercase;
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  color: #475569;
+  text-transform: uppercase;
 }
 
 .peak-hours-table th:first-child {
-    padding-left: 20px;
+  padding-left: 20px;
 }
 
 .peak-hours-table th:last-child {
-    text-align: center;
-    padding-right: 20px;
+  text-align: center;
+  padding-right: 20px;
 }
 
 /* Table Body */
 .peak-hours-table tbody {
-    background-color: #ffffff;
+  background-color: #ffffff;
 }
 
 .peak-hours-table td {
-    padding: 14px 16px;
-    border-bottom: 1px solid #f1f5f9;
-    color: #334155;
-    font-size: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 14px;
 }
 
 .peak-hours-table td:first-child {
-    padding-left: 20px;
-    font-weight: 500;
-    color: #1e293b;
+  padding-left: 20px;
+  font-weight: 500;
+  color: #1e293b;
 }
 
 .peak-hours-table td:last-child {
-    text-align: center;
-    padding-right: 20px;
-    font-weight: 600;
-    color: #0f172a;
+  text-align: center;
+  padding-right: 20px;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 /* Table Rows */
 .peak-hours-table tbody tr {
-    transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .peak-hours-table tbody tr:hover {
-    background-color: #f8fafc;
-    transform: translateY(-1px);
+  background-color: #f8fafc;
+  transform: translateY(-1px);
 }
 
 .peak-hours-table tbody tr:last-child td {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 /* Busiest Hour Highlight */
 .peak-hours-table tr.busiest-hour {
-    background: linear-gradient(90deg, #d1fae5 0%, #a7f3d0 100%);
-    font-weight: 600;
-    box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.15);
+  background: linear-gradient(90deg, #d1fae5 0%, #a7f3d0 100%);
+  font-weight: 600;
+  box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.15);
 }
 
 .peak-hours-table tr.busiest-hour td {
-    color: #065f46;
-    border-bottom-color: #6ee7b7;
+  color: #065f46;
+  border-bottom-color: #6ee7b7;
 }
 
 .peak-hours-table tr.busiest-hour:hover {
-    background: linear-gradient(90deg, #a7f3d0 0%, #6ee7b7 100%);
+  background: linear-gradient(90deg, #a7f3d0 0%, #6ee7b7 100%);
 }
 
-/* Busiest Hour Badge/Indicator */
+/* Busiest Hour Badge */
 .peak-hours-table tr.busiest-hour td:first-child::before {
-    content: "� ";
-    margin-right: 4px;
+  content: "🏆 ";
+  margin-right: 4px;
 }
 
-/* Empty State */
+/* Empty, Loading, and Error States */
 #peak-hours-output > p {
-    padding: 24px;
-    text-align: center;
-    color: #64748b;
-    font-size: 14px;
-    background-color: #f8fafc;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
+  padding: 24px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 #peak-hours-output > p.loading-message {
-    color: #0f172a;
-    font-weight: 500;
+  color: #0f172a;
+  font-weight: 500;
 }
 
 #peak-hours-output > p.error-message {
-    color: #dc2626;
-    background-color: #fee2e2;
-    border-color: #fecaca;
+  color: #dc2626;
+  background-color: #fee2e2;
+  border-color: #fecaca;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .peak-hours-table th,
-    .peak-hours-table td {
-        padding: 12px 12px;
-        font-size: 13px;
-    }
-
-    .peak-hours-table th:first-child,
-    .peak-hours-table td:first-child {
-        padding-left: 12px;
-    }
-
-    .peak-hours-table th:last-child,
-    .peak-hours-table td:last-child {
-        padding-right: 12px;
-    }
-
-    .peak-hours-table tbody tr:hover {
-        transform: none;
-    }
-}
-
-@media (max-width: 480px) {
-    .peak-hours-table {
-        font-size: 12px;
-    }
-
-    .peak-hours-table th,
-    .peak-hours-table td {
-        padding: 10px 8px;
-    }
-
-    .peak-hours-table th:first-child,
-    .peak-hours-table td:first-child {
-        padding-left: 8px;
-    }
-
-    .peak-hours-table th:last-child,
-    .peak-hours-table td:last-child {
-        padding-right: 8px;
-    }
-}
-
-/* Animation for table fade-in */
-.peak-hours-table {
-    animation: fadeInTable 0.3s ease-out;
-}
-
+/* Animation */
 @keyframes fadeInTable {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Accessibility */
 .peak-hours-table tr:focus-within {
-    outline: 2px solid #3b82f6;
-    outline-offset: -2px;
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .peak-hours-table th,
+  .peak-hours-table td {
+    padding: 12px 12px;
+    font-size: 13px;
+  }
+
+  .peak-hours-table th:first-child,
+  .peak-hours-table td:first-child {
+    padding-left: 12px;
+  }
+
+  .peak-hours-table th:last-child,
+  .peak-hours-table td:last-child {
+    padding-right: 12px;
+  }
+
+  .peak-hours-table tbody tr:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .peak-hours-table {
+    font-size: 12px;
+  }
+
+  .peak-hours-table th,
+  .peak-hours-table td {
+    padding: 10px 8px;
+  }
+
+  .peak-hours-table th:first-child,
+  .peak-hours-table td:first-child {
+    padding-left: 8px;
+  }
+
+  .peak-hours-table th:last-child,
+  .peak-hours-table td:last-child {
+    padding-right: 8px;
+  }
 }
 
 /* Print Styles */
 @media print {
-    .peak-hours-table {
-        box-shadow: none;
-        border: 1px solid #d1d5db;
-    }
+  .peak-hours-table {
+    box-shadow: none;
+    border: 1px solid #d1d5db;
+  }
 
-    .peak-hours-table tr.busiest-hour {
-        background-color: #d1fae5;
-        font-weight: bold;
-    }
+  .peak-hours-table tr.busiest-hour {
+    background-color: #d1fae5;
+    font-weight: bold;
+  }
 }
