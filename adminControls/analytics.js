@@ -156,8 +156,8 @@ window.addEventListener('load', async () => {
   }
 
   function showDashboardReadyState() {
-    if (typeof initPeakHoursReport === 'function') {
-      initPeakHoursReport()
+    if (typeof window.initPeakHoursReport === 'function') {
+      window.initPeakHoursReport()
     } else {
       console.error('Peak hours report module not loaded')
 
@@ -166,8 +166,8 @@ window.addEventListener('load', async () => {
       `
     }
 
-    if (typeof initCustomView === 'function') {
-      initCustomView()
+    if (typeof window.initCustomView === 'function') {
+      window.initCustomView()
     } else {
       console.error('Custom view module not loaded')
 
@@ -176,8 +176,8 @@ window.addEventListener('load', async () => {
       `
     }
 
-    if (typeof initExportReports === 'function') {
-      initExportReports()
+    if (typeof window.initExportReports === 'function') {
+      window.initExportReports()
     } else {
       console.error('Export reports module not loaded')
 
