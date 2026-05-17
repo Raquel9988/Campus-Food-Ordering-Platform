@@ -1,7 +1,6 @@
 const SALES_REPORT_STYLES = `
   #sales-report-section * { box-sizing: border-box; }
 
-  /* ── Filter bar ── */
   #sales-filter-bar {
     display: flex;
     align-items: center;
@@ -11,7 +10,7 @@ const SALES_REPORT_STYLES = `
     background: #f9fafb;
     border-radius: 12px;
     border: 1px solid #e5e7eb;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
 
   #sales-filter-bar label {
@@ -37,7 +36,6 @@ const SALES_REPORT_STYLES = `
     box-shadow: 0 0 0 3px rgba(34,197,94,0.15);
   }
 
-  /* ── Buttons ── */
   .sr-filter-btn {
     font-size: 13px;
     padding: 7px 16px;
@@ -69,14 +67,34 @@ const SALES_REPORT_STYLES = `
     box-shadow: 0 6px 18px rgba(34,197,94,0.35);
   }
 
-  /* ── Filter hint ── */
   .sr-filter-hint {
     font-size: 12.5px;
     color: #6b7280;
-    margin-top: 8px;
+    margin-bottom: 20px;
   }
 
-  /* ── Top vendor banner card ── */
+  .sr-prompt {
+    padding: 40px 20px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    border: 2px dashed #d1d5db;
+    border-radius: 18px;
+    background: #f9fafb;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .sr-prompt-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+  }
+
   .sr-top-card {
     display: flex;
     align-items: center;
@@ -151,7 +169,6 @@ const SALES_REPORT_STYLES = `
     color: #ffffff;
   }
 
-  /* ── Table wrapper ── */
   .sr-table-wrap {
     border: 1px solid #e5e7eb;
     border-radius: 16px;
@@ -218,7 +235,6 @@ const SALES_REPORT_STYLES = `
     border-bottom: none;
   }
 
-  /* ── Vendor avatar ── */
   .sr-vendor-cell {
     display: flex;
     align-items: center;
@@ -267,7 +283,6 @@ const SALES_REPORT_STYLES = `
   }
 
   .sr-empty,
-  .sr-loading,
   .sr-error {
     padding: 40px 20px;
     text-align: center;
@@ -284,15 +299,14 @@ const SALES_REPORT_STYLES = `
     gap: 0.5rem;
   }
 
-  .sr-empty-title {
+  .sr-empty-title,
+  .sr-error-title {
     font-size: 15px;
     font-weight: 700;
     color: #111827;
   }
 
   .sr-error-title {
-    font-size: 15px;
-    font-weight: 700;
     color: #dc2626;
   }
 `;
@@ -334,11 +348,7 @@ function formatDate(iso) {
   });
 }
 
-async function loadAnalyticsData(startDate = null, endDate = null, forceRefresh = false) {
-  if (!forceRefresh && !startDate && !endDate && window.analyticsOrders) {
-    return window.analyticsOrders;
-  }
-
+async function loadAnalyticsData(startDate, endDate) {
   const response = await fetch("https://campus-food-ordering.pages.dev/api/analytics");
 
   if (!response.ok) {
@@ -353,19 +363,15 @@ async function loadAnalyticsData(startDate = null, endDate = null, forceRefresh 
 
   let orders = result.data || [];
 
-  if (startDate && endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+  const start = new Date(startDate);
+  const end = new Date(endDate);
 
-    end.setHours(23, 59, 59, 999);
+  end.setHours(23, 59, 59, 999);
 
-    orders = orders.filter(order => {
-      const orderDate = new Date(order.order_date);
-      return orderDate >= start && orderDate <= end;
-    });
-  } else {
-    window.analyticsOrders = orders;
-  }
+  orders = orders.filter(order => {
+    const orderDate = new Date(order.order_date);
+    return orderDate >= start && orderDate <= end;
+  });
 
   return orders;
 }
@@ -428,6 +434,27 @@ function sortVendorsByTotalSales(vendorMap) {
   });
 }
 
+function renderPrompt() {
+  const container = document.getElementById("sales-report-output");
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = `
+    <section class="sr-prompt">
+      <section class="sr-prompt-title">
+        Choose a date range to view sales
+      </section>
+
+      <section>
+        Select both a start date and an end date, then click
+        <strong>Apply date filter</strong>.
+      </section>
+    </section>
+  `;
+}
+
 function renderSalesReport(vendorMap) {
   const container = document.getElementById("sales-report-output");
 
@@ -463,7 +490,7 @@ function renderSalesReport(vendorMap) {
         </section>
 
         <section class="sr-top-amount">
-          ${formatZAR(topVendor.totalSales)} total sales across all time
+          ${formatZAR(topVendor.totalSales)} total sales for selected period
         </section>
       </section>
 
@@ -564,23 +591,18 @@ function createSalesFilterUI() {
       </button>
 
       <button class="sr-filter-btn" id="clear-filter-btn">
-        Show all
+        Clear
       </button>
     </section>
 
     <p class="sr-filter-hint">
-      The report shows all sales automatically. Use the date filter only if you want a specific period.
+      Select a date range to generate the sales report.
     </p>
   `);
 
   document.getElementById("apply-filter-btn").addEventListener("click", () => {
     const startDate = document.getElementById("sr-start-date").value;
     const endDate = document.getElementById("sr-end-date").value;
-
-    if (!startDate && !endDate) {
-      initSalesReport(null, null, false);
-      return;
-    }
 
     if (!startDate || !endDate) {
       alert("Please choose both a start date and an end date.");
@@ -592,14 +614,14 @@ function createSalesFilterUI() {
       return;
     }
 
-    initSalesReport(startDate, endDate, true);
+    initSalesReport(startDate, endDate);
   });
 
   document.getElementById("clear-filter-btn").addEventListener("click", () => {
     document.getElementById("sr-start-date").value = "";
     document.getElementById("sr-end-date").value = "";
 
-    initSalesReport(null, null, false);
+    renderPrompt();
   });
 }
 
@@ -614,10 +636,15 @@ function injectSalesReportStyles() {
   document.head.appendChild(style);
 }
 
-async function initSalesReport(startDate = null, endDate = null, forceRefresh = false) {
+async function initSalesReport(startDate = null, endDate = null) {
   const container = document.getElementById("sales-report-output");
 
   if (!container) {
+    return;
+  }
+
+  if (!startDate || !endDate) {
+    renderPrompt();
     return;
   }
 
@@ -626,7 +653,7 @@ async function initSalesReport(startDate = null, endDate = null, forceRefresh = 
   `;
 
   try {
-    const orders = await loadAnalyticsData(startDate, endDate, forceRefresh);
+    const orders = await loadAnalyticsData(startDate, endDate);
     const vendorMap = buildVendorMap(orders);
 
     renderSalesReport(vendorMap);
@@ -647,4 +674,5 @@ window.initSalesReport = initSalesReport;
 document.addEventListener("DOMContentLoaded", () => {
   injectSalesReportStyles();
   createSalesFilterUI();
+  renderPrompt();
 });
