@@ -278,26 +278,40 @@ Analytics are based on valid paid orders only. Failed, cancelled, or unpaid orde
 
 ## Testing and Code Coverage
 
-The project includes manual testing, acceptance testing, automated testing, and Codecov coverage reporting.
+The project includes manual testing, acceptance testing, automated testing, GitHub Actions, and Codecov coverage reporting.
 
 Latest Codecov results for the `main` branch:
 
 | Metric | Result |
 |---|---:|
-| Overall coverage | 81.42% |
-| Covered lines | 1420 of 1744 |
-| Missed lines | 324 |
+| Overall coverage | 83.84% |
+| Covered lines | 1718 of 2049 |
+| Missed lines | 331 |
 | Coverage trend | +100.00% |
 
 Coverage by main folder:
 
 | Folder / Area | Coverage |
 |---|---:|
+| adminControls | 91.67% |
 | auth | 82.56% |
 | functions/api | 92.03% |
+| shared-auth-foundation/src/js | 100.00% |
 | student | 74.39% |
-| tests/mocks | 11.11% |
 | vendor | 93.33% |
+
+The `tests/mocks` folder was removed from Codecov production coverage tracking because it contains testing support files, not production application logic.
+
+Additional automated tests were added for:
+
+- Admin analytics dashboard access and summary cards
+- Sales per vendor report
+- Peak ordering hours report
+- Custom analytics filtering
+- Export reports as CSV/PDF
+- Master admin workflows
+- Shared authentication helpers
+- Shared route guards
 
 Detailed testing evidence is stored in:
 

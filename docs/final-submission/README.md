@@ -146,25 +146,47 @@ additional-artifacts/test-plan-results/Codecov-Test-Evidence.pdf
 
 The Codecov evidence document includes automated code coverage screenshots and coverage breakdowns for the `main` branch.
 
-The recorded Codecov results were:
+The updated Codecov results were:
 
 | Metric | Result |
 |---|---:|
 | Branch tested | main |
-| Overall coverage | 81.42% |
-| Covered lines | 1420 of 1744 |
-| Missed lines | 324 |
+| Overall coverage | 83.84% |
+| Covered lines | 1718 of 2049 |
+| Missed lines | 331 |
 | Coverage trend | +100.00% |
 
 Coverage breakdown:
 
 | Folder / Area | Coverage |
 |---|---:|
+| adminControls | 91.67% |
 | auth | 82.56% |
 | functions/api | 92.03% |
+| shared-auth-foundation/src/js | 100.00% |
 | student | 74.39% |
-| tests/mocks | 11.11% |
 | vendor | 93.33% |
+
+The `tests/mocks` folder was removed from Codecov production coverage tracking because it contains testing support files, not production application logic.
+
+The updated Codecov evidence confirms that the project is above the 80% coverage target and that the strongest tested areas include:
+
+- Shared authentication logic
+- Vendor workflows
+- Backend/API logic
+- Admin analytics functionality
+- Authentication logic
+
+Additional automated tests were added for:
+
+- Analytics dashboard loading and access control
+- Peak ordering hours report
+- Sales per vendor report
+- Custom analytics filtering
+- Export reports as CSV/PDF
+- Master admin workflows
+- Shared authentication helpers
+- Shared route guards
 
 ---
 
@@ -236,5 +258,13 @@ Then they can open:
 The final submission folder has been organised and updated.
 
 All Scrum methodology artefacts, additional artefacts, diagrams, and testing evidence have been added.
+
+The latest Codecov evidence has also been updated to show:
+
+- 83.84% overall coverage
+- 1718 of 2049 lines covered
+- 331 missed lines
+- 100.00% shared authentication foundation coverage
+- `tests/mocks` removed from production coverage tracking
 
 The remaining final tasks are to add the final screen-recording video link, test all public links, and complete the Moodle submission.
