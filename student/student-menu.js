@@ -96,6 +96,8 @@ export function createStudentMenuController({
 }) {
   let menuStarted = false;
 
+  const pendingAddKeys = new Set();
+
   const state = {
     vendorId,
     allMenuItems: [],
@@ -212,52 +214,67 @@ export function createStudentMenuController({
   }
 
   async function addToCart(selectedVendorId, item) {
-    const cart = await getCart();
     const selectedVendorKey = String(selectedVendorId);
-    const activeVendorIds = getActiveVendorIds(cart);
+    const selectedItemKey = String(item?.menuItemId || item?.id || "");
+    const pendingKey = `${selectedVendorKey}:${selectedItemKey}`;
 
-    const hasOtherVendor =
-      activeVendorIds.length > 0 &&
-      !activeVendorIds.includes(selectedVendorKey);
-
-    if (hasOtherVendor) {
-      showToast(
-        "You already have items from another vendor in your cart. Please finish that order or clear your cart first.",
-        {
-          requireOk: true,
-          type: "error",
-        }
-      );
-
+    if (pendingAddKeys.has(pendingKey)) {
       return false;
     }
 
-    if (!cart[selectedVendorKey]) {
-      cart[selectedVendorKey] = {
-        items: [],
-      };
-    }
+    pendingAddKeys.add(pendingKey);
 
-    const items = cart[selectedVendorKey].items;
+    try {
+      const cart = await getCart();
+      const activeVendorIds = getActiveVendorIds(cart);
 
-    const existing = items.find((cartItem) => {
-      return String(cartItem.menuItemId) === String(item.menuItemId);
-    });
+      const hasOtherVendor =
+        activeVendorIds.length > 0 &&
+        !activeVendorIds.includes(selectedVendorKey);
 
-    if (existing) {
-      existing.quantity += 1;
-    } else {
-      items.push({
-        menuItemId: item.menuItemId,
-        name: item.name,
-        price: Number(item.price),
-        image_url: item.image_url || "",
-        quantity: 1,
+      if (hasOtherVendor) {
+        showToast(
+          "You already have items from another vendor in your cart. Please finish that order or clear your cart first.",
+          {
+            requireOk: true,
+            type: "error",
+          }
+        );
+
+        return false;
+      }
+
+      if (!cart[selectedVendorKey]) {
+        cart[selectedVendorKey] = {
+          items: [],
+        };
+      }
+
+      const items = cart[selectedVendorKey].items;
+
+      const existing = items.find((cartItem) => {
+        return String(cartItem.menuItemId) === selectedItemKey;
       });
-    }
 
-    await saveCart(cart);
-    return true;
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        items.push({
+          menuItemId: item.menuItemId,
+          name: item.name,
+          price: Number(item.price),
+          image_url: item.image_url || "",
+          quantity: 1,
+        });
+      }
+
+      await saveCart(cart);
+      return true;
+    } finally {
+      setTimeoutRef(() => {
+        pendingAddKeys.delete(pendingKey);
+      }, 400);
+    }
   }
 
   async function loadVendorName() {
@@ -414,18 +431,34 @@ export function createStudentMenuController({
       button.textContent = "Add to Cart 🛒";
 
       button.addEventListener("click", async () => {
-        const added = await addToCart(state.vendorId, {
-          menuItemId: item.id,
-          name: item.name,
-          price: item.price,
-          image_url: item.image_url,
-        });
+        if (button.disabled) {
+          return;
+        }
 
-        if (added) {
-          showToast(`${item.name} added to cart!`, {
-            requireOk: false,
-            type: "success",
+        button.disabled = true;
+
+        const originalText = button.textContent;
+        button.textContent = "Adding...";
+
+        try {
+          const added = await addToCart(state.vendorId, {
+            menuItemId: item.id,
+            name: item.name,
+            price: item.price,
+            image_url: item.image_url,
           });
+
+          if (added) {
+            showToast(`${item.name} added to cart!`, {
+              requireOk: false,
+              type: "success",
+            });
+          }
+        } finally {
+          setTimeoutRef(() => {
+            button.disabled = false;
+            button.textContent = originalText || "Add to Cart 🛒";
+          }, 400);
         }
       });
 
