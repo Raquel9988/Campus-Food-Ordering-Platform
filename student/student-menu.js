@@ -91,7 +91,6 @@ export function createStudentMenuController({
     typeof localStorage !== "undefined" ? localStorage : fallbackStorage,
   setTimeoutRef = typeof setTimeout !== "undefined" ? setTimeout : () => {},
   alertRef = typeof alert !== "undefined" ? alert : () => {},
-  confirmRef = typeof confirm !== "undefined" ? confirm : () => true,
   consoleRef = console,
   vendorId = getVendorIdFromUrl(windowRef),
 }) {
@@ -111,11 +110,73 @@ export function createStudentMenuController({
     return Array.from(documentRef?.querySelectorAll(".filter-chip") || []);
   }
 
-  function showToast(message) {
+  function hideToast() {
+    const toast = getElement("toast");
+
+    if (!toast) {
+      return;
+    }
+
+    toast.classList.remove("show");
+    toast.classList.remove("toast-modal");
+    toast.classList.remove("toast-error");
+    toast.classList.remove("toast-success");
+    toast.innerHTML = "";
+    toast.textContent = "";
+  }
+
+  function showToast(message, options = {}) {
+    const { requireOk = false, type = "success" } = options;
+
     const toast = getElement("toast");
 
     if (!toast) {
       alertRef(message);
+      return;
+    }
+
+    toast.classList.remove("show");
+    toast.classList.remove("toast-modal");
+    toast.classList.remove("toast-error");
+    toast.classList.remove("toast-success");
+
+    if (type === "error") {
+      toast.classList.add("toast-error");
+    } else {
+      toast.classList.add("toast-success");
+    }
+
+    if (requireOk) {
+      toast.innerHTML = `
+        <section
+          class="toast-dialog"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="toast-title"
+          aria-describedby="toast-message"
+        >
+          <h2 id="toast-title">Cart Notice</h2>
+
+          <p id="toast-message">
+            ${escapeHtml(message)}
+          </p>
+
+          <button class="toast-ok-btn" type="button">
+            OK
+          </button>
+        </section>
+      `;
+
+      toast.classList.add("toast-modal");
+      toast.classList.add("show");
+
+      const okButton = toast.querySelector?.(".toast-ok-btn");
+
+      if (okButton) {
+        okButton.addEventListener("click", hideToast);
+        okButton.focus();
+      }
+
       return;
     }
 
@@ -161,7 +222,11 @@ export function createStudentMenuController({
 
     if (hasOtherVendor) {
       showToast(
-        "You already have items from another vendor in your cart. Please finish that order or clear your cart first."
+        "You already have items from another vendor in your cart. Please finish that order or clear your cart first.",
+        {
+          requireOk: true,
+          type: "error",
+        }
       );
 
       return false;
@@ -357,7 +422,10 @@ export function createStudentMenuController({
         });
 
         if (added) {
-          showToast(`${item.name} added to cart!`);
+          showToast(`${item.name} added to cart!`, {
+            requireOk: false,
+            type: "success",
+          });
         }
       });
 
@@ -561,7 +629,6 @@ export async function setupStudentMenuPage({
     typeof localStorage !== "undefined" ? localStorage : fallbackStorage,
   setTimeoutRef = typeof setTimeout !== "undefined" ? setTimeout : () => {},
   alertRef = typeof alert !== "undefined" ? alert : () => {},
-  confirmRef = typeof confirm !== "undefined" ? confirm : () => true,
   consoleRef = console,
   vendorId,
 } = {}) {
@@ -574,7 +641,6 @@ export async function setupStudentMenuPage({
     localStorageRef,
     setTimeoutRef,
     alertRef,
-    confirmRef,
     consoleRef,
     vendorId,
   });
