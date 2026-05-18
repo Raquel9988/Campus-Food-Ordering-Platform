@@ -79,16 +79,6 @@ export function getActiveVendorIds(cart) {
   });
 }
 
-export function canAddVendorToCart(cart, selectedVendorId) {
-  const activeVendorIds = getActiveVendorIds(cart);
-  const selectedVendorKey = String(selectedVendorId);
-
-  return (
-    activeVendorIds.length === 0 ||
-    activeVendorIds.includes(selectedVendorKey)
-  );
-}
-
 /* =========================
    STUDENT MENU CONTROLLER
 ========================= */
@@ -163,8 +153,13 @@ export function createStudentMenuController({
   async function addToCart(selectedVendorId, item) {
     const cart = await getCart();
     const selectedVendorKey = String(selectedVendorId);
+    const activeVendorIds = getActiveVendorIds(cart);
 
-    if (!canAddVendorToCart(cart, selectedVendorKey)) {
+    const hasOtherVendor =
+      activeVendorIds.length > 0 &&
+      !activeVendorIds.includes(selectedVendorKey);
+
+    if (hasOtherVendor) {
       showToast(
         "You already have items from another vendor in your cart. Please finish that order or clear your cart first."
       );
