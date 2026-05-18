@@ -343,12 +343,14 @@ describe("actual student menu page logic", () => {
       vendorId: "vendor-1",
     });
 
-    await controller.addToCart("vendor-1", {
+    const added = await controller.addToCart("vendor-1", {
       menuItemId: "item-1",
       name: "Burger",
       price: 50,
       image_url: "",
     });
+
+    expect(added).toBe(true);
 
     expect(JSON.parse(localStorageRef.store["campus_cart_student-1"])).toEqual({
       "vendor-1": {
@@ -365,7 +367,9 @@ describe("actual student menu page logic", () => {
     });
   });
 
-  test("does not add item from another vendor when user refuses to clear cart", async () => {
+  test("blocks adding an item from a different vendor and keeps the original cart", async () => {
+    const confirmRef = vi.fn(() => true);
+
     const localStorageRef = createStorageMock({
       "campus_cart_student-1": JSON.stringify({
         "vendor-old": {
@@ -388,18 +392,20 @@ describe("actual student menu page logic", () => {
       windowRef: createWindowMock(),
       localStorageRef,
       setTimeoutRef: vi.fn(),
-      confirmRef: vi.fn(() => false),
+      confirmRef,
       vendorId: "vendor-new",
     });
 
     const added = await controller.addToCart("vendor-new", {
-      menuItemId: "item-1",
-      name: "Burger",
+      menuItemId: "new-item",
+      name: "New Vendor Burger",
       price: 50,
       image_url: "",
     });
 
     expect(added).toBe(false);
+
+    expect(confirmRef).not.toHaveBeenCalled();
 
     expect(JSON.parse(localStorageRef.store["campus_cart_student-1"])).toEqual({
       "vendor-old": {
@@ -416,7 +422,7 @@ describe("actual student menu page logic", () => {
     });
   });
 
-  test("clears old vendor cart when user accepts new vendor", async () => {
+  test("allows adding another item from the original vendor after a different vendor was blocked", async () => {
     const localStorageRef = createStorageMock({
       "campus_cart_student-1": JSON.stringify({
         "vendor-old": {
@@ -440,25 +446,41 @@ describe("actual student menu page logic", () => {
       localStorageRef,
       setTimeoutRef: vi.fn(),
       confirmRef: vi.fn(() => true),
-      vendorId: "vendor-new",
+      vendorId: "vendor-old",
     });
 
-    const added = await controller.addToCart("vendor-new", {
-      menuItemId: "item-1",
-      name: "Burger",
+    const blocked = await controller.addToCart("vendor-new", {
+      menuItemId: "new-item",
+      name: "New Vendor Burger",
       price: 50,
       image_url: "",
     });
 
-    expect(added).toBe(true);
+    expect(blocked).toBe(false);
+
+    const addedOriginalVendorItem = await controller.addToCart("vendor-old", {
+      menuItemId: "second-old-item",
+      name: "Second Pizza",
+      price: 60,
+      image_url: "",
+    });
+
+    expect(addedOriginalVendorItem).toBe(true);
 
     expect(JSON.parse(localStorageRef.store["campus_cart_student-1"])).toEqual({
-      "vendor-new": {
+      "vendor-old": {
         items: [
           {
-            menuItemId: "item-1",
-            name: "Burger",
-            price: 50,
+            menuItemId: "old-item",
+            name: "Old Item",
+            price: 20,
+            image_url: "",
+            quantity: 1,
+          },
+          {
+            menuItemId: "second-old-item",
+            name: "Second Pizza",
+            price: 60,
             image_url: "",
             quantity: 1,
           },
