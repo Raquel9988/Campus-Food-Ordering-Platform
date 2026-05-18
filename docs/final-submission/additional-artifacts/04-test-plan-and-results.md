@@ -1,14 +1,27 @@
 # Test Plan and Results
 
-This document summarises the testing strategy, main test areas, results, and automated testing evidence for the Campus Food Ordering Platform.
+This document summarises the testing strategy, main test areas, results, and automated testing evidence for the **Campus Food Ordering Platform**.
 
-Detailed Codecov screenshots and coverage explanations are stored in the separate evidence document:
-
-`docs/final-submission/additional-artifacts/test-plan-results/Codecov-Test-Evidence.docx`
+The purpose of this document is to show how the team tested the main system features and confirmed that the student, vendor, and admin workflows work correctly.
 
 ---
 
-# 1. Testing Strategy
+# 1. Evidence Location
+
+The detailed testing evidence is stored in:
+
+`docs/final-submission/additional-artifacts/test-plan-results/Codecov-Test-Evidence.pdf`
+
+This evidence document includes:
+
+- Codecov screenshots
+- Automated coverage results
+- Coverage breakdown by folder
+- Explanation of the test coverage results
+
+---
+
+# 2. Testing Strategy
 
 The project was tested using a combination of:
 
@@ -28,7 +41,7 @@ Testing focused on confirming that the system worked correctly for the three mai
 
 ---
 
-# 2. Main Areas Tested
+# 3. Main Areas Tested
 
 | Area | Testing Focus | Result |
 |---|---|---|
@@ -48,7 +61,23 @@ Testing focused on confirming that the system worked correctly for the three mai
 
 ---
 
-# 3. Acceptance Testing Summary
+# 4. Test Case Results Summary
+
+| Test Category | Number of Main Test Areas | Overall Result |
+|---|---:|---|
+| Authentication and roles | 3 | Passed |
+| Menu and vendor management | 2 | Passed |
+| Cart and order workflow | 3 | Passed |
+| Payment flow | 2 | Passed |
+| Dietary filtering | 1 | Passed |
+| Admin analytics and exports | 2 | Passed |
+| Automated coverage evidence | 1 | Passed |
+
+Overall, the main feature areas passed testing. The Codecov report provides additional automated testing evidence for the tested JavaScript and API files.
+
+---
+
+# 5. Acceptance Testing Summary
 
 The main user stories were tested against their expected behaviour.
 
@@ -94,7 +123,7 @@ Admins were able to:
 
 ---
 
-# 4. Automated Testing and Code Coverage
+# 6. Automated Testing and Code Coverage
 
 Automated testing was connected to the project using GitHub Actions and Codecov.
 
@@ -120,11 +149,11 @@ The updated Codecov evidence shows the following results for the `main` branch:
 
 The detailed screenshots for these results are included in:
 
-`docs/final-submission/additional-artifacts/test-plan-results/Codecov-Test-Evidence.docx`
+`docs/final-submission/additional-artifacts/test-plan-results/Codecov-Test-Evidence.pdf`
 
 ---
 
-# 5. Interpretation of Results
+# 7. Interpretation of Results
 
 The Codecov report shows that the project has strong overall automated test coverage at **81.42%**.
 
@@ -140,7 +169,7 @@ The `tests/mocks` folder has low coverage because it contains support files used
 
 ---
 
-# 6. Final Testing Summary
+# 8. Final Testing Summary
 
 The testing process confirmed that the main system features were working correctly across the student, vendor, and admin roles.
 
@@ -154,3 +183,11 @@ The project includes evidence of:
 - Automated test coverage through Codecov
 
 The separate Codecov evidence document provides the detailed screenshots and coverage breakdown needed to support this test plan.
+
+---
+
+# 9. Status
+
+Completed.
+
+The test plan, testing summary, and Codecov evidence have been added to the final submission documentation.
