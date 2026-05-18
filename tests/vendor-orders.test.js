@@ -11,6 +11,40 @@ function setupDom() {
     <button id="refresh-btn" type="button">Refresh</button>
     <button id="retry-btn" type="button">Retry</button>
     <button id="dashboard-btn" type="button">Dashboard</button>
+
+    <section
+      id="vendor-modal-backdrop"
+      class="vendor-modal-backdrop hidden"
+      aria-hidden="true"
+    >
+      <section
+        class="vendor-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="vendor-modal-title"
+        aria-describedby="vendor-modal-message"
+      >
+        <section
+          id="vendor-modal-icon"
+          class="vendor-modal-icon vendor-modal-icon--success"
+          aria-hidden="true"
+        >
+          ✓
+        </section>
+
+        <section class="vendor-modal-body">
+          <p class="vendor-modal-label">CampusEats Vendor Update</p>
+          <h2 id="vendor-modal-title">Order update complete</h2>
+          <p id="vendor-modal-message"></p>
+        </section>
+
+        <section class="vendor-modal-actions">
+          <button id="vendor-modal-ok-btn" class="vendor-modal-ok-btn" type="button">
+            OK
+          </button>
+        </section>
+      </section>
+    </section>
   `;
 }
 
@@ -18,6 +52,40 @@ async function flushPromises() {
   await Promise.resolve();
   await Promise.resolve();
   await Promise.resolve();
+}
+
+async function closeModalAndWait(promise) {
+  await flushPromises();
+
+  const modalBackdrop = document.getElementById("vendor-modal-backdrop");
+  const okButton = document.getElementById("vendor-modal-ok-btn");
+
+  expect(modalBackdrop.classList.contains("hidden")).toBe(false);
+
+  okButton.click();
+
+  await promise;
+  await flushPromises();
+}
+
+function expectModalContent({ title, message, variant }) {
+  const modalBackdrop = document.getElementById("vendor-modal-backdrop");
+  const modalTitle = document.getElementById("vendor-modal-title");
+  const modalMessage = document.getElementById("vendor-modal-message");
+  const modalIcon = document.getElementById("vendor-modal-icon");
+
+  expect(modalBackdrop.classList.contains("hidden")).toBe(false);
+  expect(modalBackdrop.getAttribute("aria-hidden")).toBe("false");
+  expect(document.body.classList.contains("modal-open")).toBe(true);
+
+  expect(modalTitle.textContent).toBe(title);
+  expect(modalMessage.textContent).toBe(message);
+
+  if (variant) {
+    expect(modalIcon.classList.contains(`vendor-modal-icon--${variant}`)).toBe(
+      true
+    );
+  }
 }
 
 function createMockSupabase(overrides = {}) {
@@ -228,6 +296,45 @@ afterEach(() => {
   delete globalThis.__mockSupabase;
 
   document.body.innerHTML = "";
+});
+
+describe("vendor professional modal", () => {
+  test("getModalIconText returns the correct icon text", async () => {
+    const { getModalIconText } = await importOrdersFile();
+
+    expect(getModalIconText("success")).toBe("✓");
+    expect(getModalIconText("warning")).toBe("!");
+    expect(getModalIconText("error")).toBe("!");
+  });
+
+  test("showVendorMessage displays and closes the professional modal", async () => {
+    const { showVendorMessage } = await importOrdersFile();
+
+    const modalPromise = showVendorMessage({
+      title: "Pickup notification sent",
+      message: "The student has been notified that this order is ready for collection.",
+      variant: "success",
+    });
+
+    await flushPromises();
+
+    expectModalContent({
+      title: "Pickup notification sent",
+      message: "The student has been notified that this order is ready for collection.",
+      variant: "success",
+    });
+
+    document.getElementById("vendor-modal-ok-btn").click();
+
+    await modalPromise;
+    await flushPromises();
+
+    expect(
+      document.getElementById("vendor-modal-backdrop").classList.contains("hidden")
+    ).toBe(true);
+
+    expect(document.body.classList.contains("modal-open")).toBe(false);
+  });
 });
 
 describe("vendor order status transitions", () => {
@@ -1064,15 +1171,25 @@ describe("vendor orders data fetching coverage", () => {
 });
 
 describe("vendor orders update and page flow coverage", () => {
-  test("updateOrderStatus shows alert when vendor has not loaded", async () => {
+  test("updateOrderStatus shows professional modal when vendor has not loaded", async () => {
     const { updateOrderStatus } = await importOrdersFile();
 
-    await updateOrderStatus("order-1", "preparing", "received");
+    const updatePromise = updateOrderStatus("order-1", "preparing", "received");
 
-    expect(alert).toHaveBeenCalledWith("Vendor not loaded. Please refresh the page.");
+    await flushPromises();
+
+    expectModalContent({
+      title: "Vendor profile not loaded",
+      message: "Please refresh the page and try again.",
+      variant: "warning",
+    });
+
+    await closeModalAndWait(updatePromise);
+
+    expect(alert).not.toHaveBeenCalled();
   });
 
-  test("updateOrderStatus shows alert for invalid status change", async () => {
+  test("updateOrderStatus shows professional modal for invalid status change", async () => {
     const mockSupabase = createMockSupabase({
       orders: [],
     });
@@ -1082,9 +1199,19 @@ describe("vendor orders update and page flow coverage", () => {
 
     await initializePage();
 
-    await updateOrderStatus("order-1", "ready", "received");
+    const updatePromise = updateOrderStatus("order-1", "ready", "received");
 
-    expect(alert).toHaveBeenCalledWith("Invalid status change.");
+    await flushPromises();
+
+    expectModalContent({
+      title: "Invalid status change",
+      message: "This order cannot be moved to the selected status from its current stage.",
+      variant: "warning",
+    });
+
+    await closeModalAndWait(updatePromise);
+
+    expect(alert).not.toHaveBeenCalled();
 
     stopAutoRefresh();
   });
@@ -1099,10 +1226,20 @@ describe("vendor orders update and page flow coverage", () => {
 
     await initializePage();
 
-    await updateOrderStatus("order-1", "complete", "ready");
+    const updatePromise = updateOrderStatus("order-1", "complete", "ready");
 
-    expect(alert).toHaveBeenCalledWith("Invalid status change.");
+    await flushPromises();
+
+    expectModalContent({
+      title: "Invalid status change",
+      message: "This order cannot be moved to the selected status from its current stage.",
+      variant: "warning",
+    });
+
+    await closeModalAndWait(updatePromise);
+
     expect(mockSupabase.__state.updatedRows).toHaveLength(0);
+    expect(alert).not.toHaveBeenCalled();
 
     stopAutoRefresh();
   });
@@ -1165,7 +1302,7 @@ describe("vendor orders update and page flow coverage", () => {
     stopAutoRefresh();
   });
 
-  test("updateOrderStatus shows error alert when Supabase update fails", async () => {
+  test("updateOrderStatus shows professional error modal when Supabase update fails", async () => {
     const mockSupabase = createMockSupabase({
       orders: [],
       updateError: {
@@ -1178,18 +1315,28 @@ describe("vendor orders update and page flow coverage", () => {
 
     await initializePage();
 
-    await updateOrderStatus("order-1", "preparing", "received");
+    const updatePromise = updateOrderStatus("order-1", "preparing", "received");
+
+    await flushPromises();
 
     expect(console.error).toHaveBeenCalledWith("Update order status error:", {
       message: "Update failed",
     });
 
-    expect(alert).toHaveBeenCalledWith("Failed to update order.");
+    expectModalContent({
+      title: "Order update failed",
+      message: "The order could not be updated. Please check your connection and try again.",
+      variant: "error",
+    });
+
+    await closeModalAndWait(updatePromise);
+
+    expect(alert).not.toHaveBeenCalled();
 
     stopAutoRefresh();
   });
 
-  test("updateOrderStatus shows conflict alert when no updated row is returned", async () => {
+  test("updateOrderStatus shows conflict modal when no updated row is returned", async () => {
     const mockSupabase = createMockSupabase({
       orders: [],
       updateResult: null,
@@ -1200,13 +1347,21 @@ describe("vendor orders update and page flow coverage", () => {
 
     await initializePage();
 
-    await updateOrderStatus("order-1", "preparing", "received");
+    const updatePromise = updateOrderStatus("order-1", "preparing", "received");
 
-    expect(alert).toHaveBeenCalledWith(
-      "Order could not be updated. It may be unpaid, already completed, or already changed by another user."
-    );
+    await flushPromises();
+
+    expectModalContent({
+      title: "Order could not be updated",
+      message:
+        "This order may already have been updated, completed, or changed by another user. The order list will now refresh.",
+      variant: "warning",
+    });
+
+    await closeModalAndWait(updatePromise);
 
     expect(mockSupabase.__state.orderQueries.length).toBeGreaterThanOrEqual(2);
+    expect(alert).not.toHaveBeenCalled();
 
     stopAutoRefresh();
   });
@@ -1351,12 +1506,22 @@ describe("vendor orders update and page flow coverage", () => {
 });
 
 describe("vendor ready pickup notification flow", () => {
-  test("notifyStudentForPickup shows alert when vendor has not loaded", async () => {
+  test("notifyStudentForPickup shows professional modal when vendor has not loaded", async () => {
     const { notifyStudentForPickup } = await importOrdersFile();
 
-    await notifyStudentForPickup("order-1", "ready");
+    const notifyPromise = notifyStudentForPickup("order-1", "ready");
 
-    expect(alert).toHaveBeenCalledWith("Vendor not loaded. Please refresh the page.");
+    await flushPromises();
+
+    expectModalContent({
+      title: "Vendor profile not loaded",
+      message: "Please refresh the page and try again.",
+      variant: "warning",
+    });
+
+    await closeModalAndWait(notifyPromise);
+
+    expect(alert).not.toHaveBeenCalled();
   });
 
   test("notifyStudentForPickup only allows ready orders", async () => {
@@ -1369,18 +1534,25 @@ describe("vendor ready pickup notification flow", () => {
 
     await initializePage();
 
-    await notifyStudentForPickup("order-1", "preparing");
+    const notifyPromise = notifyStudentForPickup("order-1", "preparing");
 
-    expect(alert).toHaveBeenCalledWith(
-      "Only ready orders can be sent to the student for pickup."
-    );
+    await flushPromises();
+
+    expectModalContent({
+      title: "Order is not ready yet",
+      message: "Only orders marked as ready can be sent to the student for pickup.",
+      variant: "warning",
+    });
+
+    await closeModalAndWait(notifyPromise);
 
     expect(mockSupabase.__state.updatedRows).toHaveLength(0);
+    expect(alert).not.toHaveBeenCalled();
 
     stopAutoRefresh();
   });
 
-  test("notifyStudentForPickup does not update Supabase, hides ready order locally, and tells the vendor the student was notified", async () => {
+  test("notifyStudentForPickup does not update Supabase, hides ready order locally, and shows professional confirmation", async () => {
     const mockSupabase = createMockSupabase({
       orders: [
         {
@@ -1402,17 +1574,24 @@ describe("vendor ready pickup notification flow", () => {
 
     const queriesBeforeNotify = mockSupabase.__state.orderQueries.length;
 
-    await notifyStudentForPickup("order-1", "ready");
+    const notifyPromise = notifyStudentForPickup("order-1", "ready");
+
+    await flushPromises();
+
+    expectModalContent({
+      title: "Pickup notification sent",
+      message:
+        "The student has been notified that this order is ready for collection. After you click OK, the order will be removed from your active vendor list. Once the student confirms collection, it will move to their Order History.",
+      variant: "success",
+    });
+
+    await closeModalAndWait(notifyPromise);
 
     expect(mockSupabase.__state.updatedRows).toHaveLength(0);
 
     expect(
       JSON.parse(localStorage.getItem("vendor_notified_ready_orders_vendor-1"))
     ).toEqual(["order-1"]);
-
-    expect(alert).toHaveBeenCalledWith(
-      "The student has been notified that this order is ready. The order has been removed from your active vendor list and will move to the student's Order History after they click OK on their side."
-    );
 
     expect(mockSupabase.__state.orderQueries.length).toBeGreaterThan(
       queriesBeforeNotify
@@ -1421,6 +1600,8 @@ describe("vendor ready pickup notification flow", () => {
     expect(document.getElementById("empty-state").classList.contains("hidden")).toBe(
       false
     );
+
+    expect(alert).not.toHaveBeenCalled();
 
     stopAutoRefresh();
   });
@@ -1448,14 +1629,25 @@ describe("vendor ready pickup notification flow", () => {
 
     await initializePage();
 
-    await notifyStudentForPickup("order-1", "ready");
+    const notifyPromise = notifyStudentForPickup("order-1", "ready");
+
+    await flushPromises();
+
+    expectModalContent({
+      title: "Pickup notification sent",
+      message:
+        "The student has been notified that this order is ready for collection. After you click OK, the order will be removed from your active vendor list. Once the student confirms collection, it will move to their Order History.",
+      variant: "success",
+    });
+
+    await closeModalAndWait(notifyPromise);
 
     expect(mockSupabase.__state.updatedRows).toHaveLength(0);
     expect(console.error).not.toHaveBeenCalledWith("Notify student error:", {
       message: "Notify failed",
     });
 
-    expect(alert).not.toHaveBeenCalledWith("Failed to notify student.");
+    expect(alert).not.toHaveBeenCalled();
 
     expect(
       JSON.parse(localStorage.getItem("vendor_notified_ready_orders_vendor-1"))
@@ -1500,15 +1692,24 @@ describe("vendor ready pickup notification flow", () => {
 
     await flushPromises();
 
+    expectModalContent({
+      title: "Pickup notification sent",
+      message:
+        "The student has been notified that this order is ready for collection. After you click OK, the order will be removed from your active vendor list. Once the student confirms collection, it will move to their Order History.",
+      variant: "success",
+    });
+
+    document.getElementById("vendor-modal-ok-btn").click();
+
+    await flushPromises();
+
     expect(mockSupabase.__state.updatedRows).toHaveLength(0);
 
     expect(
       JSON.parse(localStorage.getItem("vendor_notified_ready_orders_vendor-1"))
     ).toEqual(["order-33333333"]);
 
-    expect(alert).toHaveBeenCalledWith(
-      "The student has been notified that this order is ready. The order has been removed from your active vendor list and will move to the student's Order History after they click OK on their side."
-    );
+    expect(alert).not.toHaveBeenCalled();
 
     stopAutoRefresh();
   });

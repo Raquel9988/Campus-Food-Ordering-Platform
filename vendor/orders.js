@@ -16,9 +16,16 @@ const refreshBtn = document.getElementById("refresh-btn");
 const retryBtn = document.getElementById("retry-btn");
 const dashboardBtn = document.getElementById("dashboard-btn");
 
+const vendorModalBackdrop = document.getElementById("vendor-modal-backdrop");
+const vendorModalTitle = document.getElementById("vendor-modal-title");
+const vendorModalMessage = document.getElementById("vendor-modal-message");
+const vendorModalIcon = document.getElementById("vendor-modal-icon");
+const vendorModalOkBtn = document.getElementById("vendor-modal-ok-btn");
+
 let currentVendorId = null;
 let isRefreshing = false;
 let autoRefreshInterval = null;
+let activeModalResolver = null;
 
 const ACTIVE_VENDOR_STATUSES = ["received", "preparing", "ready"];
 
@@ -138,33 +145,101 @@ function formatCurrency(amount) {
   return `R${Number(amount || 0).toFixed(2)}`;
 }
 
+function getModalIconText(variant) {
+  if (variant === "error") return "!";
+  if (variant === "warning") return "!";
+  return "✓";
+}
+
+function showVendorMessage({
+  title = "Order update complete",
+  message = "",
+  variant = "success",
+  okText = "OK",
+} = {}) {
+  const modalIsAvailable =
+    vendorModalBackdrop &&
+    vendorModalTitle &&
+    vendorModalMessage &&
+    vendorModalIcon &&
+    vendorModalOkBtn;
+
+  if (!modalIsAvailable) {
+    if (typeof window !== "undefined" && typeof window.alert === "function") {
+      window.alert(message || title);
+    }
+
+    return Promise.resolve();
+  }
+
+  vendorModalTitle.textContent = title;
+  vendorModalMessage.textContent = message;
+  vendorModalOkBtn.textContent = okText;
+
+  vendorModalIcon.textContent = getModalIconText(variant);
+  vendorModalIcon.className = `vendor-modal-icon vendor-modal-icon--${variant}`;
+
+  vendorModalBackdrop.classList.remove("hidden");
+  vendorModalBackdrop.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  setTimeout(() => {
+    vendorModalOkBtn.focus();
+  }, 0);
+
+  return new Promise((resolve) => {
+    activeModalResolver = resolve;
+  });
+}
+
+function closeVendorMessage() {
+  if (!vendorModalBackdrop) {
+    return;
+  }
+
+  vendorModalBackdrop.classList.add("hidden");
+  vendorModalBackdrop.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+
+  if (typeof activeModalResolver === "function") {
+    activeModalResolver();
+  }
+
+  activeModalResolver = null;
+}
+
+vendorModalOkBtn?.addEventListener("click", closeVendorMessage);
+
 function showLoading() {
-  loadingContainer.classList.remove("hidden");
-  errorContainer.classList.add("hidden");
-  ordersContainer.classList.add("hidden");
-  emptyState.classList.add("hidden");
+  loadingContainer?.classList.remove("hidden");
+  errorContainer?.classList.add("hidden");
+  ordersContainer?.classList.add("hidden");
+  emptyState?.classList.add("hidden");
 }
 
 function showError(message) {
-  loadingContainer.classList.add("hidden");
-  errorContainer.classList.remove("hidden");
-  ordersContainer.classList.add("hidden");
-  emptyState.classList.add("hidden");
-  errorText.textContent = message;
+  loadingContainer?.classList.add("hidden");
+  errorContainer?.classList.remove("hidden");
+  ordersContainer?.classList.add("hidden");
+  emptyState?.classList.add("hidden");
+
+  if (errorText) {
+    errorText.textContent = message;
+  }
 }
 
 function showOrders() {
-  loadingContainer.classList.add("hidden");
-  errorContainer.classList.add("hidden");
-  ordersContainer.classList.remove("hidden");
-  emptyState.classList.add("hidden");
+  loadingContainer?.classList.add("hidden");
+  errorContainer?.classList.add("hidden");
+  ordersContainer?.classList.remove("hidden");
+  emptyState?.classList.add("hidden");
 }
 
 function showEmpty() {
-  loadingContainer.classList.add("hidden");
-  errorContainer.classList.add("hidden");
-  ordersContainer.classList.add("hidden");
-  emptyState.classList.remove("hidden");
+  loadingContainer?.classList.add("hidden");
+  errorContainer?.classList.add("hidden");
+  ordersContainer?.classList.add("hidden");
+  emptyState?.classList.remove("hidden");
 }
 
 function isValidStatusTransition(currentStatus, nextStatus) {
@@ -327,12 +402,22 @@ async function fetchOrders(vendorId) {
 
 async function updateOrderStatus(orderId, nextStatus, currentStatus) {
   if (!currentVendorId) {
-    alert("Vendor not loaded. Please refresh the page.");
+    await showVendorMessage({
+      title: "Vendor profile not loaded",
+      message: "Please refresh the page and try again.",
+      variant: "warning",
+    });
+
     return;
   }
 
   if (!isValidStatusTransition(currentStatus, nextStatus)) {
-    alert("Invalid status change.");
+    await showVendorMessage({
+      title: "Invalid status change",
+      message: "This order cannot be moved to the selected status from its current stage.",
+      variant: "warning",
+    });
+
     return;
   }
 
@@ -351,14 +436,24 @@ async function updateOrderStatus(orderId, nextStatus, currentStatus) {
 
   if (error) {
     console.error("Update order status error:", error);
-    alert("Failed to update order.");
+
+    await showVendorMessage({
+      title: "Order update failed",
+      message: "The order could not be updated. Please check your connection and try again.",
+      variant: "error",
+    });
+
     return;
   }
 
   if (!data) {
-    alert(
-      "Order could not be updated. It may be unpaid, already completed, or already changed by another user."
-    );
+    await showVendorMessage({
+      title: "Order could not be updated",
+      message:
+        "This order may already have been updated, completed, or changed by another user. The order list will now refresh.",
+      variant: "warning",
+    });
+
     await loadOrders();
     return;
   }
@@ -370,20 +465,34 @@ async function updateOrderStatus(orderId, nextStatus, currentStatus) {
 
 async function notifyStudentForPickup(orderId, currentStatus) {
   if (!currentVendorId) {
-    alert("Vendor not loaded. Please refresh the page.");
+    await showVendorMessage({
+      title: "Vendor profile not loaded",
+      message: "Please refresh the page and try again.",
+      variant: "warning",
+    });
+
     return;
   }
 
   if (currentStatus !== "ready") {
-    alert("Only ready orders can be sent to the student for pickup.");
+    await showVendorMessage({
+      title: "Order is not ready yet",
+      message: "Only orders marked as ready can be sent to the student for pickup.",
+      variant: "warning",
+    });
+
     return;
   }
 
-  addVendorNotifiedReadyOrder(currentVendorId, orderId);
+  await showVendorMessage({
+    title: "Pickup notification sent",
+    message:
+      "The student has been notified that this order is ready for collection. After you click OK, the order will be removed from your active vendor list. Once the student confirms collection, it will move to their Order History.",
+    variant: "success",
+    okText: "OK",
+  });
 
-  alert(
-    "The student has been notified that this order is ready. The order has been removed from your active vendor list and will move to the student's Order History after they click OK on their side."
-  );
+  addVendorNotifiedReadyOrder(currentVendorId, orderId);
 
   await loadOrders();
 }
@@ -528,6 +637,10 @@ function createOrderCard(order) {
 }
 
 function renderOrders(orders) {
+  if (!ordersContainer) {
+    return;
+  }
+
   ordersContainer.innerHTML = "";
 
   if (!orders || orders.length === 0) {
@@ -584,6 +697,7 @@ async function loadOrders() {
 
     if (refreshBtn) {
       refreshBtn.disabled = true;
+      refreshBtn.classList.add("spinning");
     }
 
     showLoading();
@@ -598,6 +712,7 @@ async function loadOrders() {
 
     if (refreshBtn) {
       refreshBtn.disabled = false;
+      refreshBtn.classList.remove("spinning");
     }
   }
 }
@@ -654,6 +769,9 @@ export {
   escapeHtml,
   formatDate,
   formatCurrency,
+  getModalIconText,
+  showVendorMessage,
+  closeVendorMessage,
   showLoading,
   showError,
   showOrders,

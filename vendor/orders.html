@@ -18,10 +18,8 @@
 </head>
 
 <body>
-
   <header class="header">
     <section class="header-content">
-
       <section class="header-brand">
         <a href="../index.html" class="logo-link">
           <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
@@ -31,7 +29,6 @@
       </section>
 
       <nav class="header-actions" aria-label="Vendor orders actions">
-
         <button
           id="dashboard-btn"
           class="hdr-btn hdr-btn--ghost"
@@ -39,46 +36,10 @@
           title="Manage menu"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <rect
-              x="3"
-              y="3"
-              width="7"
-              height="7"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linejoin="round"
-            />
-            <rect
-              x="14"
-              y="3"
-              width="7"
-              height="7"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linejoin="round"
-            />
-            <rect
-              x="3"
-              y="14"
-              width="7"
-              height="7"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linejoin="round"
-            />
-            <rect
-              x="14"
-              y="14"
-              width="7"
-              height="7"
-              rx="1"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linejoin="round"
-            />
+            <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
           </svg>
 
           <span>Manage Menu</span>
@@ -91,31 +52,17 @@
           title="Refresh orders"
         >
           <svg id="refresh-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <polyline
-              points="23 4 23 10 17 10"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
+            <polyline points="23 4 23 10 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
 
           <span>Refresh</span>
         </button>
-
       </nav>
     </section>
   </header>
 
   <main class="container">
-
     <section id="loading-container" class="loading-container hidden">
       <section class="spinner" aria-hidden="true"></section>
       <p>Loading orders…</p>
@@ -125,27 +72,10 @@
       <section class="error-message">
         <p id="error-text"></p>
 
-        <button
-          id="retry-btn"
-          class="retry-btn"
-          type="button"
-          title="Retry"
-        >
+        <button id="retry-btn" class="retry-btn" type="button" title="Retry">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <polyline
-              points="1 4 1 10 7 10"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
+            <polyline points="1 4 1 10 7 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
 
           Try Again
@@ -159,7 +89,7 @@
         height="48"
         viewBox="0 0 24 24"
         fill="none"
-        style="margin: 0 auto 16px; display: block; opacity: 0.3;"
+        class="empty-state-icon"
         aria-hidden="true"
       >
         <path
@@ -169,25 +99,46 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         />
-        <rect
-          x="9"
-          y="3"
-          width="6"
-          height="4"
-          rx="1"
-          stroke="currentColor"
-          stroke-width="2"
-        />
+        <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2" />
       </svg>
 
-      <p>No orders yet. Check back soon!</p>
+      <p>No paid active orders are available right now.</p>
     </section>
 
     <section id="orders-container" class="orders-grid" aria-live="polite">
       <!-- Orders will be inserted here by orders.js -->
     </section>
-
   </main>
+
+  <section
+    id="vendor-modal-backdrop"
+    class="vendor-modal-backdrop hidden"
+    aria-hidden="true"
+  >
+    <section
+      class="vendor-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="vendor-modal-title"
+      aria-describedby="vendor-modal-message"
+    >
+      <section id="vendor-modal-icon" class="vendor-modal-icon vendor-modal-icon--success" aria-hidden="true">
+        ✓
+      </section>
+
+      <section class="vendor-modal-body">
+        <p class="vendor-modal-label">CampusEats Vendor Update</p>
+        <h2 id="vendor-modal-title">Order update complete</h2>
+        <p id="vendor-modal-message"></p>
+      </section>
+
+      <section class="vendor-modal-actions">
+        <button id="vendor-modal-ok-btn" class="vendor-modal-ok-btn" type="button">
+          OK
+        </button>
+      </section>
+    </section>
+  </section>
 
   <script type="module" src="orders.js"></script>
 </body>
