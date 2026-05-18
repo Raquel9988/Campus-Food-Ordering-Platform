@@ -1,1466 +1,641 @@
-\# Daily Stand-Up and Scrum Meeting Summaries
+# Daily Stand-Up Summaries
 
+This document summarises the team’s daily stand-up and Scrum progress meetings for the **Campus Food Ordering Platform**.
 
+The purpose of this document is to show how the team communicated during each sprint, tracked progress, identified blockers, and agreed on next steps.
 
-This document summarises the team’s Scrum meetings and daily stand-up style meetings for the Campus Food Ordering Platform.
-
-
-
-The purpose of these summaries is to show how the team communicated during each sprint, tracked progress, identified blockers, made decisions, and agreed on next steps.
-
-
-
-Some meetings were formal sprint planning or sprint review meetings, while others were daily scrum / progress meetings. They are included here as Scrum evidence because they show continuous team coordination throughout the project.
-
-
-
-\---
-
-
-
-\# Sprint 1 Meeting Summaries
-
-
-
-\## Sprint 1 Meeting 1 — Sprint Planning Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 30 March 2026 |
-
-| Type | In-person planning meeting |
-
-| Duration | 1 hour 30 minutes |
-
-| Attendees | Raquel, Keitu, Lesego, Lukho, Ntando, Sthembile, Calvin |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to begin Sprint 1, identify the main focus areas, discuss the first user stories, and split the starting tasks between team members.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team identified the main Sprint 1 focus areas:
-
-&#x20; - User verification
-
-&#x20; - Menu management
-
-\- The team identified the required user stories for:
-
-&#x20; - Student authentication
-
-&#x20; - Vendor authentication
-
-&#x20; - Admin authentication
-
-&#x20; - Menu creation
-
-&#x20; - Menu display and availability
-
-&#x20; - Admin controls
-
-\- The team discussed how the system should handle different user roles:
-
-&#x20; - Student
-
-&#x20; - Vendor
-
-&#x20; - Admin
-
-\- The team discussed the initial system tools and structure:
-
-&#x20; - HTML
-
-&#x20; - CSS
-
-&#x20; - JavaScript
-
-&#x20; - Supabase Authentication
-
-&#x20; - Firestore / database storage
-
-\- The team agreed to use GitHub Issues and GitHub Projects for user stories and task tracking.
-
-\- The team agreed that members should work on separate branches and commit regularly.
-
-
-
-\### Blockers / Issues
-
-
-
-\- The project was still new, so members were still learning how the system would be structured.
-
-\- The task split was not yet fully refined.
-
-\- Some members were still unsure how their parts would connect to the full system.
-
-
-
-\### Outcome
-
-
-
-\- Sprint 1 focus areas were agreed.
-
-\- Initial user stories were identified.
-
-\- Tasks were allocated to team members.
-
-\- The team agreed to use GitHub for tracking and collaboration.
-
-\- Development began after the meeting.
-
-
-
-\---
-
-
-
-\## Sprint 1 Meeting 2 — Scrum / Planning Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 7 April 2026 |
-
-| Type | WhatsApp Scrum / Planning Meeting |
-
-| Duration | 16 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to check progress, clarify GitHub workflow, and make sure user stories and acceptance tests were being handled properly.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team discussed the CI/CD pipeline that had already been set up on GitHub.
-
-\- The team explained how automated checks work when code is pushed.
-
-\- The team confirmed that user stories must be created as GitHub Issues.
-
-\- User stories needed to follow the Who–What–Why format.
-
-\- Acceptance tests needed to follow the Given–When–Then format.
-
-\- The team discussed the vendor approval system.
-
-\- Vendor accounts should remain pending until approved by an admin.
-
-\- The team agreed on the branching strategy:
-
-&#x20; - Each member works on their own branch.
-
-&#x20; - No one pushes directly to main.
-
-&#x20; - Changes should be merged through pull requests.
-
-\- The team clarified role responsibilities for student and admin functionality.
-
-\- All roles needed to reuse the shared authentication setup.
-
-
-
-\### Blockers / Issues
-
-
-
-\- Some members still needed clarity on role responsibilities.
-
-\- The team needed to make sure everyone understood the Git workflow.
-
-\- Some user stories still needed clearer acceptance tests.
-
-
-
-\### Outcome
-
-
-
-\- The team agreed to continue using the CI pipeline.
-
-\- GitHub Issues were confirmed as the place for user stories.
-
-\- Branching and pull request workflow were reinforced.
-
-\- The team agreed to maintain a shared authentication system.
-
-
-
-\---
-
-
-
-\## Sprint 1 Meeting 3 — Scrum Progress Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 10 April 2026 |
-
-| Type | WhatsApp Scrum / Progress Meeting |
-
-| Duration | 30 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to review completed functionality, clarify admin access, and check progress before the end of Sprint 1.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team discussed whether admin functionality should be public or private.
-
-\- The team agreed that admin access should remain private for better system control.
-
-\- The team reviewed completed functionality.
-
-\- The following features were confirmed as implemented:
-
-&#x20; - Login
-
-&#x20; - Registration
-
-&#x20; - Forgot Password
-
-\- The team discussed how menu creation would be integrated into the vendor dashboard.
-
-\- Vendors would manage menu items directly from the vendor dashboard.
-
-\- The team aligned on remaining Sprint 1 development work.
-
-
-
-\### Blockers / Issues
-
-
-
-\- Some parts of the system still needed clearer integration.
-
-\- Menu creation needed to be connected properly to the vendor dashboard.
-
-\- Sprint review preparation still needed to be organised.
-
-
-
-\### Outcome
-
-
-
-\- Admin functionality would remain private.
-
-\- Login, registration, and password-related functionality were confirmed as working.
-
-\- Menu creation would be implemented inside the vendor dashboard.
-
-\- The team agreed to continue building the remaining Sprint 1 features.
-
-
-
-\---
-
-
-
-\## Sprint 1 Meeting 4 — Sprint Review Preparation Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 13 April 2026 |
-
-| Type | WhatsApp Call |
-
-| Duration | 19 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to check whether Sprint 1 features were ready and to prepare for the Sprint 1 presentation/review.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team confirmed that all Sprint 1 features were complete and working.
-
-\- The system was reviewed to make sure the main functionality worked.
-
-\- The team discussed who would present each part of the system.
-
-\- Presentation roles were assigned to team members.
-
-\- The team identified the requirement to implement a third-party identity provider.
-
-\- Google authentication was discussed as an important requirement.
-
-\- The team noted that one member had already started adjusting the code for Google authentication.
-
-\- The team agreed to focus on the current working system for the Sprint 1 presentation.
-
-
-
-\### Blockers / Issues
-
-
-
-\- Third-party identity provider support still needed to be fully implemented.
-
-\- Presentation preparation happened late.
-
-\- Some members needed more time to prepare clear explanations of their work.
-
-
-
-\### Outcome
-
-
-
-\- The system was considered ready to present.
-
-\- Presentation responsibilities were assigned.
-
-\- Google authentication was acknowledged as an important next step.
-
-\- The team planned to improve third-party authentication in the next sprint.
-
-
-
-\---
-
-
-
-\# Sprint 2 Meeting Summaries
-
-
-
-\## Sprint 2 Meeting 1 — Sprint Planning Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 15 April 2026 |
-
-| Type | WhatsApp Sprint Planning Meeting |
-
-| Duration | Approximately 27 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to begin Sprint 2, select the Sprint 2 backlog, improve task structure from Sprint 1, and agree on a clearer workflow.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team agreed that Sprint 2 would focus on the ordering workflow.
-
-\- The selected Sprint 2 focus areas were:
-
-&#x20; - Cart and order placement
-
-&#x20; - Database and backend logic
-
-&#x20; - Vendor dashboard and order management
-
-&#x20; - Order status updates
-
-&#x20; - Student tracking interface
-
-&#x20; - Real-time updates and notifications
-
-\- The team agreed that user stories must follow the Who–What–Why format.
-
-\- Acceptance tests must follow the Given–When–Then format.
-
-\- Tasks must be small, manageable, and linked directly to user stories.
-
-\- The team discussed lessons from Sprint 1:
-
-&#x20; - Uneven workload distribution
-
-&#x20; - Lack of clear ownership
-
-&#x20; - Inconsistent contribution levels
-
-\- The team agreed to improve:
-
-&#x20; - Task breakdown
-
-&#x20; - Equal participation
-
-&#x20; - Communication
-
-&#x20; - Accountability
-
-\- The GitHub Projects board workflow was agreed:
-
-&#x20; - Backlog
-
-&#x20; - Ready
-
-&#x20; - In Progress
-
-&#x20; - Done
-
-\- Git workflow was reinforced:
-
-&#x20; - Each member works on their own branch.
-
-&#x20; - No direct commits to main.
-
-&#x20; - Work must be submitted through pull requests.
-
-\- Sthembile was assigned as the main code reviewer.
-
-
-
-\### Blockers / Issues
-
-
-
-\- The team needed to correct the poor task organisation from Sprint 1.
-
-\- Some members needed clearer responsibilities.
-
-\- The team needed to improve contribution tracking.
-
-
-
-\### Outcome
-
-
-
-\- Sprint 2 structure was clearly defined.
-
-\- Tasks were distributed more evenly.
-
-\- The team agreed on clearer user stories, acceptance tests, and task ownership.
-
-\- The GitHub workflow and review process were formalised.
-
-
-
-\---
-
-
-
-\## Sprint 2 Meeting 2 — Daily Scrum / Progress Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 17 April 2026 |
-
-| Type | WhatsApp Daily Scrum |
-
-| Duration | Approximately 16 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to provide progress updates, check alignment, and make sure Sprint 2 work was moving forward.
-
-
-
-\### Main Points Discussed
-
-
-
-\- Each member briefly reported:
-
-&#x20; - What they had completed
-
-&#x20; - What they were currently working on
-
-&#x20; - What they planned to complete next
-
-\- The team confirmed steady progress across assigned tasks.
-
-\- Work remained aligned with Sprint 2 user stories and task allocations.
-
-\- Members were reminded to push completed work to their own branches.
-
-\- Members were reminded to submit work through pull requests.
-
-\- The code reviewer would review pull requests before merging into main.
-
-
-
-\### Blockers / Issues
-
-
-
-\- No major blockers were reported.
-
-\- No serious technical issues were raised during this meeting.
-
-
-
-\### Outcome
-
-
-
-\- The team confirmed that Sprint 2 work was on track.
-
-\- Members continued working on their assigned tasks.
-
-\- The team agreed to keep using the project board and Git workflow.
-
-
-
-\---
-
-
-
-\## Sprint 2 Meeting 3 — Daily Scrum / Final Progress Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 19 April 2026 |
-
-| Type | WhatsApp Daily Scrum / Progress Meeting |
-
-| Duration | Approximately 29 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to review overall Sprint 2 progress, confirm completion of major tasks, and identify any remaining work.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team confirmed that all major Sprint 2 features had been completed.
-
-\- The full system flow was reviewed end-to-end.
-
-\- The team checked how the different parts of the system connected.
-
-\- The implemented functionality matched the Sprint 2 user stories and acceptance tests.
-
-\- Minor remaining issues were identified:
-
-&#x20; - Complete the notifications feature.
-
-&#x20; - Fix timestamp display so students can see:
-
-&#x20;   - Time the order was placed.
-
-&#x20;   - Time the order status changed.
-
-
-
-\### Blockers / Issues
-
-
-
-\- No major blockers were reported.
-
-\- Only minor functionality fixes remained.
-
-\- Notifications and timestamp display needed final attention.
-
-
-
-\### Outcome
-
-
-
-\- Sprint 2 was functionally almost complete.
-
-\- The team moved into final refinement and testing.
-
-\- Remaining work was clearly identified.
-
-
-
-\---
-
-
-
-\# Sprint 3 Meeting Summaries
-
-
-
-\## Sprint 3 Meeting 1 — Sprint Planning Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 24 April 2026 |
-
-| Type | Sprint Planning Meeting |
-
-| Duration | 30 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to begin Sprint 3, decide which features would be completed, divide work between members, and agree on the dependency order.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team agreed that Sprint 3 would focus on two major features:
-
-&#x20; - Online payments
-
-&#x20; - Dietary system
-
-\- The online payment feature would allow students to pay for food orders during checkout.
-
-\- The dietary system would allow menu items to be labelled with dietary tags and filtered by students.
-
-\- The payment work was divided into:
-
-&#x20; - Payment API
-
-&#x20; - Order and payment logic
-
-&#x20; - Payment UI
-
-\- The dietary work was divided into:
-
-&#x20; - Dietary tag definitions and vendor UI
-
-&#x20; - Dietary backend/database
-
-&#x20; - Student filtering frontend
-
-\- The team agreed on the work order:
-
-&#x20; - Start first: Person 2 and Person 4
-
-&#x20; - Start second: Person 3 and Person 5
-
-&#x20; - Start last: Person 1 and Person 6
-
-
-
-\### Blockers / Issues
-
-
-
-\- Dependent tasks could not start properly until foundational tasks were completed.
-
-\- Payment and dietary tag formats needed coordination between team members.
-
-
-
-\### Outcome
-
-
-
-\- Sprint 3 goal was agreed.
-
-\- Work was divided between all six members.
-
-\- Payment and dietary dependency flows were clearly defined.
-
-\- The team understood who needed to start first.
-
-
-
-\---
-
-
-
-\## Sprint 3 Meeting 2 — General Scrum / Progress Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 30 April 2026 |
-
-| Type | General Scrum / Project Progress Meeting |
-
-| Duration | 16 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to discuss Sprint 3 progress, especially the payment feature and dietary requirements feature.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team discussed which payment provider to use.
-
-\- PayFast was chosen for the online payment system.
-
-\- Students would place an order and then complete payment through PayFast.
-
-\- The team agreed that students should only be able to order from one vendor at a time.
-
-\- This would make payment and order tracking simpler.
-
-\- Vendors should only receive and process orders after successful payment.
-
-\- The student dashboard should separate:
-
-&#x20; - Active Orders
-
-&#x20; - Order History
-
-\- Once an order is collected, it should move from Active Orders to Order History.
-
-\- The team discussed dietary requirements.
-
-\- The dietary system should include common options:
-
-&#x20; - Halal
-
-&#x20; - Vegan
-
-&#x20; - Vegetarian
-
-&#x20; - Gluten-free
-
-&#x20; - Nut-free
-
-\- The team also agreed that a custom dietary input should be supported.
-
-
-
-\### Blockers / Issues
-
-
-
-\- Payment and order flow needed to be kept simple.
-
-\- Multi-vendor payments could create confusion, so the team decided to restrict orders to one vendor at a time.
-
-\- Dietary requirements needed a clear and consistent list.
-
-
-
-\### Outcome
-
-
-
-\- PayFast was selected.
-
-\- One-vendor checkout was agreed.
-
-\- Vendors would only receive paid orders.
-
-\- Active Orders and Order History were added to the student-side plan.
-
-\- Dietary requirements would include common options and a custom input option.
-
-
-
-\---
-
-
-
-\## Sprint 3 Meeting 3 — General Scrum / Progress Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 8 May 2026 |
-
-| Type | General Scrum / Project Progress Meeting |
-
-| Duration | 15 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to check Sprint 3 progress across payment, student-side work, vendor-side work, and dietary features.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The payment feature was confirmed as complete.
-
-\- The student side was still in progress.
-
-\- The vendor side was complete but still needed review before being merged into main.
-
-\- Sthembile needed to review the vendor side before upload/merge.
-
-\- Dietary requirements progress:
-
-&#x20; - Person 4 had completed their part.
-
-&#x20; - Person 5 was still in progress.
-
-&#x20; - Person 6 was still in progress.
-
-\- The team checked for blockers.
-
-
-
-\### Blockers / Issues
-
-
-
-\- No blockers were identified.
-
-\- Vendor-side work still needed review before merging.
-
-\- Student-side and some dietary work were still in progress.
-
-
-
-\### Outcome
-
-
-
-\- Payment was confirmed as done.
-
-\- Vendor work was done but awaiting review.
-
-\- Dietary work was partly complete.
-
-\- The team had no major blockers at this stage.
-
-
-
-\---
-
-
-
-\## Sprint 3 Meeting 4 — Final Scrum / Merge Preparation Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 10 May 2026 |
-
-| Type | General Scrum / Project Progress Meeting |
-
-| Duration | 12 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to confirm final Sprint 3 progress and discuss next steps before merging everything into the main branch.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team confirmed that all Sprint 3 parts were complete:
-
-&#x20; - Payment feature
-
-&#x20; - Student side
-
-&#x20; - Vendor side
-
-&#x20; - Dietary requirements feature
-
-\- It was agreed that Sthembile would merge everything into the main branch.
-
-\- After merging, the team would check whether the full project worked smoothly.
-
-\- Any bugs found after merging would need to be fixed before submission or review.
-
-\- The team was reminded to complete and update UML diagrams.
-
-\- UML diagrams needed to reflect:
-
-&#x20; - Payment flow
-
-&#x20; - Student order flow
-
-&#x20; - Vendor order flow
-
-&#x20; - Dietary requirements feature
-
-
-
-\### Blockers / Issues
-
-
-
-\- No blockers were identified.
-
-\- The main risk was whether everything would work smoothly after merging.
-
-
-
-\### Outcome
-
-
-
-\- All Sprint 3 work was confirmed complete.
-
-\- Main branch merge was planned.
-
-\- UML diagram updates were assigned as a final requirement.
-
-\- The team moved into final integration and checking.
-
-
-
-\---
-
-
-
-\## Sprint 3 Meeting 5 — Sprint Review Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 11 May 2026 |
-
-| Type | Team Sprint Review |
-
-| Duration | 17 minutes |
-
-| Attendees | All team members present |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to review Sprint 3 work, check whether the sprint goal was achieved, discuss what went well, identify issues, and agree on improvements for Sprint 4.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team reviewed the Sprint 3 goal.
-
-\- The main goal was to complete and integrate:
-
-&#x20; - Payment system
-
-&#x20; - Dietary system
-
-\- The team agreed that the sprint goal was achieved.
-
-\- Completed work included:
-
-&#x20; - Online payment system
-
-&#x20; - PayFast payment flow
-
-&#x20; - Dietary tagging system
-
-&#x20; - Dietary filtering system
-
-&#x20; - Updated UML diagrams
-
-&#x20; - Integration into the main project
-
-&#x20; - Final testing and system flow review
-
-\- The payment system was considered one of the strongest parts of the sprint.
-
-\- The team discussed GitHub branch management issues.
-
-\- One team member worked on an outdated branch, which made merging more difficult.
-
-\- The team agreed that new work should always be based on the latest updated code.
-
-\- Communication needed improvement.
-
-\- Members needed to update the group more often and ask for help earlier.
-
-
-
-\### Blockers / Issues
-
-
-
-\- No major unresolved blockers remained.
-
-\- The main issue was GitHub-related.
-
-\- Merge conflicts and outdated branches created integration difficulty.
-
-\- Communication during the sprint could have been better.
-
-
-
-\### Outcome
-
-
-
-\- Sprint 3 was considered successful.
-
-\- The payment and dietary features were completed and integrated.
-
-\- The team agreed to improve communication and branch management in Sprint 4.
-
-
-
-\---
-
-
-
-\# Sprint 4 Meeting Summaries
-
-
-
-\## Sprint 4 Meeting 1 — Sprint Planning and Task Breakdown Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 12 May 2026 |
-
-| Type | Sprint 4 Planning / First Scrum Meeting |
-
-| Duration | 25 minutes |
-
-| Attendees | Team members present |
-
-| Sprint Status | In progress |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to start Sprint 4, define the analytics sprint goal, divide tasks between the six members, and agree on the order of work.
-
-
-
-\### Sprint 4 Goal
-
-
-
-The Sprint 4 goal is to build an admin analytics section for the Campus Food Ordering Platform.
-
-
-
-The analytics section should include:
-
-
-
-\- Sales per vendor over time
-
-\- Peak ordering hours
-
-\- Custom analytics view
-
-\- Export reports as CSV or PDF
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team agreed that Sprint 4 would focus on analytics.
-
-\- The team identified the main analytics features.
-
-\- The team divided the work between all six members:
-
-&#x20; - Person 1: Analytics backend/data foundation
-
-&#x20; - Person 2: Analytics dashboard page/layout
-
-&#x20; - Person 3: Sales per vendor over time report
-
-&#x20; - Person 4: Peak ordering hours report
-
-&#x20; - Person 5: Custom analytics view
-
-&#x20; - Person 6: Export reports as CSV/PDF
-
-\- The team agreed on the work order:
-
-&#x20; - Person 1 starts first.
-
-&#x20; - Person 2 starts dashboard layout using mock/sample data.
-
-&#x20; - Persons 3, 4, and 5 build their reports after Person 1 confirms the data format.
-
-&#x20; - Person 6 builds export functionality once report data structures are clear.
-
-&#x20; - Everyone tests their own feature before merging.
-
-\- The team discussed dependencies to avoid confusion during implementation.
-
-
-
-\### Blockers / Risks Discussed
-
-
-
-\- Other reports depend on clean analytics data from Person 1.
-
-\- Person 2’s dashboard layout is needed so other reports have a place in the UI.
-
-\- Person 6 cannot complete exports until report data structures are available.
-
-\- If the data format is unclear, Persons 3, 4, 5, and 6 may be blocked.
-
-
-
-\### Outcome
-
-
-
-\- Sprint 4 analytics goal was agreed.
-
-\- Individual roles were clearly assigned.
-
-\- The dependency order was confirmed.
-
-\- Person 1 would begin with the analytics backend/data foundation.
-
-\- Person 2 would begin the dashboard layout using mock data.
-
-\- The remaining members would prepare their report sections and wait for the confirmed data format.
-
-
-
-\### Next Steps
-
-
-
-\- Person 1 starts the analytics backend/data foundation.
-
-\- Person 1 shares the final analytics data format with the team.
-
-\- Person 2 prepares the analytics dashboard layout.
-
-\- Persons 3, 4, and 5 prepare report sections.
-
-\- Person 6 prepares export functionality after report data structures are known.
-
-
-
-\---
-
-
-
-\## Sprint 4 Meeting 2 — Daily Scrum / Branch Coordination and Analytics Integration Meeting
-
-
-
-| Field | Details |
-
-|---|---|
-
-| Date | 15 May 2026 |
-
-| Type | Daily Scrum Meeting |
-
-| Duration | 13 minutes |
-
-| Sprint | Sprint 4 — Analytics |
-
-| Main Focus | Person 1’s completed analytics backend work and team coordination on the shared branch |
-
-| Sprint Status | In progress |
-
-
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to check Sprint 4 progress, confirm Person 1’s completed analytics backend work, and agree on how the rest of the team should connect to the shared analytics branch.
-
-
-
-\### Main Points Discussed
-
-
-
-\- Person 1 confirmed that their Sprint 4 analytics backend work was complete.
-
-\- Person 1 prepared the analytics data source.
-
-\- Person 1 created the `GET /api/analytics` endpoint.
-
-\- The endpoint provides clean paid-order data for the rest of the analytics reports.
-
-\- The analytics endpoint returns useful fields such as:
-
-&#x20; - Vendor name
-
-&#x20; - Order date
-
-&#x20; - Order time
-
-&#x20; - Order hour
-
-&#x20; - Order total
-
-&#x20; - Payment status
-
-&#x20; - Items
-
-\- The team discussed how the remaining members should connect to Person 1’s completed backend data.
-
-\- Persons 2, 3, 4, 5, and 6 can now connect their features to the real analytics data instead of only using mock data.
-
-\- The team discussed the risk of everyone working on the same branch.
-
-\- The main concern was that multiple people editing the same files could cause merge conflicts.
-
-\- The team agreed that everyone must pull the latest version before editing or pushing code.
-
-\- The team decided to continue working on the same branch as Person 2 because Person 2 controls the analytics dashboard layout.
-
-\- Persons 3, 4, 5, and 6 should mainly work in their own JavaScript files to reduce conflicts.
-
-
-
-\### Important Team Rule Agreed On
-
-
-
-Before making changes or pushing code, each person must first pull the latest version of the branch.
-
-
-
-During analytics branch integration, the team agreed to regularly use:
-
-
-
-```text
-
-git checkout feature/analytics-dashboard-UI
-
-git pull origin feature/analytics-dashboard-UI
+Detailed meeting evidence, call screenshots, and supporting proof are stored separately.
 
 ---
 
+## 1. Summary of Stand-Up Evidence
 
+| Sprint | Main Focus | Meeting Types Included |
+|---|---|---|
+| Sprint 1 | Authentication, roles, menu management, and admin controls | Planning, Scrum check-ins, progress meeting, review preparation |
+| Sprint 2 | Cart, ordering, vendor dashboard, tracking, and notifications | Sprint planning and daily scrum progress meetings |
+| Sprint 3 | Online payments and dietary system | Sprint planning, progress meetings, merge preparation, review |
+| Sprint 4 | Admin analytics and final submission preparation | Sprint planning, branch coordination, final preparation |
 
-\## Sprint 4 Meeting 3 — Daily Scrum / Final Sprint Preparation Meeting
+---
 
+# Sprint 1 Stand-Up / Scrum Summaries
 
+Sprint 1 focused on building the foundation of the platform. The main work included user verification, menu management, role-based access, and admin controls.
+
+---
+
+## Sprint 1 Meeting 1 — Sprint Planning Meeting
 
 | Field | Details |
-
 |---|---|
+| Date | 30 March 2026 |
+| Type | In-person planning meeting |
+| Duration | 1 hour 30 minutes |
+| Attendees | Raquel, Keitu, Lesego, Lukho, Ntando, Sthembile, Calvin |
 
-| Date | 17 May 2026 |
+### Main Points Discussed
 
+- The team agreed that Sprint 1 would focus on **User Verification** and **Menu Management**.
+- The first user stories were identified for the main user roles:
+  - Student
+  - Vendor
+  - Admin
+- Required Sprint 1 features were discussed:
+  - Student registration and login
+  - Vendor registration and login
+  - Admin login and role-based access
+  - Vendor menu creation
+  - Menu display and availability
+  - Admin approval and suspension of vendors
+- The team discussed the initial technology stack and project structure.
+- GitHub Issues and GitHub Projects were selected for tracking user stories and tasks.
+
+### Blockers / Issues
+
+- The project was still new, so members were still learning how the system would be structured.
+- The task split still needed to be refined.
+- Some members were not yet fully clear on how their work would connect to the full system.
+
+### Outcome / Next Steps
+
+- Sprint 1 focus areas were agreed.
+- Initial user stories were identified.
+- Tasks were allocated to team members.
+- Development started after the meeting.
+
+---
+
+## Sprint 1 Meeting 2 — Scrum / Planning Check-In
+
+| Field | Details |
+|---|---|
+| Date | 7 April 2026 |
+| Type | WhatsApp Scrum / Planning Meeting |
+| Duration | 16 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- The team discussed the CI/CD pipeline that had been set up on GitHub.
+- The team confirmed that user stories should be created as GitHub Issues.
+- User stories needed to follow the **Who–What–Why** format.
+- Acceptance tests needed to follow the **Given–When–Then** format.
+- The team discussed the vendor approval system.
+- Vendor accounts should remain pending until approved by an admin.
+- The team reviewed the GitHub workflow:
+  - Each member should work on their own branch.
+  - Members should not push directly to `main`.
+  - Work should be merged through pull requests.
+
+### Blockers / Issues
+
+- Some members still needed clarity on role responsibilities.
+- Some user stories needed clearer acceptance tests.
+- The team needed to improve understanding of the GitHub workflow.
+
+### Outcome / Next Steps
+
+- GitHub Issues were confirmed as the place for user stories.
+- Branching and pull request rules were reinforced.
+- The shared authentication system would be reused across student, vendor, and admin roles.
+
+---
+
+## Sprint 1 Meeting 3 — Scrum Progress Meeting
+
+| Field | Details |
+|---|---|
+| Date | 10 April 2026 |
+| Type | WhatsApp Scrum / Progress Meeting |
+| Duration | 30 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- The team discussed whether admin functionality should be public or private.
+- The team agreed that admin access should remain private.
+- Completed authentication functionality was reviewed.
+- The team confirmed that the following features were working:
+  - Login
+  - Registration
+  - Forgot Password
+- The team discussed how vendor menu creation would be connected to the vendor dashboard.
+
+### Blockers / Issues
+
+- Menu creation still needed to be connected properly to the vendor dashboard.
+- Some integration details still needed clarification.
+- Sprint review preparation still needed to be organised.
+
+### Outcome / Next Steps
+
+- Admin access would remain private.
+- Authentication-related functionality was confirmed as complete.
+- The team continued working toward completing Sprint 1 functionality.
+
+---
+
+## Sprint 1 Meeting 4 — Sprint Review Preparation Meeting
+
+| Field | Details |
+|---|---|
+| Date | 13 April 2026 |
+| Type | WhatsApp Call |
+| Duration | 19 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- The team checked whether Sprint 1 features were ready for presentation.
+- The working system was reviewed.
+- Presentation responsibilities were discussed.
+- The team identified that third-party identity provider support still needed attention.
+- Google authentication was discussed as a future improvement.
+
+### Blockers / Issues
+
+- Presentation preparation happened late.
+- Third-party identity provider support was not fully completed yet.
+- Some members needed more time to prepare clear explanations of their own work.
+
+### Outcome / Next Steps
+
+- The system was considered ready for the Sprint 1 review.
+- Presentation roles were assigned.
+- The team agreed that task splitting, GitHub workflow, and preparation needed to improve in Sprint 2.
+
+---
+
+# Sprint 2 Stand-Up / Scrum Summaries
+
+Sprint 2 focused on the main ordering workflow. The main work included cart functionality, order placement, vendor orders, order tracking, and notifications.
+
+---
+
+## Sprint 2 Meeting 1 — Sprint Planning Meeting
+
+| Field | Details |
+|---|---|
+| Date | 15 April 2026 |
+| Type | WhatsApp Sprint Planning Meeting |
+| Duration | Approximately 27 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- Sprint 2 would focus on the main ordering workflow.
+- The selected Sprint 2 areas were:
+  - Cart and order placement
+  - Database and backend order logic
+  - Vendor dashboard and order management
+  - Order status updates
+  - Student tracking interface
+  - Real-time updates and notifications
+- The team applied lessons from Sprint 1.
+- Tasks needed to be split more clearly and fairly.
+- Each member needed clearer responsibility for their own work.
+- The GitHub Projects board would be used to track:
+  - Backlog
+  - Ready
+  - In Progress
+  - Done
+- The team confirmed that work should be completed through branches and pull requests.
+- Sthembile was assigned as the main code reviewer.
+
+### Blockers / Issues
+
+- Sprint 1 had weak task ownership, so Sprint 2 needed better structure.
+- Contribution tracking needed improvement.
+- Some members needed clearer responsibilities.
+
+### Outcome / Next Steps
+
+- Sprint 2 structure was clearly defined.
+- Tasks were distributed more evenly.
+- The team agreed to use the GitHub Projects board and pull request workflow more consistently.
+
+---
+
+## Sprint 2 Meeting 2 — Daily Scrum / Progress Meeting
+
+| Field | Details |
+|---|---|
+| Date | 17 April 2026 |
+| Type | WhatsApp Daily Scrum |
+| Duration | Approximately 16 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- Each member gave a short progress update.
+- Members reported:
+  - What they had completed
+  - What they were currently working on
+  - What they planned to complete next
+- Work remained aligned with the Sprint 2 user stories and task allocations.
+- Members were reminded to push completed work to their own branches.
+- Pull requests would be reviewed before merging into `main`.
+
+### Blockers / Issues
+
+- No major blockers were reported.
+- No serious technical issues were raised.
+
+### Outcome / Next Steps
+
+- Sprint 2 work was confirmed to be on track.
+- Members continued with assigned tasks.
+- The team continued using the GitHub Projects board and pull request workflow.
+
+---
+
+## Sprint 2 Meeting 3 — Daily Scrum / Final Progress Meeting
+
+| Field | Details |
+|---|---|
+| Date | 19 April 2026 |
+| Type | WhatsApp Daily Scrum / Progress Meeting |
+| Duration | Approximately 29 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- The team confirmed that all major Sprint 2 features had been completed.
+- The full ordering flow was reviewed.
+- The team checked how the different parts of the system connected.
+- Remaining minor work included:
+  - Completing notifications
+  - Fixing timestamp display
+  - Showing when an order was placed
+  - Showing when an order status changed
+
+### Blockers / Issues
+
+- No major blockers were reported.
+- Only minor fixes remained.
+
+### Outcome / Next Steps
+
+- Sprint 2 was nearly complete.
+- The team moved into final testing and refinement.
+- Remaining issues were clearly identified.
+
+---
+
+# Sprint 3 Stand-Up / Scrum Summaries
+
+Sprint 3 focused on two major features: online payments and the dietary system.
+
+---
+
+## Sprint 3 Meeting 1 — Sprint Planning Meeting
+
+| Field | Details |
+|---|---|
+| Date | 24 April 2026 |
+| Type | Sprint Planning Meeting |
+| Duration | 30 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- Sprint 3 would focus on:
+  - Online payments
+  - Dietary system
+- Payment work was divided into:
+  - Payment API
+  - Order and payment logic
+  - Payment UI
+- Dietary work was divided into:
+  - Dietary tag definitions and vendor UI
+  - Dietary backend/database
+  - Student filtering UI
+- The team agreed on the dependency order:
+  - Person 2 would start the Payment API first.
+  - Person 4 would start Dietary Definitions and Vendor UI first.
+  - Person 3 and Person 5 would start after the foundations were ready.
+  - Person 1 and Person 6 would complete frontend-dependent work later.
+
+### Blockers / Issues
+
+- Some tasks depended on other members finishing first.
+- Payment and dietary tag formats needed coordination between team members.
+
+### Outcome / Next Steps
+
+- Sprint 3 goal was agreed.
+- Work was divided between all six members.
+- Dependency order was confirmed to prevent blocking.
+
+---
+
+## Sprint 3 Meeting 2 — General Scrum / Progress Meeting
+
+| Field | Details |
+|---|---|
+| Date | 30 April 2026 |
+| Type | General Scrum / Project Progress Meeting |
+| Duration | 16 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- The team discussed the payment provider.
+- PayFast was selected for online payments.
+- Students would complete payment through PayFast.
+- Students should only order from one vendor at a time.
+- Vendors should only receive orders after successful payment.
+- Student orders should be separated into:
+  - Active Orders
+  - Order History
+- Dietary requirements were discussed.
+- The dietary system should include common options:
+  - Halal
+  - Vegan
+  - Vegetarian
+  - Gluten-free
+  - Nut-free
+- A custom dietary input option should also be supported.
+
+### Blockers / Issues
+
+- Multi-vendor payments would make the system more complicated.
+- Dietary requirements needed a clear and consistent list.
+
+### Outcome / Next Steps
+
+- PayFast was selected.
+- One-vendor checkout was agreed.
+- Vendors would only process paid orders.
+- Dietary filtering requirements were clarified.
+
+---
+
+## Sprint 3 Meeting 3 — General Scrum / Progress Meeting
+
+| Field | Details |
+|---|---|
+| Date | 8 May 2026 |
+| Type | General Scrum / Project Progress Meeting |
+| Duration | 15 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- The payment feature was complete.
+- Student-side work was still in progress.
+- Vendor-side work was complete but still needed review.
+- Sthembile needed to review vendor-side work before it was merged.
+- Dietary feature progress:
+  - Person 4 completed their part.
+  - Person 5 was still in progress.
+  - Person 6 was still in progress.
+
+### Blockers / Issues
+
+- No major blockers were identified.
+- Vendor work still required review.
+- Student-side and some dietary work still needed completion.
+
+### Outcome / Next Steps
+
+- Payment was confirmed as done.
+- Vendor work awaited review.
+- Dietary work continued.
+- The team confirmed that there were no major blockers.
+
+---
+
+## Sprint 3 Meeting 4 — Final Scrum / Merge Preparation Meeting
+
+| Field | Details |
+|---|---|
+| Date | 10 May 2026 |
+| Type | General Scrum / Project Progress Meeting |
+| Duration | 12 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- The team confirmed that all Sprint 3 parts were complete:
+  - Payment feature
+  - Student side
+  - Vendor side
+  - Dietary requirements feature
+- Sthembile would merge everything into the main branch.
+- The team would test the full system after merging.
+- UML diagrams needed to be updated to reflect:
+  - Payment flow
+  - Student order flow
+  - Vendor order flow
+  - Dietary requirements
+
+### Blockers / Issues
+
+- No blockers were identified.
+- The main risk was whether everything would work smoothly after merging.
+
+### Outcome / Next Steps
+
+- Sprint 3 work was complete.
+- Merge into `main` was planned.
+- UML diagram updates were reminded.
+
+---
+
+## Sprint 3 Meeting 5 — Sprint Review / Scrum Reflection
+
+| Field | Details |
+|---|---|
+| Date | 11 May 2026 |
+| Type | Team Sprint Review |
+| Duration | 17 minutes |
+| Attendees | All team members present |
+
+### Main Points Discussed
+
+- The team reviewed whether the Sprint 3 goal had been achieved.
+- Payment and dietary features were completed and integrated.
+- The payment system was considered one of the strongest sprint features.
+- GitHub branch management caused some difficulty.
+- One member worked on an outdated branch, which made merging harder.
+- The team agreed that new work must always start from the latest updated code.
+- Communication needed improvement.
+
+### Blockers / Issues
+
+- No unresolved blockers remained.
+- The main issue was outdated branches and merge conflicts.
+- Communication could have been more consistent.
+
+### Outcome / Next Steps
+
+- Sprint 3 was considered successful.
+- The team agreed to improve communication and branch management in Sprint 4.
+- Members should pull the latest code before continuing work.
+
+---
+
+# Sprint 4 Stand-Up / Scrum Summaries
+
+Sprint 4 focused on admin analytics, report exports, testing evidence, UML diagrams, and final submission preparation.
+
+---
+
+## Sprint 4 Meeting 1 — Sprint Planning and Task Breakdown Meeting
+
+| Field | Details |
+|---|---|
+| Date | 12 May 2026 |
+| Type | Sprint 4 Planning / First Scrum Meeting |
+| Duration | 25 minutes |
+| Attendees | Team members present |
+
+### Main Points Discussed
+
+- Sprint 4 would focus on the admin analytics section.
+- Required analytics features included:
+  - Sales per vendor over time
+  - Peak ordering hours
+  - Custom analytics view
+  - Export reports as CSV or PDF
+- Work was divided between six members:
+  - Person 1: Analytics backend/data foundation
+  - Person 2: Analytics dashboard page/layout
+  - Person 3: Sales per vendor report
+  - Person 4: Peak ordering hours report
+  - Person 5: Custom analytics view
+  - Person 6: CSV/PDF export feature
+- The team agreed on the dependency order:
+  - Person 1 starts with analytics data.
+  - Person 2 creates the dashboard structure.
+  - Persons 3, 4, and 5 create reports.
+  - Person 6 completes export functionality.
+
+### Blockers / Risks
+
+- Reports depend on clean analytics data.
+- Export functionality depends on completed report data.
+- Multiple people editing the same files could create merge conflicts.
+
+### Outcome / Next Steps
+
+- Sprint 4 analytics goal was agreed.
+- Individual responsibilities were assigned.
+- Work order and dependencies were clearly confirmed.
+
+---
+
+## Sprint 4 Meeting 2 — Daily Scrum / Branch Coordination Meeting
+
+| Field | Details |
+|---|---|
+| Date | 15 May 2026 |
 | Type | Daily Scrum Meeting |
+| Duration | 13 minutes |
+| Sprint | Sprint 4 Analytics |
 
+### Main Points Discussed
+
+- Person 1 completed the analytics backend/data foundation.
+- The `GET /api/analytics` endpoint was ready.
+- The endpoint provides clean paid-order data for the analytics reports.
+- The endpoint returns fields such as:
+  - Vendor name
+  - Order date
+  - Order time
+  - Order hour
+  - Order total
+  - Payment status
+  - Items
+- The team discussed how the remaining members should connect to the analytics data.
+- The team discussed the risk of everyone working on the same branch.
+- The team decided to continue working on the same branch as Person 2 because Person 2 controlled the analytics dashboard layout.
+- Members were told to avoid unnecessary edits to shared files.
+
+### Blockers / Risks
+
+- Merge conflicts could happen if multiple people edited `analytics.html`.
+- Someone working on outdated code could break the shared branch.
+- Reports might not connect properly if the API data format was misunderstood.
+
+### Outcome / Next Steps
+
+- The analytics backend was confirmed as ready.
+- Everyone agreed to pull the latest branch before editing or pushing code.
+- Persons 3, 4, 5, and 6 would mainly work in their own JavaScript files.
+
+### Team Rule Agreed
+
+```text
+git checkout feature/analytics-dashboard-UI
+git pull origin feature/analytics-dashboard-UI
+```
+
+Each member must pull the latest version before making changes.
+
+---
+
+## Sprint 4 Meeting 3 — Daily Scrum / Final Preparation Meeting
+
+| Field | Details |
+|---|---|
+| Date | 17 May 2026 |
+| Type | Daily Scrum Meeting |
 | Duration | 10 minutes |
-
 | Sprint | Sprint 4 |
 
-| Main Focus | Final Sprint 4 progress, export work, UML diagrams, video preparation, and final report |
+### Main Points Discussed
 
-| Sprint Status | Almost complete / preparing for Sprint 4 review |
+- Almost all Sprint 4 tasks were complete.
+- Remaining work focused on:
+  - Final documentation
+  - PDF exports
+  - UML diagrams
+  - Final presentation video
+  - Final report
+- Sthembile was still working on PDF exports.
+- Team members were reminded to send or update UML diagrams.
+- Sthembile would create the final video.
+- Raquel would finalise the final report.
 
+### Blockers / Risks
 
-
-\### Main Purpose
-
-
-
-The purpose of this meeting was to discuss the current progress of Sprint 4 and prepare for the final Sprint 4 review and final project submission.
-
-
-
-\### Main Points Discussed
-
-
-
-\- The team confirmed that almost all Sprint 4 parts had been completed.
-
-\- The project is nearly ready for the final Sprint 4 review.
-
-\- The remaining work is mainly focused on:
-
-&#x20; - Final documentation
-
-&#x20; - Exporting PDF documents
-
-&#x20; - Collecting and updating UML diagrams
-
-&#x20; - Preparing the final presentation video
-
-&#x20; - Finalising the final report
-
-\- Sthembile is still working on exporting the PDF documents.
-
-\- The PDF export work still needs to be completed so that the final report and submission files can be prepared properly.
-
-\- The team was reminded to send and update their UML diagrams.
-
-\- The UML diagrams are needed for the final documentation and sprint evidence.
-
-\- The team discussed the final sprint video.
-
-\- Sthembile will be responsible for creating the final sprint video.
-
-\- Raquel will be responsible for implementing and finalising the final report.
-
-\- The team is almost ready for the final sprint review, with only a few final items left to complete.
-
-
-
-
-
-\### Blockers / Risks Discussed
-
-
-
-| Blocker or Risk | Solution |
-
+| Risk | Planned Response |
 |---|---|
+| PDF exports not finished | Sthembile to complete exports |
+| UML diagrams missing from some members | All members reminded to send/update diagrams |
+| Final report still needed work | Raquel to finalise report |
+| Final video still needed work | Sthembile to create video |
 
-| PDF exports not finished yet | Sthembile will complete the exports |
+### Outcome / Next Steps
 
-| UML diagrams still missing from some members | All members were reminded to send or update diagrams |
+- Sprint 4 was confirmed as almost complete.
+- The team moved into final polishing and evidence preparation.
+- Remaining tasks were assigned clearly.
 
-| Final report still needs completion | Raquel will finalise the report |
+---
 
-| Final video still needs to be created | Sthembile will create the video |
+# Overall Daily Stand-Up Summary
 
-| Sprint 4 review is close | Team will focus on final polishing and evidence preparation |
+Across the project, the daily stand-ups and Scrum progress meetings helped the team to:
 
+- Track feature progress during each sprint.
+- Identify blockers and risks.
+- Confirm what each member was working on.
+- Coordinate dependent work between team members.
+- Improve GitHub branch and pull request workflow.
+- Prepare for sprint reviews and final submission.
+- Keep the team aligned as the project became more complex.
 
+The most common blockers or risks were:
 
-\### Outcome
+- Unclear task splitting during early sprints.
+- GitHub branch management problems.
+- Working from outdated branches.
+- Merge conflict risks.
+- Late documentation and UML preparation.
+- Final submission organisation.
 
-
-
-The meeting confirmed that Sprint 4 is almost complete. The remaining focus is on final polishing, completing PDF exports, collecting UML diagrams, preparing the final video, and finalising the report.
-
-
-
-The team is nearly ready for the Sprint 4 review and final project submission.
-
+The team improved over time by using clearer task allocation, better dependency planning, regular progress checks, and stronger GitHub workflow rules.

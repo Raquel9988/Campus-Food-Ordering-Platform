@@ -1,340 +1,93 @@
-\# Sprint Review Evidence
+# Sprint Review Demonstration Evidence
 
+This document summarises where the sprint review and Scrum meeting evidence for the **Campus Food Ordering Platform** can be found.
 
+The detailed evidence has been moved into a separate evidence document so that this Markdown file stays short, clear, and easy to navigate.
 
-This document provides links to the team’s sprint review and Scrum meeting evidence for the Campus Food Ordering Platform.
+---
 
+## 1. Evidence Location
 
-
-The evidence is stored as Word documents because each sprint contains multiple meeting screenshots. Each Word document includes screenshots, dates, durations, and short explanations of what each meeting was used for.
-
-
-
-\---
-
-
-
-\# Evidence Folder
-
-
-
-All sprint evidence documents are stored in:
-
-
+All sprint review and Scrum meeting evidence is stored in:
 
 `docs/final-submission/scrum-methodology/evidence/`
 
+The main evidence document is:
 
+`docs/final-submission/scrum-methodology/evidence/Combined_Daily_Standup_and_Retrospective_Evidence.docx`
 
-\---
+This document contains the detailed meeting evidence for each sprint, including:
 
+- Sprint planning meetings
+- Daily Scrum / progress meetings
+- Sprint review meetings
+- Sprint retrospective meetings
+- WhatsApp call screenshots
+- Meeting dates and durations
+- Main points discussed
+- Blockers or risks
+- Outcomes and next steps
 
+---
 
-\# Sprint Evidence Documents
+## 2. Sprint Review Evidence Summary
 
-
-
-| Sprint | Evidence Document | What It Contains |
-
+| Sprint | Review / Evidence Included | Location |
 |---|---|---|
+| Sprint 1 | Sprint 1 review preparation and retrospective evidence | `evidence/Combined_Daily_Standup_and_Retrospective_Evidence.docx` |
+| Sprint 2 | Sprint 2 progress, final review preparation, and retrospective evidence | `evidence/Combined_Daily_Standup_and_Retrospective_Evidence.docx` |
+| Sprint 3 | Sprint 3 review meeting, payment/dietary feature review, and retrospective evidence | `evidence/Combined_Daily_Standup_and_Retrospective_Evidence.docx` |
+| Sprint 4 | Sprint 4 review / methodology review, analytics review, and final submission readiness evidence | `evidence/Combined_Daily_Standup_and_Retrospective_Evidence.docx` |
 
-| Sprint 1 | \[Sprint 1 Meeting Evidence](<evidence/Sprint1.docx>) | Screenshots and notes for Sprint 1 planning, Scrum progress meetings, and Sprint 1 review preparation. |
+---
 
-| Sprint 2 | \[Sprint 2 Meeting Evidence](<evidence/Sprint 2.docx>) | Screenshots and notes for Sprint 2 planning, daily Scrum meetings, final progress meeting, and retrospective. |
+## 3. What the Evidence Shows
 
-| Sprint 3 | \[Sprint 3 Meeting Evidence](<evidence/Sprint 3.docx>) | Screenshots and notes for Sprint 3 planning, progress meetings, merge preparation, and Sprint 3 review. |
+The combined evidence document shows that the team held regular Scrum meetings throughout the project.
 
-| Sprint 4 | \[Sprint 4 Meeting Evidence](<evidence/Sprint 4.docx>) | Screenshots and notes for Sprint 4 planning, analytics branch coordination, final preparation, and Sprint 4 review evidence once completed. |
+The evidence demonstrates that the team:
 
+- Reviewed completed sprint work
+- Discussed progress and blockers
+- Checked whether sprint goals were achieved
+- Planned improvements for the next sprint
+- Reviewed GitHub workflow and branch issues
+- Prepared sprint review demonstrations
+- Collected final submission artefacts
+- Discussed final video, documentation, UML diagrams, and testing evidence
 
+---
 
-\---
+## 4. Sprint Review Notes
 
+### Sprint 1
 
+Sprint 1 focused on user verification, menu management, role-based access, and admin controls.
 
-\# Sprint 1 Review Evidence Summary
+The evidence shows that the team prepared for the Sprint 1 review, checked completed features, and discussed improvements needed for task splitting and GitHub workflow.
 
+### Sprint 2
 
+Sprint 2 focused on the ordering workflow.
 
-\## Evidence Included
+The evidence shows that the team reviewed cart functionality, order placement, vendor orders, student tracking, notifications, and remaining fixes.
 
+### Sprint 3
 
+Sprint 3 focused on online payments and the dietary system.
 
-The Sprint 1 evidence document includes screenshots for:
+The evidence shows that the team reviewed the completed PayFast payment flow, one-vendor cart rule, paid-order handling, active orders, order history, dietary tags, and dietary filtering.
 
+### Sprint 4
 
+Sprint 4 focused on admin analytics and final submission preparation.
 
-\- Sprint 1 Planning Meeting — 30 March 2026
+The evidence shows that the team reviewed the analytics dashboard, sales per vendor report, peak ordering hours report, custom analytics view, CSV/PDF exports, UML diagrams, final report, and final submission readiness.
 
-\- Sprint 1 Scrum / Planning Meeting — 7 April 2026
+---
 
-\- Sprint 1 Progress Meeting — 10 April 2026
+## 5. Status
 
-\- Sprint 1 Review Preparation Meeting — 13 April 2026
+Completed.
 
-
-
-\## What the Evidence Shows
-
-
-
-The Sprint 1 screenshots show that the team discussed:
-
-
-
-\- User verification
-
-\- Menu management
-
-\- Student, vendor, and admin authentication
-
-\- Role-based access
-
-\- Vendor menu functionality
-
-\- Admin vendor controls
-
-\- GitHub Issues
-
-\- Branching workflow
-
-\- Sprint review preparation
-
-
-
-\## Sprint 1 Notes
-
-
-
-Sprint 1 was the least organised sprint. The evidence shows that the team held meetings and discussed progress, but the retrospective also explains that task separation, communication, and sprint review preparation needed improvement.
-
-
-
-\---
-
-
-
-\# Sprint 2 Review Evidence Summary
-
-
-
-\## Evidence Included
-
-
-
-The Sprint 2 evidence document includes screenshots for:
-
-
-
-\- Sprint 2 Planning Meeting — 15 April 2026
-
-\- Sprint 2 Daily Scrum Meeting — 17 April 2026
-
-\- Sprint 2 Daily Scrum / Final Progress Meeting — 19 April 2026
-
-\- Sprint 2 Retrospective Meeting — 20 April 2026
-
-
-
-\## What the Evidence Shows
-
-
-
-The Sprint 2 screenshots show that the team discussed:
-
-
-
-\- Cart functionality
-
-\- Order placement
-
-\- Database and backend logic
-
-\- Vendor dashboard
-
-\- Order status updates
-
-\- Student order tracking
-
-\- Real-time notifications
-
-\- GitHub workflow
-
-\- Pull requests
-
-\- Code review
-
-\- Improved task ownership after Sprint 1
-
-
-
-\## Sprint 2 Notes
-
-
-
-Sprint 2 showed improvement from Sprint 1. Tasks were split more clearly, the team used GitHub workflow more effectively, and members communicated progress more consistently.
-
-
-
-\---
-
-
-
-\# Sprint 3 Review Evidence Summary
-
-
-
-\## Evidence Included
-
-
-
-The Sprint 3 evidence document includes screenshots for:
-
-
-
-\- Sprint 3 Planning Meeting — 24 April 2026
-
-\- Sprint 3 Progress Meeting — 30 April 2026
-
-\- Sprint 3 Progress Meeting — 8 May 2026
-
-\- Sprint 3 Final Progress / Merge Preparation Meeting — 10 May 2026
-
-\- Sprint 3 Review Meeting — 11 May 2026
-
-
-
-\## What the Evidence Shows
-
-
-
-The Sprint 3 screenshots show that the team discussed:
-
-
-
-\- Online payments
-
-\- PayFast payment flow
-
-\- Payment API
-
-\- Order and payment logic
-
-\- Payment UI
-
-\- One-vendor cart rule
-
-\- Active Orders
-
-\- Order History
-
-\- Dietary tags
-
-\- Dietary backend
-
-\- Dietary filtering
-
-\- Main branch merging
-
-\- UML diagram updates
-
-\- Sprint 3 review and reflection
-
-
-
-\## Sprint 3 Notes
-
-
-
-Sprint 3 was successful because the payment and dietary systems were completed and integrated. The evidence also shows that the team discussed branch management problems and agreed to improve GitHub communication in Sprint 4.
-
-
-
-\---
-
-\# Sprint 4 Review Evidence Summary
-
-
-
-\## Evidence Included
-
-
-
-The Sprint 4 evidence document includes screenshots and notes for:
-
-
-
-\- Sprint 4 Planning and Task Breakdown Meeting — 12 May 2026
-
-\- Sprint 4 Daily Scrum / Branch Coordination Meeting — 15 May 2026
-
-\- Sprint 4 Daily Scrum / Final Sprint Preparation Meeting — 17 May 2026
-
-\- Sprint 4 Sprint Review / Methodology Review Meeting — 18 May 2026
-
-
-
-\## What the Evidence Shows
-
-
-
-The Sprint 4 screenshots and notes show that the team discussed:
-
-
-
-\- Analytics sprint goal
-
-\- Sales per vendor over time
-
-\- Peak ordering hours
-
-\- Custom analytics view
-
-\- CSV/PDF report exporting
-
-\- Analytics backend/API
-
-\- Dashboard layout
-
-\- Report responsibilities
-
-\- Branch coordination
-
-\- Pull-before-editing rule
-
-\- Avoiding merge conflicts
-
-\- Final PDF export work
-
-\- UML diagram collection
-
-\- Final video preparation
-
-\- Final report preparation
-
-\- Sprint 4 review preparation
-
-
-
-\## Sprint 4 Notes
-
-
-
-Sprint 4 focused on adding the analytics section and preparing the final project submission.
-
-
-
-The 12 May meeting shows the initial Sprint 4 planning and task breakdown. The team agreed on the analytics features, assigned roles, and confirmed the dependency order for the sprint.
-
-
-
-The 15 May meeting shows the team’s branch coordination and analytics integration planning. Person 1’s analytics backend work was confirmed as complete, and the team agreed that everyone should pull the latest analytics branch before continuing work.
-
-
-
-The 17 May meeting shows that Sprint 4 was almost complete. The remaining work was focused on final polishing, exporting PDF documents, collecting UML diagrams, preparing the final video, and finalising the final report.
-
-
-
-The final Sprint 4 methodology/review evidence will be added after the review meeting has taken place.
-
+The sprint review and Scrum meeting evidence has been organised into the combined evidence document in the `evidence` folder.
