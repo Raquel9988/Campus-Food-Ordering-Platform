@@ -450,7 +450,7 @@ https://raquel9988.github.io/Campus-Food-Ordering-Platform/
 | Lesego Ngobeni | 2814875 |
 | Ntandoyenkosi Nemadozi | 2812316 |
 | Sthembile | 2611748 |
-| Member 6 | To be added if applicable |
+| Lukho | 2828271 |
 
 ---
 
