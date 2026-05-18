@@ -10,6 +10,7 @@ const fallbackWindow = {
     href: "",
     search: "",
   },
+
   history: {
     replaceState() {},
   },
@@ -225,6 +226,9 @@ export function createMyOrdersController({
   setTimeoutRef = typeof setTimeout !== "undefined" ? setTimeout : () => {},
   consoleRef = console,
 }) {
+  let pageStarted = false;
+  let realtimeSubscription = null;
+
   const state = {
     currentStudentId: null,
     allOrders: [],
@@ -277,6 +281,7 @@ export function createMyOrdersController({
     getElement("empty-state")?.classList.add("hidden");
 
     const errorText = getElement("error-text");
+
     if (errorText) {
       errorText.textContent = message;
     }
@@ -316,9 +321,10 @@ export function createMyOrdersController({
   }
 
   function updateUrlFilter(filter) {
-    const currentHref = windowRef?.location?.href || "https://test.local/student/my-orders.html";
-    const url = new URL(currentHref);
+    const currentHref =
+      windowRef?.location?.href || "https://test.local/student/my-orders.html";
 
+    const url = new URL(currentHref);
     url.searchParams.set("filter", filter);
 
     windowRef?.history?.replaceState?.({}, "", url);
@@ -447,7 +453,9 @@ export function createMyOrdersController({
       : "";
 
     const providerHtml = order.payment_provider
-      ? `<p><strong>Payment Provider:</strong> ${escapeHtml(order.payment_provider)}</p>`
+      ? `<p><strong>Payment Provider:</strong> ${escapeHtml(
+          order.payment_provider
+        )}</p>`
       : `<p><strong>Payment Provider:</strong> N/A</p>`;
 
     const paymentAmount = order.payment_amount || order.total_price;
@@ -514,6 +522,14 @@ export function createMyOrdersController({
     try {
       showLoading();
 
+      if (!state.currentStudentId) {
+        state.currentStudentId = await checkStudentAuth();
+
+        if (!state.currentStudentId) {
+          return;
+        }
+      }
+
       state.allOrders = await fetchOrders(state.currentStudentId);
       renderOrders(state.allOrders, state.currentFilter);
     } catch (error) {
@@ -523,7 +539,11 @@ export function createMyOrdersController({
   }
 
   function subscribeToRealtime() {
-    return supabaseClient
+    if (realtimeSubscription) {
+      return realtimeSubscription;
+    }
+
+    realtimeSubscription = supabaseClient
       .channel("student-orders-realtime")
       .on(
         "postgres_changes",
@@ -535,8 +555,9 @@ export function createMyOrdersController({
         async (payload) => {
           const newOrder = payload.new;
           const oldOrder = payload.old;
+          const relatedOrder = newOrder || oldOrder;
 
-          if (!newOrder || newOrder.student_id !== state.currentStudentId) {
+          if (!relatedOrder || relatedOrder.student_id !== state.currentStudentId) {
             return;
           }
 
@@ -545,25 +566,33 @@ export function createMyOrdersController({
 
           if (
             oldOrder?.payment_status === "pending" &&
-            newOrder.payment_status === "paid"
+            newOrder?.payment_status === "paid"
           ) {
-            showToast(`Payment confirmed for order #${getSafeOrderId(newOrder.id)}.`);
+            showToast(
+              `Payment confirmed for order #${getSafeOrderId(newOrder.id)}.`
+            );
           }
 
-          if (oldOrder?.status === "received" && newOrder.status === "preparing") {
+          if (oldOrder?.status === "received" && newOrder?.status === "preparing") {
             showToast(`Order #${getSafeOrderId(newOrder.id)} is being prepared.`);
           }
 
-          if (oldOrder?.status === "preparing" && newOrder.status === "ready") {
-            showToast(`Order #${getSafeOrderId(newOrder.id)} is ready for collection.`);
+          if (oldOrder?.status === "preparing" && newOrder?.status === "ready") {
+            showToast(
+              `Order #${getSafeOrderId(newOrder.id)} is ready for collection.`
+            );
           }
 
-          if (oldOrder?.status !== "complete" && newOrder.status === "complete") {
-            showToast(`Order #${getSafeOrderId(newOrder.id)} has moved to Order History.`);
+          if (oldOrder?.status !== "complete" && newOrder?.status === "complete") {
+            showToast(
+              `Order #${getSafeOrderId(newOrder.id)} has moved to Order History.`
+            );
           }
         }
       )
       .subscribe();
+
+    return realtimeSubscription;
   }
 
   function handleFilterClick(button) {
@@ -578,6 +607,12 @@ export function createMyOrdersController({
   }
 
   async function initializePage() {
+    if (pageStarted) {
+      return;
+    }
+
+    pageStarted = true;
+
     state.currentStudentId = await checkStudentAuth();
 
     if (!state.currentStudentId) {
@@ -616,6 +651,13 @@ export function createMyOrdersController({
     });
 
     documentRef?.addEventListener?.("DOMContentLoaded", initializePage);
+
+    if (
+      documentRef?.readyState === "interactive" ||
+      documentRef?.readyState === "complete"
+    ) {
+      initializePage();
+    }
   }
 
   return {
