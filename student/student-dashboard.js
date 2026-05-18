@@ -344,7 +344,7 @@ export function createStudentDashboardController({
   }
 
   function setupStudentDashboardPage() {
-    windowRef?.addEventListener?.("load", handlePageLoad);
+    windowRef.addEventListener("load", handlePageLoad);
 
     documentRef?.addEventListener?.("DOMContentLoaded", handlePageLoad);
 
