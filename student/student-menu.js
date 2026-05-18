@@ -33,6 +33,19 @@ async function createDefaultSupabaseClient() {
    HELPERS
 ========================= */
 
+export function escapeHtml(text) {
+  if (text === null || text === undefined) {
+    return "";
+  }
+
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export function normalizeTag(tag) {
   return String(tag || "")
     .trim()
@@ -76,6 +89,8 @@ export function createStudentMenuController({
   consoleRef = console,
   vendorId = getVendorIdFromUrl(windowRef),
 }) {
+  let menuStarted = false;
+
   const state = {
     vendorId,
     allMenuItems: [],
@@ -243,7 +258,7 @@ export function createStudentMenuController({
 
       menuList.innerHTML = `
         <p class="error-text">
-          Error loading menu: ${error.message || "Unknown error"}
+          Error loading menu: ${escapeHtml(error.message || "Unknown error")}
         </p>
       `;
 
@@ -482,14 +497,45 @@ export function createStudentMenuController({
   }
 
   async function initMenu() {
-    await loadVendorName();
-    await loadMenu();
-    setupFilters();
-    setupNavigation();
+    try {
+      await loadVendorName();
+      await loadMenu();
+      setupFilters();
+      setupNavigation();
+    } catch (error) {
+      consoleRef.error("Student menu load error:", error);
+
+      const menuList = getElement("menu-list");
+
+      if (menuList) {
+        menuList.innerHTML = `
+          <p class="error-text">
+            Could not load menu: ${escapeHtml(error?.message || "Unknown error")}
+          </p>
+        `;
+      }
+    }
+  }
+
+  async function startMenuOnce() {
+    if (menuStarted) {
+      return;
+    }
+
+    menuStarted = true;
+    await initMenu();
   }
 
   function setupStudentMenuPage() {
-    documentRef?.addEventListener?.("DOMContentLoaded", initMenu);
+    if (documentRef?.readyState === "loading") {
+      documentRef.addEventListener("DOMContentLoaded", startMenuOnce, {
+        once: true,
+      });
+
+      return;
+    }
+
+    startMenuOnce();
   }
 
   return {
