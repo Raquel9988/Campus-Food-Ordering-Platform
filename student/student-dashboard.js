@@ -57,6 +57,8 @@ export function createStudentDashboardController({
   setTimeoutRef = typeof setTimeout !== "undefined" ? setTimeout : () => {},
   consoleRef = console,
 }) {
+  let dashboardStarted = false;
+
   function getElement(id) {
     return documentRef?.getElementById(id) || null;
   }
@@ -239,12 +241,19 @@ export function createStudentDashboardController({
       .eq("status", "approved")
       .order("business_name", { ascending: true });
 
-    if (error || !vendors) {
-      vendorsList.innerHTML = `<p class="error-text">Error loading vendors.</p>`;
+    if (error) {
+      consoleRef.error("Load vendors error:", error);
+
+      vendorsList.innerHTML = `
+        <p class="error-text">
+          Error loading vendors: ${escapeHtml(error.message || "Unknown error")}
+        </p>
+      `;
+
       return;
     }
 
-    if (vendors.length === 0) {
+    if (!vendors || vendors.length === 0) {
       vendorsList.innerHTML = `<p class="empty-text">No vendors available.</p>`;
       return;
     }
@@ -294,26 +303,59 @@ export function createStudentDashboardController({
   }
 
   async function handlePageLoad() {
-    const user = await getStudentAuth();
+    try {
+      const user = await getStudentAuth();
 
-    if (!user) {
+      if (!user) {
+        return;
+      }
+
+      const userInfo = getElement("user-info");
+
+      if (userInfo) {
+        userInfo.textContent = `Logged in as: ${user.email}`;
+      }
+
+      await loadVendors();
+      await updateActiveOrdersDot(user.id);
+      subscribeToOrders(user.id);
+      setupEvents(user);
+    } catch (error) {
+      consoleRef.error("Student dashboard load error:", error);
+
+      const vendorsList = getElement("vendors-list");
+
+      if (vendorsList) {
+        vendorsList.innerHTML = `
+          <p class="error-text">
+            Could not load dashboard: ${escapeHtml(
+              error?.message || "Unknown error"
+            )}
+          </p>
+        `;
+      }
+    }
+  }
+
+  async function startDashboardOnce() {
+    if (dashboardStarted) {
       return;
     }
 
-    const userInfo = getElement("user-info");
-
-    if (userInfo) {
-      userInfo.textContent = `Logged in as: ${user.email}`;
-    }
-
-    await loadVendors();
-    await updateActiveOrdersDot(user.id);
-    subscribeToOrders(user.id);
-    setupEvents(user);
+    dashboardStarted = true;
+    await handlePageLoad();
   }
 
   function setupStudentDashboardPage() {
-    windowRef.addEventListener("load", handlePageLoad);
+    if (documentRef?.readyState === "loading") {
+      documentRef.addEventListener("DOMContentLoaded", startDashboardOnce, {
+        once: true,
+      });
+
+      return;
+    }
+
+    startDashboardOnce();
   }
 
   return {
