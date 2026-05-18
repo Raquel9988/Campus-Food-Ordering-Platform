@@ -1380,7 +1380,7 @@ describe("vendor ready pickup notification flow", () => {
     stopAutoRefresh();
   });
 
-  test("notifyStudentForPickup keeps the order ready, hides it from vendor list, and tells the vendor the student was notified", async () => {
+  test("notifyStudentForPickup does not update Supabase, hides ready order locally, and tells the vendor the student was notified", async () => {
     const mockSupabase = createMockSupabase({
       orders: [
         {
@@ -1393,11 +1393,6 @@ describe("vendor ready pickup notification flow", () => {
           updated_at: "2026-05-11T09:50:00Z",
         },
       ],
-      updateResult: {
-        id: "order-1",
-        status: "ready",
-        payment_status: "paid",
-      },
     });
 
     const { initializePage, notifyStudentForPickup, stopAutoRefresh } =
@@ -1405,16 +1400,11 @@ describe("vendor ready pickup notification flow", () => {
 
     await initializePage();
 
+    const queriesBeforeNotify = mockSupabase.__state.orderQueries.length;
+
     await notifyStudentForPickup("order-1", "ready");
 
-    expect(mockSupabase.__state.updatedRows[0]).toMatchObject({
-      tableName: "orders",
-      data: {
-        status: "ready",
-      },
-    });
-
-    expect(mockSupabase.__state.updatedRows[0].data.status).not.toBe("complete");
+    expect(mockSupabase.__state.updatedRows).toHaveLength(0);
 
     expect(
       JSON.parse(localStorage.getItem("vendor_notified_ready_orders_vendor-1"))
@@ -1424,14 +1414,30 @@ describe("vendor ready pickup notification flow", () => {
       "The student has been notified that this order is ready. The order has been removed from your active vendor list and will move to the student's Order History after they click OK on their side."
     );
 
-    expect(mockSupabase.__state.orderQueries.length).toBeGreaterThanOrEqual(2);
+    expect(mockSupabase.__state.orderQueries.length).toBeGreaterThan(
+      queriesBeforeNotify
+    );
+
+    expect(document.getElementById("empty-state").classList.contains("hidden")).toBe(
+      false
+    );
 
     stopAutoRefresh();
   });
 
-  test("notifyStudentForPickup shows error alert when Supabase update fails", async () => {
+  test("notifyStudentForPickup still hides order locally even if mock Supabase update settings contain an error, because no update is attempted", async () => {
     const mockSupabase = createMockSupabase({
-      orders: [],
+      orders: [
+        {
+          id: "order-1",
+          student_id: "student-1",
+          vendor_id: "vendor-1",
+          status: "ready",
+          payment_status: "paid",
+          created_at: "2026-05-11T09:50:00Z",
+          updated_at: "2026-05-11T09:50:00Z",
+        },
+      ],
       updateError: {
         message: "Notify failed",
       },
@@ -1444,53 +1450,23 @@ describe("vendor ready pickup notification flow", () => {
 
     await notifyStudentForPickup("order-1", "ready");
 
-    expect(console.error).toHaveBeenCalledWith("Notify student error:", {
+    expect(mockSupabase.__state.updatedRows).toHaveLength(0);
+    expect(console.error).not.toHaveBeenCalledWith("Notify student error:", {
       message: "Notify failed",
     });
 
-    expect(alert).toHaveBeenCalledWith("Failed to notify student.");
+    expect(alert).not.toHaveBeenCalledWith("Failed to notify student.");
 
-    expect(localStorage.getItem("vendor_notified_ready_orders_vendor-1")).toBe(
-      null
-    );
-
-    stopAutoRefresh();
-  });
-
-  test("notifyStudentForPickup shows conflict alert when no updated row is returned", async () => {
-    const mockSupabase = createMockSupabase({
-      orders: [],
-      updateResult: null,
-    });
-
-    const { initializePage, notifyStudentForPickup, stopAutoRefresh } =
-      await importOrdersFile(mockSupabase);
-
-    await initializePage();
-
-    await notifyStudentForPickup("order-1", "ready");
-
-    expect(alert).toHaveBeenCalledWith(
-      "Order could not be confirmed for pickup. Please refresh and try again."
-    );
-
-    expect(localStorage.getItem("vendor_notified_ready_orders_vendor-1")).toBe(
-      null
-    );
-
-    expect(mockSupabase.__state.orderQueries.length).toBeGreaterThanOrEqual(2);
+    expect(
+      JSON.parse(localStorage.getItem("vendor_notified_ready_orders_vendor-1"))
+    ).toEqual(["order-1"]);
 
     stopAutoRefresh();
   });
 
-  test("clicking Order Complete on a ready card notifies the student instead of completing the order directly", async () => {
+  test("clicking Order Complete on a ready card notifies the student without completing the order directly", async () => {
     const mockSupabase = createMockSupabase({
       orders: [],
-      updateResult: {
-        id: "order-33333333",
-        status: "ready",
-        payment_status: "paid",
-      },
     });
 
     const { initializePage, createOrderCard, stopAutoRefresh } =
@@ -1524,14 +1500,7 @@ describe("vendor ready pickup notification flow", () => {
 
     await flushPromises();
 
-    expect(mockSupabase.__state.updatedRows[0]).toMatchObject({
-      tableName: "orders",
-      data: {
-        status: "ready",
-      },
-    });
-
-    expect(mockSupabase.__state.updatedRows[0].data.status).not.toBe("complete");
+    expect(mockSupabase.__state.updatedRows).toHaveLength(0);
 
     expect(
       JSON.parse(localStorage.getItem("vendor_notified_ready_orders_vendor-1"))

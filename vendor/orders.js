@@ -1,9 +1,11 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const supabase = createClient(
-  "https://sqbscxfolbckikrzxqhr.supabase.co",
-  "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
-);
+const supabase =
+  globalThis.__mockSupabase ||
+  createClient(
+    "https://sqbscxfolbckikrzxqhr.supabase.co",
+    "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay"
+  );
 
 const loadingContainer = document.getElementById("loading-container");
 const errorContainer = document.getElementById("error-container");
@@ -374,31 +376,6 @@ async function notifyStudentForPickup(orderId, currentStatus) {
 
   if (currentStatus !== "ready") {
     alert("Only ready orders can be sent to the student for pickup.");
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from("orders")
-    .update({
-      status: "ready",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", orderId)
-    .eq("vendor_id", currentVendorId)
-    .eq("payment_status", "paid")
-    .eq("status", "ready")
-    .select("id, status, payment_status")
-    .maybeSingle();
-
-  if (error) {
-    console.error("Notify student error:", error);
-    alert("Failed to notify student.");
-    return;
-  }
-
-  if (!data) {
-    alert("Order could not be confirmed for pickup. Please refresh and try again.");
-    await loadOrders();
     return;
   }
 
