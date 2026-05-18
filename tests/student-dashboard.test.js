@@ -68,11 +68,18 @@ function createElementMock(id = "") {
       return null;
     }),
 
+    remove: vi.fn(),
+
+    focus: vi.fn(),
+
     button,
   };
 }
 
-function createDocumentMock({ includeActiveOrdersDot = true } = {}) {
+function createDocumentMock({
+  includeActiveOrdersDot = true,
+  includeReadyOrdersModal = true,
+} = {}) {
   const elements = {
     "user-info": createElementMock("user-info"),
     "vendors-list": createElementMock("vendors-list"),
@@ -87,9 +94,19 @@ function createDocumentMock({ includeActiveOrdersDot = true } = {}) {
     elements["active-orders-dot"] = createElementMock("active-orders-dot");
   }
 
+  if (includeReadyOrdersModal) {
+    elements["ready-orders-modal"] = createElementMock("ready-orders-modal");
+    elements["ready-modal-orders"] = createElementMock("ready-modal-orders");
+    elements["ready-modal-count"] = createElementMock("ready-modal-count");
+    elements["ready-modal-confirm"] = createElementMock("ready-modal-confirm");
+    elements["ready-modal-cancel"] = createElementMock("ready-modal-cancel");
+    elements["ready-modal-close"] = createElementMock("ready-modal-close");
+  }
+
   return {
     elements,
     readyState: "loading",
+    body: createElementMock("body"),
 
     getElementById: vi.fn((id) => {
       return elements[id] || null;
@@ -124,6 +141,26 @@ function createWindowMock({ confirmResult = true } = {}) {
       this[`on${event}`] = handler;
     }),
   };
+}
+
+async function flushPromises(times = 20) {
+  for (let i = 0; i < times; i += 1) {
+    await Promise.resolve();
+  }
+}
+
+async function waitForModalButton(documentRef, buttonId = "ready-modal-confirm") {
+  for (let i = 0; i < 60; i += 1) {
+    await Promise.resolve();
+
+    const button = documentRef.elements[buttonId];
+
+    if (button && typeof button.onclick === "function") {
+      return button;
+    }
+  }
+
+  throw new Error(`${buttonId} was not ready. The modal did not finish opening.`);
 }
 
 function createPaidReadyOrder(id = "ORDER-1") {
@@ -305,6 +342,13 @@ function createSupabaseMock({
         }),
 
         then(resolve, reject) {
+          if (tableName === "orders" && query.updateData) {
+            return Promise.resolve({
+              data: updateResult,
+              error: updateError,
+            }).then(resolve, reject);
+          }
+
           if (tableName === "orders") {
             state.orderQueries.push({
               type: "ready-id-check",
@@ -526,6 +570,27 @@ describe("actual student dashboard logic", () => {
     ]);
   });
 
+  test("fetchReadyOrderIds ignores acknowledged ready orders", async () => {
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock({
+        readyOrders: [
+          createPaidReadyOrder("ORDER-1"),
+          createPaidReadyOrder("ORDER-2"),
+        ],
+      }),
+      documentRef: createDocumentMock(),
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock({
+        "acknowledged_ready_orders_student-1": JSON.stringify(["ORDER-1"]),
+      }),
+      setTimeoutRef: vi.fn(),
+    });
+
+    await expect(controller.fetchReadyOrderIds("student-1")).resolves.toEqual([
+      "ORDER-2",
+    ]);
+  });
+
   test("shows active orders dot when there is a ready order", async () => {
     const documentRef = createDocumentMock();
 
@@ -570,6 +635,30 @@ describe("actual student dashboard logic", () => {
     expect(
       documentRef.elements["active-orders-dot"].classList.remove
     ).toHaveBeenCalledWith("hidden");
+  });
+
+  test("hides active orders dot when all ready orders are acknowledged", async () => {
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock({
+        readyOrders: [createPaidReadyOrder("ORDER-1")],
+      }),
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock({
+        "acknowledged_ready_orders_student-1": JSON.stringify(["ORDER-1"]),
+      }),
+      setTimeoutRef: vi.fn(),
+    });
+
+    await controller.updateActiveOrdersDot("student-1");
+
+    expect(
+      documentRef.elements["active-orders-dot"].classList.add
+    ).toHaveBeenCalledWith("hidden");
+
+    expect(documentRef.elements["active-orders-dot"].style.display).toBe("none");
   });
 
   test("hides active orders dot when there are no ready orders", async () => {
@@ -633,6 +722,11 @@ describe("actual student dashboard logic", () => {
     await controller.markReadyOrdersAsSeen("student-1");
 
     expect(localStorageRef.setItem).toHaveBeenCalledWith(
+      "acknowledged_ready_orders_student-1",
+      JSON.stringify(["ORDER-1"])
+    );
+
+    expect(localStorageRef.setItem).toHaveBeenCalledWith(
       "seen_ready_orders",
       JSON.stringify(["ORDER-1"])
     );
@@ -674,6 +768,30 @@ describe("ready order acknowledgement flow", () => {
     expect(orders).toHaveLength(1);
     expect(orders[0].vendorName).toBe("Campus Burgers");
     expect(orders[0].items).toEqual(["2 × Burger"]);
+  });
+
+  test("fetchReadyOrdersForAcknowledgement removes already acknowledged ready orders", async () => {
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock({
+        acknowledgementOrders: [
+          createPaidReadyOrder("ORDER-1"),
+          createPaidReadyOrder("ORDER-2"),
+        ],
+      }),
+      documentRef: createDocumentMock(),
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock({
+        "acknowledged_ready_orders_student-1": JSON.stringify(["ORDER-1"]),
+      }),
+      setTimeoutRef: vi.fn(),
+    });
+
+    const orders = await controller.fetchReadyOrdersForAcknowledgement(
+      "student-1"
+    );
+
+    expect(orders).toHaveLength(1);
+    expect(orders[0].id).toBe("ORDER-2");
   });
 
   test("fetchReadyOrdersForAcknowledgement returns empty array and logs when query fails", async () => {
@@ -777,6 +895,163 @@ describe("ready order acknowledgement flow", () => {
     expect(message).toContain("The order will then move to Order History.");
   });
 
+  test("buildReadyOrderCardsHtml creates safe professional order cards", () => {
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef: createDocumentMock(),
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    const html = controller.buildReadyOrderCardsHtml([
+      {
+        id: "ORDER-12345678",
+        vendorName: `<script>alert("bad")</script>`,
+        items: [`2 × Burger`, `<img src=x onerror=alert(1)>`],
+      },
+    ]);
+
+    expect(html).toContain("ready-order-card");
+    expect(html).toContain("Order #ORDER-12");
+    expect(html).toContain("&lt;script&gt;alert(&quot;bad&quot;)&lt;/script&gt;");
+    expect(html).toContain("&lt;img src=x onerror=alert(1)&gt;");
+  });
+
+  test("showReadyOrdersDialog opens professional modal and confirms when OK is clicked", async () => {
+    const documentRef = createDocumentMock();
+    const windowRef = createWindowMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef,
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    const dialogPromise = controller.showReadyOrdersDialog([
+      {
+        id: "ORDER-12345678",
+        vendorName: "Campus Burgers",
+        items: ["2 × Burger"],
+      },
+    ]);
+
+    expect(
+      documentRef.elements["ready-orders-modal"].classList.remove
+    ).toHaveBeenCalledWith("hidden");
+
+    expect(
+      documentRef.elements["ready-orders-modal"].setAttribute
+    ).toHaveBeenCalledWith("aria-hidden", "false");
+
+    expect(documentRef.body.classList.add).toHaveBeenCalledWith("modal-open");
+
+    expect(documentRef.elements["ready-modal-count"].textContent).toBe(
+      "1 ready order"
+    );
+
+    expect(documentRef.elements["ready-modal-orders"].innerHTML).toContain(
+      "Campus Burgers"
+    );
+
+    expect(documentRef.elements["ready-modal-confirm"].focus).toHaveBeenCalled();
+
+    documentRef.elements["ready-modal-confirm"].onclick();
+
+    await expect(dialogPromise).resolves.toBe(true);
+
+    expect(
+      documentRef.elements["ready-orders-modal"].classList.add
+    ).toHaveBeenCalledWith("hidden");
+
+    expect(
+      documentRef.elements["ready-orders-modal"].setAttribute
+    ).toHaveBeenCalledWith("aria-hidden", "true");
+
+    expect(documentRef.body.classList.remove).toHaveBeenCalledWith("modal-open");
+  });
+
+  test("showReadyOrdersDialog cancels when Not now is clicked", async () => {
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    const dialogPromise = controller.showReadyOrdersDialog([
+      {
+        id: "ORDER-1",
+        vendorName: "Campus Burgers",
+        items: ["2 × Burger"],
+      },
+    ]);
+
+    documentRef.elements["ready-modal-cancel"].onclick();
+
+    await expect(dialogPromise).resolves.toBe(false);
+  });
+
+  test("showReadyOrdersDialog cancels when close button is clicked", async () => {
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    const dialogPromise = controller.showReadyOrdersDialog([
+      {
+        id: "ORDER-1",
+        vendorName: "Campus Burgers",
+        items: ["2 × Burger"],
+      },
+    ]);
+
+    documentRef.elements["ready-modal-close"].onclick();
+
+    await expect(dialogPromise).resolves.toBe(false);
+  });
+
+  test("showReadyOrdersDialog falls back to browser confirm when modal elements are missing", async () => {
+    const documentRef = createDocumentMock({
+      includeReadyOrdersModal: false,
+    });
+
+    const windowRef = createWindowMock({
+      confirmResult: true,
+    });
+
+    const controller = createStudentDashboardController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef,
+      localStorageRef: createStorageMock(),
+      setTimeoutRef: vi.fn(),
+    });
+
+    const result = await controller.showReadyOrdersDialog([
+      {
+        id: "ORDER-1",
+        vendorName: "Campus Burgers",
+        items: ["2 × Burger"],
+      },
+    ]);
+
+    expect(result).toBe(true);
+    expect(windowRef.confirm).toHaveBeenCalledWith(
+      expect.stringContaining("Your order is ready for pickup.")
+    );
+  });
+
   test("completeReadyOrders updates ready paid orders to complete", async () => {
     const supabaseClient = createSupabaseMock({
       updateResult: {
@@ -785,11 +1060,13 @@ describe("ready order acknowledgement flow", () => {
       },
     });
 
+    const localStorageRef = createStorageMock();
+
     const controller = createStudentDashboardController({
       supabaseClient,
       documentRef: createDocumentMock(),
       windowRef: createWindowMock(),
-      localStorageRef: createStorageMock(),
+      localStorageRef,
       setTimeoutRef: vi.fn(),
     });
 
@@ -803,6 +1080,16 @@ describe("ready order acknowledgement flow", () => {
         status: "complete",
       },
     });
+
+    expect(localStorageRef.setItem).toHaveBeenCalledWith(
+      "acknowledged_ready_orders_student-1",
+      JSON.stringify(["ORDER-1"])
+    );
+
+    expect(localStorageRef.setItem).toHaveBeenCalledWith(
+      "seen_ready_orders",
+      JSON.stringify(["ORDER-1"])
+    );
   });
 
   test("completeReadyOrders returns false when no order ids are provided", async () => {
@@ -822,10 +1109,12 @@ describe("ready order acknowledgement flow", () => {
     expect(supabaseClient.__state.updatedRows).toHaveLength(0);
   });
 
-  test("completeReadyOrders returns false and logs when update fails", async () => {
+  test("completeReadyOrders still acknowledges locally when Supabase update fails", async () => {
     const consoleRef = {
       error: vi.fn(),
     };
+
+    const localStorageRef = createStorageMock();
 
     const controller = createStudentDashboardController({
       supabaseClient: createSupabaseMock({
@@ -835,19 +1124,24 @@ describe("ready order acknowledgement flow", () => {
       }),
       documentRef: createDocumentMock(),
       windowRef: createWindowMock(),
-      localStorageRef: createStorageMock(),
+      localStorageRef,
       setTimeoutRef: vi.fn(),
       consoleRef,
     });
 
     const result = await controller.completeReadyOrders("student-1", ["ORDER-1"]);
 
-    expect(result).toBe(false);
-    expect(consoleRef.error).toHaveBeenCalledWith(
-      "Complete ready order error:",
-      {
-        message: "Update failed",
-      }
+    expect(result).toBe(true);
+    expect(consoleRef.error).toHaveBeenCalled();
+
+    expect(localStorageRef.setItem).toHaveBeenCalledWith(
+      "acknowledged_ready_orders_student-1",
+      JSON.stringify(["ORDER-1"])
+    );
+
+    expect(localStorageRef.setItem).toHaveBeenCalledWith(
+      "seen_ready_orders",
+      JSON.stringify(["ORDER-1"])
     );
   });
 
@@ -874,11 +1168,9 @@ describe("ready order acknowledgement flow", () => {
     expect(windowRef.location.href).toBe("my-orders.html?filter=active");
   });
 
-  test("acknowledgeReadyOrders shows message, completes order, saves seen order, and redirects to history", async () => {
+  test("acknowledgeReadyOrders opens modal, completes order, saves seen order, and redirects to history after OK", async () => {
     const documentRef = createDocumentMock();
-    const windowRef = createWindowMock({
-      confirmResult: true,
-    });
+    const windowRef = createWindowMock();
     const localStorageRef = createStorageMock();
 
     const controller = createStudentDashboardController({
@@ -907,14 +1199,31 @@ describe("ready order acknowledgement flow", () => {
       setTimeoutRef: vi.fn(),
     });
 
-    await controller.acknowledgeReadyOrders("student-1");
+    const acknowledgePromise = controller.acknowledgeReadyOrders("student-1");
 
-    expect(windowRef.confirm).toHaveBeenCalledWith(
-      expect.stringContaining("Your order is ready for pickup.")
+    await waitForModalButton(documentRef, "ready-modal-confirm");
+
+    expect(windowRef.confirm).not.toHaveBeenCalled();
+
+    expect(
+      documentRef.elements["ready-orders-modal"].classList.remove
+    ).toHaveBeenCalledWith("hidden");
+
+    expect(documentRef.elements["ready-modal-orders"].innerHTML).toContain(
+      "Campus Burgers"
     );
 
-    expect(windowRef.confirm).toHaveBeenCalledWith(
-      expect.stringContaining("spam or junk folder")
+    expect(documentRef.elements["ready-modal-orders"].innerHTML).toContain(
+      "2 × Burger"
+    );
+
+    documentRef.elements["ready-modal-confirm"].onclick();
+
+    await acknowledgePromise;
+
+    expect(localStorageRef.setItem).toHaveBeenCalledWith(
+      "acknowledged_ready_orders_student-1",
+      JSON.stringify(["ORDER-1"])
     );
 
     expect(localStorageRef.setItem).toHaveBeenCalledWith(
@@ -929,11 +1238,10 @@ describe("ready order acknowledgement flow", () => {
     expect(windowRef.location.href).toBe("my-orders.html?filter=history");
   });
 
-  test("acknowledgeReadyOrders does not complete order when student cancels the confirmation", async () => {
+  test("acknowledgeReadyOrders does not complete order when student cancels the modal", async () => {
     const documentRef = createDocumentMock();
-    const windowRef = createWindowMock({
-      confirmResult: false,
-    });
+    const windowRef = createWindowMock();
+
     const supabaseClient = createSupabaseMock({
       acknowledgementOrders: [createPaidReadyOrder("ORDER-1")],
     });
@@ -946,9 +1254,15 @@ describe("ready order acknowledgement flow", () => {
       setTimeoutRef: vi.fn(),
     });
 
-    await controller.acknowledgeReadyOrders("student-1");
+    const acknowledgePromise = controller.acknowledgeReadyOrders("student-1");
 
-    expect(windowRef.confirm).toHaveBeenCalled();
+    await waitForModalButton(documentRef, "ready-modal-cancel");
+
+    documentRef.elements["ready-modal-cancel"].onclick();
+
+    await acknowledgePromise;
+
+    expect(windowRef.confirm).not.toHaveBeenCalled();
     expect(supabaseClient.__state.updatedRows).toHaveLength(0);
 
     expect(
@@ -958,30 +1272,50 @@ describe("ready order acknowledgement flow", () => {
     expect(windowRef.location.href).toBe("");
   });
 
-  test("acknowledgeReadyOrders shows alert when ready order cannot be moved to history", async () => {
+  test("acknowledgeReadyOrders redirects to history even when Supabase update fails because order is acknowledged locally", async () => {
     const documentRef = createDocumentMock();
-    const windowRef = createWindowMock({
-      confirmResult: true,
-    });
+    const windowRef = createWindowMock();
+    const localStorageRef = createStorageMock();
 
     const controller = createStudentDashboardController({
       supabaseClient: createSupabaseMock({
         acknowledgementOrders: [createPaidReadyOrder("ORDER-1")],
-        updateResult: null,
+        updateError: {
+          message: "Update failed",
+        },
       }),
       documentRef,
       windowRef,
-      localStorageRef: createStorageMock(),
+      localStorageRef,
       setTimeoutRef: vi.fn(),
     });
 
-    await controller.acknowledgeReadyOrders("student-1");
+    const acknowledgePromise = controller.acknowledgeReadyOrders("student-1");
 
-    expect(alert).toHaveBeenCalledWith(
-      "The ready order could not be moved to Order History. Please try again."
+    await waitForModalButton(documentRef, "ready-modal-confirm");
+
+    documentRef.elements["ready-modal-confirm"].onclick();
+
+    await acknowledgePromise;
+
+    expect(windowRef.confirm).not.toHaveBeenCalled();
+    expect(alert).not.toHaveBeenCalled();
+
+    expect(localStorageRef.setItem).toHaveBeenCalledWith(
+      "acknowledged_ready_orders_student-1",
+      JSON.stringify(["ORDER-1"])
     );
 
-    expect(windowRef.location.href).toBe("");
+    expect(localStorageRef.setItem).toHaveBeenCalledWith(
+      "seen_ready_orders",
+      JSON.stringify(["ORDER-1"])
+    );
+
+    expect(
+      documentRef.elements["active-orders-dot"].classList.add
+    ).toHaveBeenCalledWith("hidden");
+
+    expect(windowRef.location.href).toBe("my-orders.html?filter=history");
   });
 });
 
@@ -1121,11 +1455,9 @@ describe("student dashboard button events", () => {
     expect(documentRef.elements.logout.addEventListener).toHaveBeenCalled();
   });
 
-  test("active orders button acknowledges ready orders and redirects to history after OK", async () => {
+  test("active orders button acknowledges ready orders and redirects to history after OK in modal", async () => {
     const documentRef = createDocumentMock();
-    const windowRef = createWindowMock({
-      confirmResult: true,
-    });
+    const windowRef = createWindowMock();
     const localStorageRef = createStorageMock();
 
     const controller = createStudentDashboardController({
@@ -1147,11 +1479,19 @@ describe("student dashboard button events", () => {
       email: "student@test.com",
     });
 
-    await documentRef.elements["active-orders"].onclick();
+    const clickPromise = documentRef.elements["active-orders"].onclick();
 
-    expect(windowRef.confirm).toHaveBeenCalledWith(
-      expect.stringContaining("registered email address")
-    );
+    await waitForModalButton(documentRef, "ready-modal-confirm");
+
+    expect(windowRef.confirm).not.toHaveBeenCalled();
+
+    expect(
+      documentRef.elements["ready-orders-modal"].classList.remove
+    ).toHaveBeenCalledWith("hidden");
+
+    documentRef.elements["ready-modal-confirm"].onclick();
+
+    await clickPromise;
 
     expect(localStorageRef.setItem).toHaveBeenCalledWith(
       "seen_ready_orders",
@@ -1399,6 +1739,41 @@ describe("student dashboard toast and realtime updates", () => {
     expect(
       documentRef.elements["active-orders-dot"].classList.remove
     ).toHaveBeenCalledWith("hidden");
+  });
+
+  test("subscribeToOrders does not show ready toast for already acknowledged ready order", async () => {
+    const supabaseClient = createSupabaseMock({
+      readyOrders: [createPaidReadyOrder("ORDER-1")],
+    });
+
+    const documentRef = createDocumentMock();
+
+    const controller = createStudentDashboardController({
+      supabaseClient,
+      documentRef,
+      windowRef: createWindowMock(),
+      localStorageRef: createStorageMock({
+        "acknowledged_ready_orders_student-1": JSON.stringify(["ORDER-1"]),
+      }),
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.subscribeToOrders("student-1");
+
+    await supabaseClient.realtimeCallback({
+      new: {
+        id: "ORDER-1",
+        student_id: "student-1",
+        payment_status: "paid",
+        status: "ready",
+      },
+      old: {
+        payment_status: "paid",
+        status: "preparing",
+      },
+    });
+
+    expect(documentRef.elements.toast.textContent).toBe("");
   });
 
   test("subscribeToOrders shows complete order toast", async () => {

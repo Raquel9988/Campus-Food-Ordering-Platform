@@ -20,6 +20,79 @@
   <body>
     <section id="toast" class="toast hidden" aria-live="polite"></section>
 
+    <section
+      id="ready-orders-modal"
+      class="ready-modal hidden"
+      aria-hidden="true"
+    >
+      <article
+        class="ready-modal__dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="ready-modal-title"
+        aria-describedby="ready-modal-description"
+      >
+        <header class="ready-modal__header">
+          <section class="ready-modal__icon" aria-hidden="true">
+            ✓
+          </section>
+
+          <section class="ready-modal__heading">
+            <p class="ready-modal__eyebrow">Pickup notification</p>
+            <h2 id="ready-modal-title">Your order is ready</h2>
+          </section>
+
+          <button
+            id="ready-modal-close"
+            class="ready-modal__close"
+            type="button"
+            aria-label="Close ready order message"
+          >
+            ×
+          </button>
+        </header>
+
+        <section class="ready-modal__body">
+          <p id="ready-modal-description" class="ready-modal__intro">
+            The vendor has marked the following order as ready for pickup.
+          </p>
+
+          <p id="ready-modal-count" class="ready-modal__count"></p>
+
+          <section
+            id="ready-modal-orders"
+            class="ready-modal__orders"
+            aria-live="polite"
+          ></section>
+
+          <aside class="ready-modal__email-note">
+            <strong>Email reminder:</strong>
+            A confirmation email may also have been sent to your registered
+            email address. Please check your inbox, and also check your spam or
+            junk folder if you do not see it.
+          </aside>
+        </section>
+
+        <footer class="ready-modal__footer">
+          <button
+            id="ready-modal-cancel"
+            class="ready-modal__btn ready-modal__btn--ghost"
+            type="button"
+          >
+            Not now
+          </button>
+
+          <button
+            id="ready-modal-confirm"
+            class="ready-modal__btn ready-modal__btn--primary"
+            type="button"
+          >
+            OK, show in Order History
+          </button>
+        </footer>
+      </article>
+    </section>
+
     <header class="header">
       <section class="header-inner">
         <section class="header-brand">
@@ -199,7 +272,8 @@
         <section>
           <h2 class="main-title">Welcome back! 🍔</h2>
           <p class="main-sub">
-            Browse approved campus vendors, build your cart, and track your orders.
+            Browse approved campus vendors, build your cart, and track your
+            orders.
           </p>
         </section>
       </section>

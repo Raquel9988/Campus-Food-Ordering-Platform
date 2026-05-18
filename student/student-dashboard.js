@@ -1,6 +1,8 @@
 const SUPABASE_URL = "https://sqbscxfolbckikrzxqhr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay";
 
+const ACKNOWLEDGED_READY_ORDERS_KEY_PREFIX = "acknowledged_ready_orders";
+
 const fallbackStorage = {
   getItem() {
     return null;
@@ -133,6 +135,52 @@ export function createStudentDashboardController({
     localStorageRef.setItem("seen_ready_orders", JSON.stringify(orderIds));
   }
 
+  function getAcknowledgedReadyOrdersKey(userId) {
+    return `${ACKNOWLEDGED_READY_ORDERS_KEY_PREFIX}_${userId}`;
+  }
+
+  function getAcknowledgedReadyOrders(userId) {
+    if (!userId) {
+      return [];
+    }
+
+    try {
+      const saved = JSON.parse(
+        localStorageRef.getItem(getAcknowledgedReadyOrdersKey(userId)) || "[]"
+      );
+
+      return Array.isArray(saved) ? saved.map(String) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveAcknowledgedReadyOrders(userId, orderIds) {
+    if (!userId) {
+      return [];
+    }
+
+    const uniqueOrderIds = [...new Set((orderIds || []).map(String))];
+
+    localStorageRef.setItem(
+      getAcknowledgedReadyOrdersKey(userId),
+      JSON.stringify(uniqueOrderIds)
+    );
+
+    return uniqueOrderIds;
+  }
+
+  function addAcknowledgedReadyOrders(userId, orderIds) {
+    const existing = getAcknowledgedReadyOrders(userId);
+    const merged = [...new Set([...existing, ...(orderIds || []).map(String)])];
+
+    return saveAcknowledgedReadyOrders(userId, merged);
+  }
+
+  function isReadyOrderAcknowledged(userId, orderId) {
+    return getAcknowledgedReadyOrders(userId).includes(String(orderId));
+  }
+
   function ensureActiveOrdersDot() {
     let dot = getElement("active-orders-dot");
 
@@ -214,6 +262,7 @@ export function createStudentDashboardController({
 
     return (data || [])
       .filter((order) => isPaidReadyOrder(order))
+      .filter((order) => !isReadyOrderAcknowledged(userId, order.id))
       .map((order) => order.id);
   }
 
@@ -231,12 +280,16 @@ export function createStudentDashboardController({
       return [];
     }
 
-    if (!readyOrders || readyOrders.length === 0) {
+    const unacknowledgedReadyOrders = (readyOrders || []).filter((order) => {
+      return isPaidReadyOrder(order) && !isReadyOrderAcknowledged(userId, order.id);
+    });
+
+    if (unacknowledgedReadyOrders.length === 0) {
       return [];
     }
 
     const enrichedOrders = await Promise.all(
-      readyOrders.map(async (order) => {
+      unacknowledgedReadyOrders.map(async (order) => {
         const vendorName = await fetchVendorName(order.vendor_id);
         const items = await fetchOrderItemNames(order.id);
 
@@ -301,7 +354,7 @@ export function createStudentDashboardController({
   function buildReadyOrdersMessage(readyOrders) {
     const orderLines = readyOrders
       .map((order, index) => {
-        const orderNumber = order.id ? order.id.slice(0, 8) : "Unknown";
+        const orderNumber = order.id ? String(order.id).slice(0, 8) : "Unknown";
         const itemText =
           order.items && order.items.length > 0
             ? order.items.join(", ")
@@ -322,14 +375,115 @@ A confirmation email may also have been sent to your registered email address. P
 Click OK once you have seen this message. The order will then move to Order History.`;
   }
 
+  function buildReadyOrderCardsHtml(readyOrders) {
+    return readyOrders
+      .map((order, index) => {
+        const orderNumber = order.id ? String(order.id).slice(0, 8) : "Unknown";
+
+        const itemText =
+          order.items && order.items.length > 0
+            ? order.items.join(", ")
+            : "Items unavailable";
+
+        return `
+          <article class="ready-order-card">
+            <h3>${index + 1}. Order #${escapeHtml(orderNumber)}</h3>
+
+            <p>
+              <strong>Vendor:</strong>
+              ${escapeHtml(order.vendorName || "Unknown vendor")}
+            </p>
+
+            <p>
+              <strong>Items:</strong>
+              ${escapeHtml(itemText)}
+            </p>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  function showReadyOrdersDialog(readyOrders) {
+    const modal = getElement("ready-orders-modal");
+    const ordersContainer = getElement("ready-modal-orders");
+    const orderCount = getElement("ready-modal-count");
+    const confirmButton = getElement("ready-modal-confirm");
+    const cancelButton = getElement("ready-modal-cancel");
+    const closeButton = getElement("ready-modal-close");
+
+    if (
+      !modal ||
+      !ordersContainer ||
+      !orderCount ||
+      !confirmButton ||
+      !cancelButton ||
+      !closeButton
+    ) {
+      const message = buildReadyOrdersMessage(readyOrders);
+
+      return Promise.resolve(
+        typeof windowRef.confirm === "function"
+          ? windowRef.confirm(message)
+          : true
+      );
+    }
+
+    return new Promise((resolve) => {
+      const orderWord = readyOrders.length === 1 ? "order" : "orders";
+
+      ordersContainer.innerHTML = buildReadyOrderCardsHtml(readyOrders);
+      orderCount.textContent = `${readyOrders.length} ready ${orderWord}`;
+
+      modal.classList.remove("hidden");
+      modal.setAttribute("aria-hidden", "false");
+
+      documentRef?.body?.classList?.add("modal-open");
+
+      function closeModal(result) {
+        modal.classList.add("hidden");
+        modal.setAttribute("aria-hidden", "true");
+
+        documentRef?.body?.classList?.remove("modal-open");
+
+        confirmButton.onclick = null;
+        cancelButton.onclick = null;
+        closeButton.onclick = null;
+        modal.onclick = null;
+
+        resolve(result);
+      }
+
+      confirmButton.onclick = () => {
+        closeModal(true);
+      };
+
+      cancelButton.onclick = () => {
+        closeModal(false);
+      };
+
+      closeButton.onclick = () => {
+        closeModal(false);
+      };
+
+      modal.onclick = (event) => {
+        if (event.target === modal) {
+          closeModal(false);
+        }
+      };
+
+      confirmButton.focus?.();
+    });
+  }
+
   async function completeReadyOrders(userId, orderIds) {
     if (!orderIds || orderIds.length === 0) {
       return false;
     }
 
-    const updates = await Promise.all(
+    await Promise.all(
       orderIds.map(async (orderId) => {
-        const { data, error } = await supabaseClient
+        const { error } = await supabaseClient
           .from("orders")
           .update({
             status: "complete",
@@ -338,20 +492,18 @@ Click OK once you have seen this message. The order will then move to Order Hist
           .eq("id", orderId)
           .eq("student_id", userId)
           .eq("payment_status", "paid")
-          .eq("status", "ready")
-          .select("id, status")
-          .maybeSingle();
+          .eq("status", "ready");
 
         if (error) {
-          consoleRef.error("Complete ready order error:", error);
-          return false;
+          consoleRef.error("Best-effort complete ready order error:", error);
         }
-
-        return Boolean(data);
       })
     );
 
-    return updates.some(Boolean);
+    addAcknowledgedReadyOrders(userId, orderIds);
+    saveSeenReadyOrders(orderIds);
+
+    return true;
   }
 
   async function updateActiveOrdersDot(userId) {
@@ -368,6 +520,7 @@ Click OK once you have seen this message. The order will then move to Order Hist
   async function markReadyOrdersAsSeen(userId) {
     const readyOrderIds = await fetchReadyOrderIds(userId);
 
+    addAcknowledgedReadyOrders(userId, readyOrderIds);
     saveSeenReadyOrders(readyOrderIds);
     hideActiveOrdersDot();
   }
@@ -383,9 +536,7 @@ Click OK once you have seen this message. The order will then move to Order Hist
 
     showActiveOrdersDot();
 
-    const message = buildReadyOrdersMessage(readyOrders);
-    const confirmed =
-      typeof windowRef.confirm === "function" ? windowRef.confirm(message) : true;
+    const confirmed = await showReadyOrdersDialog(readyOrders);
 
     if (!confirmed) {
       showActiveOrdersDot();
@@ -393,16 +544,11 @@ Click OK once you have seen this message. The order will then move to Order Hist
     }
 
     const readyOrderIds = readyOrders.map((order) => order.id);
-    const completed = await completeReadyOrders(userId, readyOrderIds);
 
-    if (!completed) {
-      alert("The ready order could not be moved to Order History. Please try again.");
-      await updateActiveOrdersDot(userId);
-      return;
-    }
+    await completeReadyOrders(userId, readyOrderIds);
 
-    saveSeenReadyOrders(readyOrderIds);
     hideActiveOrdersDot();
+    showToast("Ready order acknowledged. It will now appear in Order History.");
 
     windowRef.location.href = "my-orders.html?filter=history";
   }
@@ -434,7 +580,11 @@ Click OK once you have seen this message. The order will then move to Order Hist
             showToast("Payment confirmed. Your order has been received.");
           }
 
-          if (newOrder && isPaidReadyOrder(newOrder)) {
+          if (
+            newOrder &&
+            isPaidReadyOrder(newOrder) &&
+            !isReadyOrderAcknowledged(userId, newOrder.id)
+          ) {
             showToast("Your order is ready for pickup.");
             showActiveOrdersDot();
           }
@@ -616,6 +766,11 @@ Click OK once you have seen this message. The order will then move to Order Hist
     getStudentAuth,
     getSeenReadyOrders,
     saveSeenReadyOrders,
+    getAcknowledgedReadyOrdersKey,
+    getAcknowledgedReadyOrders,
+    saveAcknowledgedReadyOrders,
+    addAcknowledgedReadyOrders,
+    isReadyOrderAcknowledged,
     showActiveOrdersDot,
     hideActiveOrdersDot,
     fetchReadyOrderIds,
@@ -623,6 +778,8 @@ Click OK once you have seen this message. The order will then move to Order Hist
     fetchVendorName,
     fetchOrderItemNames,
     buildReadyOrdersMessage,
+    buildReadyOrderCardsHtml,
+    showReadyOrdersDialog,
     completeReadyOrders,
     updateActiveOrdersDot,
     markReadyOrdersAsSeen,

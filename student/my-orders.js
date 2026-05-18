@@ -4,6 +4,15 @@ const SUPABASE_KEY = "sb_publishable_Zw_iCK1n54xXGPuDWALWQQ_k2cOQWay";
 export const ACTIVE_ORDER_STATUSES = ["received", "preparing", "ready"];
 export const HISTORY_ORDER_STATUSES = ["complete"];
 export const VALID_FILTERS = ["active", "history"];
+export const ACKNOWLEDGED_READY_ORDERS_KEY_PREFIX = "acknowledged_ready_orders";
+
+const fallbackStorage = {
+  getItem() {
+    return null;
+  },
+  setItem() {},
+  removeItem() {},
+};
 
 const fallbackWindow = {
   location: {
@@ -68,44 +77,104 @@ export function getSafeOrderId(orderId) {
   return String(orderId || "").substring(0, 6);
 }
 
+export function normaliseStatus(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+/* ========================================
+   Local acknowledgement helpers
+======================================== */
+
+export function getAcknowledgedReadyOrdersKey(userId) {
+  return `${ACKNOWLEDGED_READY_ORDERS_KEY_PREFIX}_${userId}`;
+}
+
+export function getAcknowledgedReadyOrderIds(
+  userId,
+  localStorageRef = fallbackStorage
+) {
+  if (!userId) {
+    return [];
+  }
+
+  try {
+    const saved = JSON.parse(
+      localStorageRef.getItem(getAcknowledgedReadyOrdersKey(userId)) || "[]"
+    );
+
+    return Array.isArray(saved) ? saved.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function isAcknowledgedReadyOrder(order, acknowledgedReadyOrderIds = []) {
+  return (
+    normaliseStatus(order?.payment_status) === "paid" &&
+    normaliseStatus(order?.status) === "ready" &&
+    acknowledgedReadyOrderIds.map(String).includes(String(order?.id))
+  );
+}
+
 /* ========================================
    Order Status Helpers
 ======================================== */
 
 export function isPaidOrder(order) {
-  return order?.payment_status === "paid";
+  return normaliseStatus(order?.payment_status) === "paid";
 }
 
-export function isActiveOrder(order) {
-  return isPaidOrder(order) && ACTIVE_ORDER_STATUSES.includes(order?.status);
+export function isActiveOrder(order, acknowledgedReadyOrderIds = []) {
+  return (
+    isPaidOrder(order) &&
+    ACTIVE_ORDER_STATUSES.includes(normaliseStatus(order?.status)) &&
+    !isAcknowledgedReadyOrder(order, acknowledgedReadyOrderIds)
+  );
 }
 
-export function isHistoryOrder(order) {
-  return isPaidOrder(order) && HISTORY_ORDER_STATUSES.includes(order?.status);
+export function isHistoryOrder(order, acknowledgedReadyOrderIds = []) {
+  return (
+    isPaidOrder(order) &&
+    (HISTORY_ORDER_STATUSES.includes(normaliseStatus(order?.status)) ||
+      isAcknowledgedReadyOrder(order, acknowledgedReadyOrderIds))
+  );
 }
 
-export function filterOrders(orders, filter) {
+export function filterOrders(orders, filter, acknowledgedReadyOrderIds = []) {
   if (filter === "history") {
-    return orders.filter((order) => isHistoryOrder(order));
+    return orders.filter((order) =>
+      isHistoryOrder(order, acknowledgedReadyOrderIds)
+    );
   }
 
-  return orders.filter((order) => isActiveOrder(order));
+  return orders.filter((order) =>
+    isActiveOrder(order, acknowledgedReadyOrderIds)
+  );
 }
 
 export function getDisplayStatusKey(order) {
-  if (order.payment_status === "pending" || order.status === "payment_pending") {
+  if (
+    normaliseStatus(order.payment_status) === "pending" ||
+    normaliseStatus(order.status) === "payment_pending"
+  ) {
     return "payment_pending";
   }
 
-  if (order.payment_status === "failed" || order.status === "payment_failed") {
+  if (
+    normaliseStatus(order.payment_status) === "failed" ||
+    normaliseStatus(order.status) === "payment_failed"
+  ) {
     return "payment_failed";
   }
 
-  if (order.payment_status === "cancelled" || order.status === "cancelled") {
+  if (
+    normaliseStatus(order.payment_status) === "cancelled" ||
+    normaliseStatus(order.status) === "cancelled"
+  ) {
     return "cancelled";
   }
 
-  return order.status || "unknown";
+  return normaliseStatus(order.status) || "unknown";
 }
 
 export function getStatusClass(order) {
@@ -132,24 +201,43 @@ export function getStatusClass(order) {
   }
 }
 
-export function getStudentOrderStatusText(order) {
-  if (order.payment_status === "pending" || order.status === "payment_pending") {
+export function getStudentOrderStatusText(
+  order,
+  acknowledgedReadyOrderIds = []
+) {
+  if (
+    normaliseStatus(order.payment_status) === "pending" ||
+    normaliseStatus(order.status) === "payment_pending"
+  ) {
     return "Waiting for Payment";
   }
 
-  if (order.payment_status === "failed" || order.status === "payment_failed") {
+  if (
+    normaliseStatus(order.payment_status) === "failed" ||
+    normaliseStatus(order.status) === "payment_failed"
+  ) {
     return "Payment Failed";
   }
 
-  if (order.payment_status === "cancelled" || order.status === "cancelled") {
+  if (
+    normaliseStatus(order.payment_status) === "cancelled" ||
+    normaliseStatus(order.status) === "cancelled"
+  ) {
     return "Payment Cancelled";
   }
 
-  if (order.payment_status === "paid" && order.status === "received") {
+  if (isAcknowledgedReadyOrder(order, acknowledgedReadyOrderIds)) {
+    return "Ready for Collection / Acknowledged";
+  }
+
+  if (
+    normaliseStatus(order.payment_status) === "paid" &&
+    normaliseStatus(order.status) === "received"
+  ) {
     return "Payment Received / Order Received";
   }
 
-  switch (order.status) {
+  switch (normaliseStatus(order.status)) {
     case "received":
       return "Order Received";
 
@@ -168,7 +256,7 @@ export function getStudentOrderStatusText(order) {
 }
 
 export function getPaymentStatusText(status) {
-  switch (status) {
+  switch (normaliseStatus(status)) {
     case "pending":
       return "Payment Pending";
 
@@ -194,7 +282,7 @@ export function getEmptyMessage(filter) {
     return {
       title: "No order history",
       message:
-        "Completed orders will appear here after the vendor marks them as complete.",
+        "Completed orders and acknowledged ready orders will appear here.",
     };
   }
 
@@ -223,6 +311,8 @@ export function createMyOrdersController({
   supabaseClient,
   documentRef = typeof document !== "undefined" ? document : null,
   windowRef = typeof window !== "undefined" ? window : fallbackWindow,
+  localStorageRef =
+    typeof localStorage !== "undefined" ? localStorage : fallbackStorage,
   setTimeoutRef = typeof setTimeout !== "undefined" ? setTimeout : () => {},
   consoleRef = console,
 }) {
@@ -232,6 +322,7 @@ export function createMyOrdersController({
   const state = {
     currentStudentId: null,
     allOrders: [],
+    acknowledgedReadyOrderIds: [],
     currentFilter: getInitialFilter(windowRef),
   };
 
@@ -241,6 +332,15 @@ export function createMyOrdersController({
 
   function getFilterTabs() {
     return Array.from(documentRef?.querySelectorAll(".filter-tab") || []);
+  }
+
+  function refreshAcknowledgedReadyOrders() {
+    state.acknowledgedReadyOrderIds = getAcknowledgedReadyOrderIds(
+      state.currentStudentId,
+      localStorageRef
+    );
+
+    return state.acknowledgedReadyOrderIds;
   }
 
   function showToast(message) {
@@ -424,6 +524,11 @@ export function createMyOrdersController({
     const card = documentRef.createElement("article");
     card.className = "order-card";
 
+    const acknowledgedReady = isAcknowledgedReadyOrder(
+      order,
+      state.acknowledgedReadyOrderIds
+    );
+
     const itemsHtml = order.items
       .map((item) => {
         const itemName = escapeHtml(item.name);
@@ -435,12 +540,16 @@ export function createMyOrdersController({
       .join("");
 
     const readyTime =
-      order.status === "ready"
+      normaliseStatus(order.status) === "ready"
         ? `<p><strong>Ready Time:</strong> ${formatDate(order.updated_at)}</p>`
         : "";
 
+    const acknowledgedHtml = acknowledgedReady
+      ? `<p><strong>Student Acknowledgement:</strong> Message viewed. Please collect from vendor.</p>`
+      : "";
+
     const completedTime =
-      order.status === "complete"
+      normaliseStatus(order.status) === "complete"
         ? `<p><strong>Completed Time:</strong> ${formatDate(order.updated_at)}</p>`
         : "";
 
@@ -465,7 +574,7 @@ export function createMyOrdersController({
         <h3>Order #${getSafeOrderId(order.id)}</h3>
 
         <span class="${getStatusClass(order)}">
-          ${getStudentOrderStatusText(order)}
+          ${getStudentOrderStatusText(order, state.acknowledgedReadyOrderIds)}
         </span>
       </header>
 
@@ -478,6 +587,7 @@ export function createMyOrdersController({
         ${transactionHtml}
         ${paidAtHtml}
         ${readyTime}
+        ${acknowledgedHtml}
         ${completedTime}
       </section>
 
@@ -502,9 +612,14 @@ export function createMyOrdersController({
 
     ordersContainer.innerHTML = "";
 
+    refreshAcknowledgedReadyOrders();
     setActiveTab(filter);
 
-    const filteredOrders = filterOrders(orders, filter);
+    const filteredOrders = filterOrders(
+      orders,
+      filter,
+      state.acknowledgedReadyOrderIds
+    );
 
     if (!filteredOrders.length) {
       showEmpty(filter);
@@ -529,6 +644,8 @@ export function createMyOrdersController({
           return;
         }
       }
+
+      refreshAcknowledgedReadyOrders();
 
       state.allOrders = await fetchOrders(state.currentStudentId);
       renderOrders(state.allOrders, state.currentFilter);
@@ -560,6 +677,8 @@ export function createMyOrdersController({
           if (!relatedOrder || relatedOrder.student_id !== state.currentStudentId) {
             return;
           }
+
+          refreshAcknowledgedReadyOrders();
 
           state.allOrders = await fetchOrders(state.currentStudentId);
           renderOrders(state.allOrders, state.currentFilter);
@@ -619,6 +738,7 @@ export function createMyOrdersController({
       return;
     }
 
+    refreshAcknowledgedReadyOrders();
     updateUrlFilter(state.currentFilter);
 
     await loadOrders();
@@ -669,6 +789,7 @@ export function createMyOrdersController({
     showEmpty,
     setActiveTab,
     updateUrlFilter,
+    refreshAcknowledgedReadyOrders,
     checkStudentAuth,
     fetchOrders,
     createOrderCard,
@@ -685,6 +806,8 @@ export async function setupMyOrdersPage({
   supabaseClient,
   documentRef = typeof document !== "undefined" ? document : null,
   windowRef = typeof window !== "undefined" ? window : fallbackWindow,
+  localStorageRef =
+    typeof localStorage !== "undefined" ? localStorage : fallbackStorage,
   setTimeoutRef = typeof setTimeout !== "undefined" ? setTimeout : () => {},
   consoleRef = console,
 } = {}) {
@@ -694,6 +817,7 @@ export async function setupMyOrdersPage({
     supabaseClient: client,
     documentRef,
     windowRef,
+    localStorageRef,
     setTimeoutRef,
     consoleRef,
   });

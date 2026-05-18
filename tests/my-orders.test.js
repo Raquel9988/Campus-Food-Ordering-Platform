@@ -4,10 +4,14 @@ import {
   escapeHtml,
   formatCurrency,
   getSafeOrderId,
+  normaliseStatus,
   isPaidOrder,
   isActiveOrder,
   isHistoryOrder,
   filterOrders,
+  getAcknowledgedReadyOrdersKey,
+  getAcknowledgedReadyOrderIds,
+  isAcknowledgedReadyOrder,
   getDisplayStatusKey,
   getStatusClass,
   getStudentOrderStatusText,
@@ -66,6 +70,7 @@ function createDocumentMock() {
     elements,
     filterTabs: [activeTab, historyTab],
     body: createElementMock("body"),
+    readyState: "loading",
 
     getElementById: vi.fn((id) => {
       return elements[id] || null;
@@ -102,6 +107,32 @@ function createWindowMock(search = "") {
   };
 }
 
+function createLocalStorageMock(initialValues = {}) {
+  const store = { ...initialValues };
+
+  return {
+    getItem: vi.fn((key) => {
+      return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null;
+    }),
+
+    setItem: vi.fn((key, value) => {
+      store[key] = String(value);
+    }),
+
+    removeItem: vi.fn((key) => {
+      delete store[key];
+    }),
+
+    clear: vi.fn(() => {
+      Object.keys(store).forEach((key) => {
+        delete store[key];
+      });
+    }),
+
+    store,
+  };
+}
+
 function createSupabaseMock({
   user = { id: "student-1" },
   userError = null,
@@ -112,10 +143,8 @@ function createSupabaseMock({
   menuName = "Burger",
   vendorName = "Campus Burgers",
 } = {}) {
-  let realtimeCallback = null;
-
   const supabaseClient = {
-    realtimeCallback,
+    realtimeCallback: null,
 
     auth: {
       getUser: vi.fn().mockResolvedValue({
@@ -131,6 +160,7 @@ function createSupabaseMock({
         select: vi.fn(() => query),
         eq: vi.fn(() => query),
         in: vi.fn(() => query),
+
         order: vi.fn(async () => {
           if (tableName === "orders") {
             return {
@@ -187,6 +217,7 @@ function createSupabaseMock({
       return {
         on: vi.fn((eventName, config, callback) => {
           supabaseClient.realtimeCallback = callback;
+
           return {
             subscribe: vi.fn(() => {
               return {
@@ -223,18 +254,27 @@ describe("actual my-orders page logic", () => {
     expect(getSafeOrderId("ORDER-123456")).toBe("ORDER-");
   });
 
+  test("normalises status text", () => {
+    expect(normaliseStatus(" READY ")).toBe("ready");
+    expect(normaliseStatus(null)).toBe("");
+    expect(normaliseStatus(undefined)).toBe("");
+  });
+
   test("detects active and history paid orders", () => {
     const activeOrder = {
+      id: "ORDER-1",
       payment_status: "paid",
       status: "ready",
     };
 
     const historyOrder = {
+      id: "ORDER-2",
       payment_status: "paid",
       status: "complete",
     };
 
     const unpaidOrder = {
+      id: "ORDER-3",
       payment_status: "pending",
       status: "ready",
     };
@@ -249,7 +289,24 @@ describe("actual my-orders page logic", () => {
     expect(isActiveOrder(unpaidOrder)).toBe(false);
   });
 
-  test("filters orders by active and history", () => {
+  test("treats acknowledged ready orders as history, not active", () => {
+    const acknowledgedReadyOrder = {
+      id: "ORDER-READY-1",
+      payment_status: "paid",
+      status: "ready",
+    };
+
+    const acknowledgedIds = ["ORDER-READY-1"];
+
+    expect(isAcknowledgedReadyOrder(acknowledgedReadyOrder, acknowledgedIds)).toBe(
+      true
+    );
+
+    expect(isActiveOrder(acknowledgedReadyOrder, acknowledgedIds)).toBe(false);
+    expect(isHistoryOrder(acknowledgedReadyOrder, acknowledgedIds)).toBe(true);
+  });
+
+  test("filters orders by active and history without acknowledgements", () => {
     const orders = [
       {
         id: "1",
@@ -275,6 +332,62 @@ describe("actual my-orders page logic", () => {
     expect(filterOrders(orders, "history").map((order) => order.id)).toEqual([
       "2",
     ]);
+  });
+
+  test("filters acknowledged ready orders into history", () => {
+    const orders = [
+      {
+        id: "1",
+        payment_status: "paid",
+        status: "ready",
+      },
+      {
+        id: "2",
+        payment_status: "paid",
+        status: "complete",
+      },
+      {
+        id: "3",
+        payment_status: "paid",
+        status: "preparing",
+      },
+    ];
+
+    const acknowledgedIds = ["1"];
+
+    expect(
+      filterOrders(orders, "active", acknowledgedIds).map((order) => order.id)
+    ).toEqual(["3"]);
+
+    expect(
+      filterOrders(orders, "history", acknowledgedIds).map((order) => order.id)
+    ).toEqual(["1", "2"]);
+  });
+
+  test("gets acknowledged ready orders key", () => {
+    expect(getAcknowledgedReadyOrdersKey("student-1")).toBe(
+      "acknowledged_ready_orders_student-1"
+    );
+  });
+
+  test("gets acknowledged ready order ids from localStorage", () => {
+    const localStorageRef = createLocalStorageMock({
+      acknowledged_ready_orders_student_1: JSON.stringify(["ORDER-1"]),
+    });
+
+    expect(
+      getAcknowledgedReadyOrderIds("student_1", localStorageRef)
+    ).toEqual(["ORDER-1"]);
+  });
+
+  test("returns empty acknowledged list when localStorage is invalid", () => {
+    const localStorageRef = createLocalStorageMock({
+      acknowledged_ready_orders_student_1: "not-json",
+    });
+
+    expect(
+      getAcknowledgedReadyOrderIds("student_1", localStorageRef)
+    ).toEqual([]);
   });
 
   test("gets display status key and status class", () => {
@@ -303,6 +416,7 @@ describe("actual my-orders page logic", () => {
   test("gets student order status text", () => {
     expect(
       getStudentOrderStatusText({
+        id: "ORDER-1",
         payment_status: "paid",
         status: "received",
       })
@@ -310,6 +424,7 @@ describe("actual my-orders page logic", () => {
 
     expect(
       getStudentOrderStatusText({
+        id: "ORDER-2",
         payment_status: "paid",
         status: "preparing",
       })
@@ -317,10 +432,24 @@ describe("actual my-orders page logic", () => {
 
     expect(
       getStudentOrderStatusText({
+        id: "ORDER-3",
         payment_status: "failed",
         status: "payment_failed",
       })
     ).toBe("Payment Failed");
+  });
+
+  test("gets acknowledged ready student order status text", () => {
+    expect(
+      getStudentOrderStatusText(
+        {
+          id: "ORDER-READY-1",
+          payment_status: "paid",
+          status: "ready",
+        },
+        ["ORDER-READY-1"]
+      )
+    ).toBe("Ready for Collection / Acknowledged");
   });
 
   test("gets payment status text", () => {
@@ -332,6 +461,10 @@ describe("actual my-orders page logic", () => {
   test("gets correct empty messages", () => {
     expect(getEmptyMessage("active").title).toBe("No active orders");
     expect(getEmptyMessage("history").title).toBe("No order history");
+
+    expect(getEmptyMessage("history").message).toBe(
+      "Completed orders and acknowledged ready orders will appear here."
+    );
   });
 
   test("gets initial filter from URL", () => {
@@ -349,6 +482,7 @@ describe("actual my-orders page logic", () => {
       }),
       documentRef,
       windowRef,
+      localStorageRef: createLocalStorageMock(),
       setTimeoutRef: vi.fn(),
     });
 
@@ -369,6 +503,7 @@ describe("actual my-orders page logic", () => {
       }),
       documentRef,
       windowRef: createWindowMock(),
+      localStorageRef: createLocalStorageMock(),
       setTimeoutRef: vi.fn(),
     });
 
@@ -408,6 +543,7 @@ describe("actual my-orders page logic", () => {
       supabaseClient,
       documentRef: createDocumentMock(),
       windowRef: createWindowMock(),
+      localStorageRef: createLocalStorageMock(),
       setTimeoutRef: vi.fn(),
     });
 
@@ -428,6 +564,7 @@ describe("actual my-orders page logic", () => {
       }),
       documentRef: createDocumentMock(),
       windowRef: createWindowMock(),
+      localStorageRef: createLocalStorageMock(),
       setTimeoutRef: vi.fn(),
     });
 
@@ -443,6 +580,7 @@ describe("actual my-orders page logic", () => {
       supabaseClient: createSupabaseMock(),
       documentRef,
       windowRef: createWindowMock(),
+      localStorageRef: createLocalStorageMock(),
       setTimeoutRef: vi.fn(),
     });
 
@@ -474,6 +612,109 @@ describe("actual my-orders page logic", () => {
     expect(documentRef.elements["orders-container"].children).toHaveLength(1);
   });
 
+  test("renders acknowledged ready order in history", () => {
+    const documentRef = createDocumentMock();
+
+    const localStorageRef = createLocalStorageMock({
+      acknowledged_ready_orders_student_1: JSON.stringify(["ORDER-123"]),
+    });
+
+    const controller = createMyOrdersController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef: createWindowMock("?filter=history"),
+      localStorageRef,
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.state.currentStudentId = "student_1";
+
+    controller.renderOrders(
+      [
+        {
+          id: "ORDER-123",
+          vendorName: "Campus Burgers",
+          created_at: "2026-05-01T10:00:00Z",
+          updated_at: "2026-05-01T10:30:00Z",
+          payment_status: "paid",
+          payment_provider: "payfast_sandbox",
+          payment_amount: 50,
+          status: "ready",
+          total_price: 50,
+          items: [
+            {
+              name: "Burger",
+              quantity: 1,
+              price: 50,
+            },
+          ],
+        },
+      ],
+      "history"
+    );
+
+    expect(documentRef.elements["orders-container"].appendChild).toHaveBeenCalled();
+    expect(documentRef.elements["orders-container"].children).toHaveLength(1);
+
+    const renderedCard = documentRef.elements["orders-container"].children[0];
+
+    expect(renderedCard.innerHTML).toContain(
+      "Ready for Collection / Acknowledged"
+    );
+
+    expect(renderedCard.innerHTML).toContain(
+      "Student Acknowledgement:"
+    );
+  });
+
+  test("does not render acknowledged ready order as active", () => {
+    const documentRef = createDocumentMock();
+
+    const localStorageRef = createLocalStorageMock({
+      acknowledged_ready_orders_student_1: JSON.stringify(["ORDER-123"]),
+    });
+
+    const controller = createMyOrdersController({
+      supabaseClient: createSupabaseMock(),
+      documentRef,
+      windowRef: createWindowMock("?filter=active"),
+      localStorageRef,
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.state.currentStudentId = "student_1";
+
+    controller.renderOrders(
+      [
+        {
+          id: "ORDER-123",
+          vendorName: "Campus Burgers",
+          created_at: "2026-05-01T10:00:00Z",
+          updated_at: "2026-05-01T10:30:00Z",
+          payment_status: "paid",
+          payment_provider: "payfast_sandbox",
+          payment_amount: 50,
+          status: "ready",
+          total_price: 50,
+          items: [
+            {
+              name: "Burger",
+              quantity: 1,
+              price: 50,
+            },
+          ],
+        },
+      ],
+      "active"
+    );
+
+    expect(documentRef.elements["empty-title"].textContent).toBe(
+      "No active orders"
+    );
+
+    expect(documentRef.elements["orders-container"].children).toHaveLength(0);
+  });
+
   test("shows empty state when active filter has no matching orders", () => {
     const documentRef = createDocumentMock();
 
@@ -481,6 +722,7 @@ describe("actual my-orders page logic", () => {
       supabaseClient: createSupabaseMock(),
       documentRef,
       windowRef: createWindowMock(),
+      localStorageRef: createLocalStorageMock(),
       setTimeoutRef: vi.fn(),
     });
 
@@ -499,6 +741,7 @@ describe("actual my-orders page logic", () => {
       supabaseClient: createSupabaseMock(),
       documentRef,
       windowRef,
+      localStorageRef: createLocalStorageMock(),
       setTimeoutRef: vi.fn(),
     });
 
@@ -509,6 +752,27 @@ describe("actual my-orders page logic", () => {
     expect(windowRef.history.replaceState).toHaveBeenCalled();
   });
 
+  test("refreshes acknowledged ready orders from localStorage", () => {
+    const localStorageRef = createLocalStorageMock({
+      acknowledged_ready_orders_student_1: JSON.stringify(["ORDER-99"]),
+    });
+
+    const controller = createMyOrdersController({
+      supabaseClient: createSupabaseMock(),
+      documentRef: createDocumentMock(),
+      windowRef: createWindowMock(),
+      localStorageRef,
+      setTimeoutRef: vi.fn(),
+    });
+
+    controller.state.currentStudentId = "student_1";
+
+    const acknowledgedIds = controller.refreshAcknowledgedReadyOrders();
+
+    expect(acknowledgedIds).toEqual(["ORDER-99"]);
+    expect(controller.state.acknowledgedReadyOrderIds).toEqual(["ORDER-99"]);
+  });
+
   test("sets up event listeners", () => {
     const documentRef = createDocumentMock();
 
@@ -516,6 +780,7 @@ describe("actual my-orders page logic", () => {
       supabaseClient: createSupabaseMock(),
       documentRef,
       windowRef: createWindowMock(),
+      localStorageRef: createLocalStorageMock(),
       setTimeoutRef: vi.fn(),
     });
 
@@ -524,6 +789,7 @@ describe("actual my-orders page logic", () => {
     expect(documentRef.elements["refresh-btn"].onclick).toBeTypeOf("function");
     expect(documentRef.elements["retry-btn"].onclick).toBeTypeOf("function");
     expect(documentRef.elements["back-btn"].onclick).toBeTypeOf("function");
+
     expect(documentRef.addEventListener).toHaveBeenCalledWith(
       "DOMContentLoaded",
       controller.initializePage
