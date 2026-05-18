@@ -73,6 +73,22 @@ export function getVendorIdFromUrl(windowRef = fallbackWindow) {
   return params.get("vendorId");
 }
 
+export function getActiveVendorIds(cart) {
+  return Object.keys(cart || {}).filter((vendorId) => {
+    return cart[vendorId]?.items?.length > 0;
+  });
+}
+
+export function canAddVendorToCart(cart, selectedVendorId) {
+  const activeVendorIds = getActiveVendorIds(cart);
+  const selectedVendorKey = String(selectedVendorId);
+
+  return (
+    activeVendorIds.length === 0 ||
+    activeVendorIds.includes(selectedVendorKey)
+  );
+}
+
 /* =========================
    STUDENT MENU CONTROLLER
 ========================= */
@@ -146,39 +162,23 @@ export function createStudentMenuController({
 
   async function addToCart(selectedVendorId, item) {
     const cart = await getCart();
+    const selectedVendorKey = String(selectedVendorId);
 
-    const existingVendorIds = Object.keys(cart).filter((id) => {
-      return cart[id]?.items?.length > 0;
-    });
-
-    const hasOtherVendor =
-      existingVendorIds.length > 0 &&
-      !existingVendorIds.includes(String(selectedVendorId));
-
-    if (hasOtherVendor) {
-      const shouldClear = confirmRef(
-        "You can only order from one vendor at a time. Clear your current cart and start a new order from this vendor?"
+    if (!canAddVendorToCart(cart, selectedVendorKey)) {
+      showToast(
+        "You already have items from another vendor in your cart. Please finish that order or clear your cart first."
       );
 
-      if (!shouldClear) {
-        showToast(
-          "Item was not added. Your cart still has items from another vendor."
-        );
-        return false;
-      }
-
-      existingVendorIds.forEach((id) => {
-        delete cart[id];
-      });
+      return false;
     }
 
-    if (!cart[selectedVendorId]) {
-      cart[selectedVendorId] = {
+    if (!cart[selectedVendorKey]) {
+      cart[selectedVendorKey] = {
         items: [],
       };
     }
 
-    const items = cart[selectedVendorId].items;
+    const items = cart[selectedVendorKey].items;
 
     const existing = items.find((cartItem) => {
       return String(cartItem.menuItemId) === String(item.menuItemId);
