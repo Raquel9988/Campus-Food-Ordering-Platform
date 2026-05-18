@@ -1,4 +1,3 @@
-
 async function loadPeakHoursAnalyticsData() {
   try {
     const response = await fetch("https://campus-food-ordering.pages.dev/api/analytics");
@@ -21,6 +20,59 @@ async function loadPeakHoursAnalyticsData() {
   }
 }
 
+/*
+  Supabase stores timestamptz values in UTC.
+  South Africa is UTC+2.
+
+  This function takes the order created_at time from Supabase
+  and converts it to South African time before extracting the hour.
+*/
+function getSouthAfricanHour(order) {
+  const timestamp =
+    order.created_at ||
+    order.order_created_at ||
+    order.createdAt ||
+    order.timestamp;
+
+  if (!timestamp) {
+    console.warn("Order has no created_at timestamp:", order);
+
+    if (order.order_hour !== null && order.order_hour !== undefined) {
+      return (Number(order.order_hour) + 2) % 24;
+    }
+
+    return null;
+  }
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    console.warn("Invalid order timestamp:", timestamp);
+    return null;
+  }
+
+  const formatter = new Intl.DateTimeFormat("en-ZA", {
+    timeZone: "Africa/Johannesburg",
+    hour: "2-digit",
+    hour12: false
+  });
+
+  const parts = formatter.formatToParts(date);
+  const hourPart = parts.find(part => part.type === "hour");
+
+  if (!hourPart) {
+    return null;
+  }
+
+  let hour = Number(hourPart.value);
+
+  if (hour === 24) {
+    hour = 0;
+  }
+
+  return hour;
+}
+
 function processPeakHours(orders) {
   if (!orders || orders.length === 0) {
     return [];
@@ -29,9 +81,15 @@ function processPeakHours(orders) {
   const hourCounts = {};
 
   orders.forEach(order => {
-    const hour = order.order_hour;
+    const paymentStatus = String(order.payment_status || "").toLowerCase();
 
-    if (hour !== null && hour !== undefined) {
+    if (paymentStatus && paymentStatus !== "paid") {
+      return;
+    }
+
+    const hour = getSouthAfricanHour(order);
+
+    if (hour !== null && hour !== undefined && !Number.isNaN(hour)) {
       hourCounts[hour] = (hourCounts[hour] || 0) + 1;
     }
   });
@@ -43,7 +101,13 @@ function processPeakHours(orders) {
     };
   });
 
-  hourArray.sort((a, b) => b.orderCount - a.orderCount);
+  hourArray.sort((a, b) => {
+    if (b.orderCount !== a.orderCount) {
+      return b.orderCount - a.orderCount;
+    }
+
+    return a.hour - b.hour;
+  });
 
   return hourArray;
 }
@@ -93,7 +157,7 @@ function renderPeakHoursTable(hourData) {
       <thead>
         <tr>
           <th>Hour</th>
-          <th>Number of Orders</th>
+          <th>Number of Paid Orders</th>
         </tr>
       </thead>
 
@@ -134,6 +198,7 @@ window.initPeakHoursReport = initPeakHoursReport;
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     loadPeakHoursAnalyticsData,
+    getSouthAfricanHour,
     processPeakHours,
     formatHourRange,
     renderPeakHoursTable,
