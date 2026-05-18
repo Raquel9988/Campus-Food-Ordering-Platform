@@ -303,6 +303,12 @@ export function createStudentDashboardController({
   }
 
   async function handlePageLoad() {
+    if (dashboardStarted) {
+      return;
+    }
+
+    dashboardStarted = true;
+
     try {
       const user = await getStudentAuth();
 
@@ -337,27 +343,17 @@ export function createStudentDashboardController({
     }
   }
 
-  async function startDashboardOnce() {
-    if (dashboardStarted) {
-      return;
-    }
-
-    dashboardStarted = true;
-    await handlePageLoad();
-  }
-
   function setupStudentDashboardPage() {
-    windowRef?.addEventListener?.("load", startDashboardOnce);
+    windowRef?.addEventListener?.("load", handlePageLoad);
 
-    if (documentRef?.readyState === "loading") {
-      documentRef.addEventListener("DOMContentLoaded", startDashboardOnce, {
-        once: true,
-      });
+    documentRef?.addEventListener?.("DOMContentLoaded", handlePageLoad);
 
-      return;
+    if (
+      documentRef?.readyState === "interactive" ||
+      documentRef?.readyState === "complete"
+    ) {
+      handlePageLoad();
     }
-
-    startDashboardOnce();
   }
 
   return {
