@@ -1,321 +1,32 @@
-const SALES_REPORT_STYLES = `
-  #sales-report-section * { box-sizing: border-box; }
+/**
+ * Sales Report
+ * Creates a professional sales-per-vendor report with filters,
+ * summary cards, a top vendor card, chart view, and table view.
+ */
 
-  #sales-filter-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding: 14px 16px;
-    background: #f9fafb;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    margin-bottom: 12px;
-  }
-
-  #sales-filter-bar label {
-    font-size: 13px;
-    color: #6b7280;
-    font-weight: 600;
-  }
-
-  #sales-filter-bar input[type="date"] {
-    font-size: 13px;
-    padding: 7px 10px;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    background: #ffffff;
-    color: #111827;
-    outline: none;
-    font-family: inherit;
-    transition: border-color 0.2s ease;
-  }
-
-  #sales-filter-bar input[type="date"]:focus {
-    border-color: #22c55e;
-    box-shadow: 0 0 0 3px rgba(34,197,94,0.15);
-  }
-
-  .sr-filter-btn {
-    font-size: 13px;
-    padding: 7px 16px;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    background: #ffffff;
-    color: #374151;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: 600;
-    transition: 0.2s ease;
-  }
-
-  .sr-filter-btn:hover {
-    background: #dcfce7;
-    color: #166534;
-    border-color: #22c55e;
-  }
-
-  .sr-filter-btn.primary {
-    background: linear-gradient(135deg, #166534, #22c55e);
-    color: #ffffff;
-    border: none;
-    box-shadow: 0 4px 12px rgba(34,197,94,0.25);
-  }
-
-  .sr-filter-btn.primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(34,197,94,0.35);
-  }
-
-  .sr-filter-hint {
-    font-size: 12.5px;
-    color: #6b7280;
-    margin-bottom: 20px;
-  }
-
-  .sr-prompt {
-    padding: 40px 20px;
-    text-align: center;
-    color: #6b7280;
-    font-size: 14px;
-    border: 2px dashed #d1d5db;
-    border-radius: 18px;
-    background: #f9fafb;
-    min-height: 180px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .sr-prompt-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #111827;
-  }
-
-  .sr-top-card {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, #166534, #22c55e);
-    border-radius: 16px;
-    margin-bottom: 20px;
-    box-shadow: 0 6px 18px rgba(34,197,94,0.25);
-    color: #ffffff;
-  }
-
-  .sr-trophy-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    flex-shrink: 0;
-    backdrop-filter: blur(4px);
-  }
-
-  .sr-top-info { flex: 1; }
-
-  .sr-top-label {
-    font-size: 12px;
-    color: rgba(255,255,255,0.75);
-    margin-bottom: 2px;
-    font-weight: 600;
-  }
-
-  .sr-top-name {
-    font-size: 15px;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 2px;
-  }
-
-  .sr-top-amount {
-    font-size: 13px;
-    color: rgba(255,255,255,0.85);
-    font-weight: 600;
-  }
-
-  .sr-best-badge {
-    display: inline-block;
-    font-size: 11px;
-    padding: 2px 9px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.25);
-    color: #ffffff;
-    font-weight: 700;
-    margin-left: 8px;
-    vertical-align: middle;
-    backdrop-filter: blur(4px);
-  }
-
-  .sr-top-orders { text-align: right; }
-
-  .sr-top-orders-label {
-    font-size: 12px;
-    color: rgba(255,255,255,0.75);
-    font-weight: 600;
-  }
-
-  .sr-top-orders-count {
-    font-size: 26px;
-    font-weight: 800;
-    color: #ffffff;
-  }
-
-  .sr-table-wrap {
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  .sr-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-
-  .sr-table thead tr {
-    background: #f9fafb;
-  }
-
-  .sr-table th {
-    text-align: left;
-    padding: 11px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #6b7280;
-    border-bottom: 1px solid #e5e7eb;
-    white-space: nowrap;
-  }
-
-  .sr-table td {
-    padding: 11px 14px;
-    border-bottom: 1px solid #e5e7eb;
-    color: #111827;
-    vertical-align: middle;
-  }
-
-  .sr-table tbody tr:last-child td {
-    border-bottom: none;
-  }
-
-  .sr-table tbody tr.sr-vendor-header td {
-    background: #f9fafb;
-    font-weight: 700;
-    border-top: 1px solid #e5e7eb;
-  }
-
-  .sr-table tbody tr.sr-vendor-header.sr-top-vendor td {
-    background: #dcfce7;
-  }
-
-  .sr-table tbody tr.sr-date-row td {
-    padding-top: 8px;
-    padding-bottom: 8px;
-    font-size: 12px;
-    color: #6b7280;
-  }
-
-  .sr-table tbody tr.sr-date-row:hover td {
-    background: #f9fafb;
-  }
-
-  .sr-table tbody tr.sr-date-row td:first-child {
-    padding-left: 48px;
-  }
-
-  .sr-table tbody tr.sr-date-row.sr-group-last td {
-    border-bottom: none;
-  }
-
-  .sr-vendor-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .sr-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: #dcfce7;
-    color: #166534;
-    font-size: 11px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    text-transform: uppercase;
-  }
-
-  .sr-avatar.top {
-    background: linear-gradient(135deg, #166534, #22c55e);
-    color: #ffffff;
-  }
-
-  .sr-date-cell {
-    color: #6b7280;
-    font-size: 12px;
-  }
-
-  .sr-orders-pill {
-    display: inline-block;
-    font-size: 11px;
-    padding: 3px 9px;
-    background: #dcfce7;
-    color: #166534;
-    border-radius: 999px;
-    font-weight: 600;
-  }
-
-  .sr-amount-cell {
-    text-align: right;
-    font-weight: 700;
-    color: #16a34a;
-  }
-
-  .sr-empty,
-  .sr-error {
-    padding: 40px 20px;
-    text-align: center;
-    color: #6b7280;
-    font-size: 14px;
-    border: 2px dashed #d1d5db;
-    border-radius: 18px;
-    background: #f9fafb;
-    min-height: 180px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .sr-empty-title,
-  .sr-error-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #111827;
-  }
-
-  .sr-error-title {
-    color: #dc2626;
-  }
-`;
+const SALES_REPORT_STATE = {
+  allOrders: [],
+  vendorMap: {},
+  startDate: "",
+  endDate: "",
+  sortBy: "sales-desc",
+  viewMode: "both"
+};
 
 function formatZAR(value) {
   return Number(value || 0).toLocaleString("en-ZA", {
     style: "currency",
     currency: "ZAR"
   });
+}
+
+function escapeSalesHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function getInitials(name) {
@@ -335,17 +46,25 @@ function getInitials(name) {
 }
 
 function formatDate(iso) {
-  if (!iso) {
+  if (!iso || iso === "Unknown Date") {
     return "N/A";
   }
 
   const date = new Date(`${iso}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return "N/A";
+  }
 
   return date.toLocaleDateString("en-ZA", {
     day: "numeric",
     month: "short",
     year: "numeric"
   });
+}
+
+function getOrderDateValue(order) {
+  return order.order_date || order.created_at || order.order_created_at || "";
 }
 
 async function loadAnalyticsData(startDate, endDate) {
@@ -363,13 +82,28 @@ async function loadAnalyticsData(startDate, endDate) {
 
   let orders = result.data || [];
 
+  if (!startDate || !endDate) {
+    return orders;
+  }
+
   const start = new Date(startDate);
   const end = new Date(endDate);
 
   end.setHours(23, 59, 59, 999);
 
   orders = orders.filter(order => {
-    const orderDate = new Date(order.order_date);
+    const rawOrderDate = getOrderDateValue(order);
+
+    if (!rawOrderDate) {
+      return false;
+    }
+
+    const orderDate = new Date(rawOrderDate);
+
+    if (Number.isNaN(orderDate.getTime())) {
+      return false;
+    }
+
     return orderDate >= start && orderDate <= end;
   });
 
@@ -389,6 +123,7 @@ function buildVendorMap(orders) {
         vendorName,
         totalSales: 0,
         totalOrders: 0,
+        averageOrder: 0,
         dates: {}
       };
     }
@@ -408,6 +143,10 @@ function buildVendorMap(orders) {
   });
 
   Object.values(map).forEach(vendor => {
+    vendor.averageOrder = vendor.totalOrders > 0
+      ? vendor.totalSales / vendor.totalOrders
+      : 0;
+
     vendor.dates = Object.values(vendor.dates).sort((a, b) => {
       return new Date(a.date) - new Date(b.date);
     });
@@ -428,9 +167,167 @@ function getTopVendor(vendorMap) {
   });
 }
 
-function sortVendorsByTotalSales(vendorMap) {
-  return Object.values(vendorMap).sort((a, b) => {
-    return b.totalSales - a.totalSales;
+function sortVendors(vendorMap) {
+  const vendors = Object.values(vendorMap);
+
+  if (SALES_REPORT_STATE.sortBy === "orders-desc") {
+    return vendors.sort((a, b) => {
+      if (b.totalOrders !== a.totalOrders) {
+        return b.totalOrders - a.totalOrders;
+      }
+
+      return b.totalSales - a.totalSales;
+    });
+  }
+
+  if (SALES_REPORT_STATE.sortBy === "vendor-az") {
+    return vendors.sort((a, b) => {
+      return a.vendorName.localeCompare(b.vendorName);
+    });
+  }
+
+  if (SALES_REPORT_STATE.sortBy === "sales-asc") {
+    return vendors.sort((a, b) => {
+      return a.totalSales - b.totalSales;
+    });
+  }
+
+  return vendors.sort((a, b) => {
+    if (b.totalSales !== a.totalSales) {
+      return b.totalSales - a.totalSales;
+    }
+
+    return b.totalOrders - a.totalOrders;
+  });
+}
+
+function getSalesSummary(vendorMap) {
+  const vendors = Object.values(vendorMap);
+
+  const totalSales = vendors.reduce((sum, vendor) => {
+    return sum + vendor.totalSales;
+  }, 0);
+
+  const totalOrders = vendors.reduce((sum, vendor) => {
+    return sum + vendor.totalOrders;
+  }, 0);
+
+  const averageOrder = totalOrders > 0 ? totalSales / totalOrders : 0;
+
+  return {
+    totalSales,
+    totalOrders,
+    averageOrder,
+    vendorCount: vendors.length
+  };
+}
+
+function createSalesFilterUI() {
+  const section = document.getElementById("sales-report-section");
+
+  if (!section || document.getElementById("sales-filter-panel")) {
+    return;
+  }
+
+  const filterHTML = `
+    <section id="sales-filter-panel" class="sr-filter-panel">
+      <header class="sr-filter-header">
+        <h4>Sales Report Filters</h4>
+        <p>
+          Select a date range, choose sorting, and decide how the report should be displayed.
+        </p>
+      </header>
+
+      <section class="sr-filter-grid">
+        <section class="sr-filter-group">
+          <label for="sr-start-date">Start Date</label>
+          <input type="date" id="sr-start-date" />
+        </section>
+
+        <section class="sr-filter-group">
+          <label for="sr-end-date">End Date</label>
+          <input type="date" id="sr-end-date" />
+        </section>
+
+        <section class="sr-filter-group">
+          <label for="sr-sort-by">Sort By</label>
+          <select id="sr-sort-by">
+            <option value="sales-desc">Highest sales first</option>
+            <option value="sales-asc">Lowest sales first</option>
+            <option value="orders-desc">Most orders first</option>
+            <option value="vendor-az">Vendor name A-Z</option>
+          </select>
+        </section>
+
+        <section class="sr-filter-group">
+          <label for="sr-view-mode">View</label>
+          <select id="sr-view-mode">
+            <option value="both">Chart and table</option>
+            <option value="chart">Chart only</option>
+            <option value="table">Table only</option>
+          </select>
+        </section>
+
+        <button type="button" class="sr-filter-btn primary" id="apply-filter-btn">
+          Apply
+        </button>
+
+        <button type="button" class="sr-filter-btn secondary" id="clear-filter-btn">
+          Reset
+        </button>
+      </section>
+    </section>
+  `;
+
+  const output = document.getElementById("sales-report-output");
+
+  if (output) {
+    output.insertAdjacentHTML("beforebegin", filterHTML);
+  } else {
+    section.insertAdjacentHTML("beforeend", filterHTML);
+  }
+
+  document.getElementById("apply-filter-btn").addEventListener("click", () => {
+    const startDate = document.getElementById("sr-start-date").value;
+    const endDate = document.getElementById("sr-end-date").value;
+    const sortBy = document.getElementById("sr-sort-by").value;
+    const viewMode = document.getElementById("sr-view-mode").value;
+
+    if (!startDate || !endDate) {
+      alert("Please choose both a start date and an end date.");
+      return;
+    }
+
+    if (startDate > endDate) {
+      alert("Start date cannot be after end date.");
+      return;
+    }
+
+    SALES_REPORT_STATE.startDate = startDate;
+    SALES_REPORT_STATE.endDate = endDate;
+    SALES_REPORT_STATE.sortBy = sortBy;
+    SALES_REPORT_STATE.viewMode = viewMode;
+
+    initSalesReport(startDate, endDate);
+  });
+
+  document.getElementById("clear-filter-btn").addEventListener("click", () => {
+    document.getElementById("sr-start-date").value = "";
+    document.getElementById("sr-end-date").value = "";
+    document.getElementById("sr-sort-by").value = "sales-desc";
+    document.getElementById("sr-view-mode").value = "both";
+
+    SALES_REPORT_STATE.allOrders = [];
+    SALES_REPORT_STATE.vendorMap = {};
+    SALES_REPORT_STATE.startDate = "";
+    SALES_REPORT_STATE.endDate = "";
+    SALES_REPORT_STATE.sortBy = "sales-desc";
+    SALES_REPORT_STATE.viewMode = "both";
+
+    window.salesReportFilteredData = [];
+    window.salesReportVendorMap = {};
+
+    renderPrompt();
   });
 }
 
@@ -442,15 +339,182 @@ function renderPrompt() {
   }
 
   container.innerHTML = `
-    <section class="sr-prompt">
-      <section class="sr-prompt-title">
-        Choose a date range to view sales
+    <section class="sr-state-card">
+      <h3>Choose a Date Range</h3>
+      <p>
+        Select both a start date and an end date, then click <strong>Apply</strong>
+        to generate the sales report.
+      </p>
+    </section>
+  `;
+}
+
+function renderSummaryCards(vendorMap) {
+  const summary = getSalesSummary(vendorMap);
+
+  return `
+    <section class="sr-summary-grid" aria-label="Sales report summary">
+      <article class="sr-summary-card featured">
+        <p class="sr-summary-label">Total Sales</p>
+        <p class="sr-summary-value">${formatZAR(summary.totalSales)}</p>
+        <p class="sr-summary-note">Selected date range</p>
+      </article>
+
+      <article class="sr-summary-card">
+        <p class="sr-summary-label">Total Orders</p>
+        <p class="sr-summary-value">${summary.totalOrders}</p>
+        <p class="sr-summary-note">Paid order records</p>
+      </article>
+
+      <article class="sr-summary-card">
+        <p class="sr-summary-label">Average Order</p>
+        <p class="sr-summary-value">${formatZAR(summary.averageOrder)}</p>
+        <p class="sr-summary-note">Average order value</p>
+      </article>
+
+      <article class="sr-summary-card">
+        <p class="sr-summary-label">Vendors</p>
+        <p class="sr-summary-value">${summary.vendorCount}</p>
+        <p class="sr-summary-note">Vendors with sales</p>
+      </article>
+    </section>
+  `;
+}
+
+function renderTopVendorCard(topVendor) {
+  if (!topVendor) {
+    return "";
+  }
+
+  return `
+    <section class="sr-top-card">
+      <section class="sr-trophy-icon">🏆</section>
+
+      <section class="sr-top-info">
+        <section class="sr-top-label">Top Performing Vendor</section>
+
+        <section class="sr-top-name">
+          ${escapeSalesHtml(topVendor.vendorName)}
+          <span class="sr-best-badge">Best</span>
+        </section>
+
+        <section class="sr-top-amount">
+          ${formatZAR(topVendor.totalSales)} total sales for the selected period
+        </section>
       </section>
 
-      <section>
-        Select both a start date and an end date, then click
-        <strong>Apply date filter</strong>.
+      <section class="sr-top-orders">
+        <section class="sr-top-orders-label">Total Orders</section>
+        <section class="sr-top-orders-count">${topVendor.totalOrders}</section>
       </section>
+    </section>
+  `;
+}
+
+function renderVendorChart(sortedVendors, topVendor) {
+  if (!sortedVendors || sortedVendors.length === 0) {
+    return "";
+  }
+
+  const maxSales = Math.max(...sortedVendors.map(vendor => vendor.totalSales), 0);
+
+  const chartRows = sortedVendors.slice(0, 8).map(vendor => {
+    const widthPercentage = maxSales > 0
+      ? Math.max((vendor.totalSales / maxSales) * 100, vendor.totalSales > 0 ? 6 : 0)
+      : 0;
+
+    const isTopVendor = topVendor && vendor.vendorName === topVendor.vendorName;
+
+    return `
+      <section class="sr-chart-row ${isTopVendor ? "top" : ""}">
+        <span class="sr-chart-vendor">${escapeSalesHtml(vendor.vendorName)}</span>
+
+        <section class="sr-chart-track" aria-hidden="true">
+          <span class="sr-chart-bar" style="width: ${widthPercentage}%"></span>
+        </section>
+
+        <span class="sr-chart-value">${formatZAR(vendor.totalSales)}</span>
+      </section>
+    `;
+  }).join("");
+
+  return `
+    <section class="sr-chart-card" aria-label="Vendor sales chart">
+      <h3 class="sr-chart-title">Vendor Sales Comparison</h3>
+      ${chartRows}
+    </section>
+  `;
+}
+
+function renderVendorTable(sortedVendors, topVendor) {
+  let rows = "";
+
+  sortedVendors.forEach(vendor => {
+    const isTopVendor = topVendor && vendor.vendorName === topVendor.vendorName;
+    const initials = escapeSalesHtml(getInitials(vendor.vendorName));
+    const headerClass = isTopVendor
+      ? "sr-vendor-header sr-top-vendor"
+      : "sr-vendor-header";
+
+    rows += `
+      <tr class="${headerClass}">
+        <td>
+          <section class="sr-vendor-cell">
+            <section class="sr-avatar${isTopVendor ? " top" : ""}">
+              ${initials}
+            </section>
+            <span>${escapeSalesHtml(vendor.vendorName)}</span>
+          </section>
+        </td>
+
+        <td class="sr-date-cell">
+          ${vendor.dates.length} day${vendor.dates.length !== 1 ? "s" : ""}
+        </td>
+
+        <td style="text-align:center">
+          <span class="sr-orders-pill">${vendor.totalOrders}</span>
+        </td>
+
+        <td style="text-align:center">
+          <span class="sr-orders-pill">${formatZAR(vendor.averageOrder)}</span>
+        </td>
+
+        <td class="sr-amount-cell">${formatZAR(vendor.totalSales)}</td>
+      </tr>
+    `;
+
+    vendor.dates.forEach(dateEntry => {
+      rows += `
+        <tr class="sr-date-row">
+          <td class="sr-date-cell">${formatDate(dateEntry.date)}</td>
+          <td></td>
+          <td style="text-align:center">
+            <span class="sr-orders-pill">${dateEntry.orders}</span>
+          </td>
+          <td style="text-align:center">--</td>
+          <td class="sr-amount-cell">${formatZAR(dateEntry.sales)}</td>
+        </tr>
+      `;
+    });
+  });
+
+  return `
+    <section class="sr-table-wrap">
+      <table class="sr-table">
+        <thead>
+          <tr>
+            <th>Vendor / Date</th>
+            <th>Active Days</th>
+            <th>Orders</th>
+            <th>Average Order</th>
+            <th>Total Sales</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
     </section>
   `;
 }
@@ -465,9 +529,9 @@ function renderSalesReport(vendorMap) {
 
   if (!vendorMap || Object.keys(vendorMap).length === 0) {
     container.innerHTML = `
-      <section class="sr-empty">
-        <section class="sr-empty-title">No sales found</section>
-        <section>No vendor sales exist for the selected period.</section>
+      <section class="sr-state-card">
+        <h3>No Sales Found</h3>
+        <p>No vendor sales exist for the selected period.</p>
       </section>
     `;
 
@@ -475,165 +539,38 @@ function renderSalesReport(vendorMap) {
   }
 
   const topVendor = getTopVendor(vendorMap);
-  const sortedVendors = sortVendorsByTotalSales(vendorMap);
+  const sortedVendors = sortVendors(vendorMap);
 
-  const banner = `
-    <section class="sr-top-card">
-      <section class="sr-trophy-icon">🏆</section>
+  const shouldShowChart =
+    SALES_REPORT_STATE.viewMode === "chart" ||
+    SALES_REPORT_STATE.viewMode === "both";
 
-      <section class="sr-top-info">
-        <section class="sr-top-label">Top performing vendor</section>
-
-        <section class="sr-top-name">
-          ${topVendor.vendorName}
-          <span class="sr-best-badge">Best</span>
-        </section>
-
-        <section class="sr-top-amount">
-          ${formatZAR(topVendor.totalSales)} total sales for selected period
-        </section>
-      </section>
-
-      <section class="sr-top-orders">
-        <section class="sr-top-orders-label">Total orders</section>
-        <section class="sr-top-orders-count">${topVendor.totalOrders}</section>
-      </section>
-    </section>
-  `;
-
-  let rows = "";
-
-  sortedVendors.forEach(vendor => {
-    const isTopVendor = vendor.vendorName === topVendor.vendorName;
-    const initials = getInitials(vendor.vendorName);
-    const headerClass = isTopVendor
-      ? "sr-vendor-header sr-top-vendor"
-      : "sr-vendor-header";
-
-    rows += `
-      <tr class="${headerClass}">
-        <td>
-          <section class="sr-vendor-cell">
-            <section class="sr-avatar${isTopVendor ? " top" : ""}">
-              ${initials}
-            </section>
-            <span>${vendor.vendorName}</span>
-          </section>
-        </td>
-
-        <td class="sr-date-cell">
-          ${vendor.dates.length} day${vendor.dates.length !== 1 ? "s" : ""}
-        </td>
-
-        <td style="text-align:center">
-          <span class="sr-orders-pill">${vendor.totalOrders}</span>
-        </td>
-
-        <td class="sr-amount-cell">${formatZAR(vendor.totalSales)}</td>
-      </tr>
-    `;
-
-    vendor.dates.forEach((dateEntry, index) => {
-      const isLast = index === vendor.dates.length - 1;
-
-      rows += `
-        <tr class="sr-date-row${isLast ? " sr-group-last" : ""}">
-          <td class="sr-date-cell">${formatDate(dateEntry.date)}</td>
-          <td></td>
-          <td style="text-align:center">
-            <span class="sr-orders-pill">${dateEntry.orders}</span>
-          </td>
-          <td class="sr-amount-cell">${formatZAR(dateEntry.sales)}</td>
-        </tr>
-      `;
-    });
-  });
+  const shouldShowTable =
+    SALES_REPORT_STATE.viewMode === "table" ||
+    SALES_REPORT_STATE.viewMode === "both";
 
   container.innerHTML = `
-    ${banner}
+    <section class="sr-panel">
+      <header class="sr-panel-header">
+        <section class="sr-panel-heading">
+          <h3>Sales Per Vendor Over Time</h3>
+          <p>
+            This report compares vendor sales across the selected date range.
+          </p>
+        </section>
 
-    <section class="sr-table-wrap">
-      <table class="sr-table">
-        <thead>
-          <tr>
-            <th>Vendor / Date</th>
-            <th>Active days</th>
-            <th style="text-align:center">Orders</th>
-            <th style="text-align:right">Total sales</th>
-          </tr>
-        </thead>
+        <span class="sr-panel-tag">Admin Report</span>
+      </header>
 
-        <tbody>
-          ${rows}
-        </tbody>
-      </table>
+      ${renderSummaryCards(vendorMap)}
+
+      ${renderTopVendorCard(topVendor)}
+
+      ${shouldShowChart ? renderVendorChart(sortedVendors, topVendor) : ""}
+
+      ${shouldShowTable ? renderVendorTable(sortedVendors, topVendor) : ""}
     </section>
   `;
-}
-
-function createSalesFilterUI() {
-  const section = document.getElementById("sales-report-section");
-
-  if (!section || document.getElementById("sales-filter-bar")) {
-    return;
-  }
-
-  section.insertAdjacentHTML("afterbegin", `
-    <section id="sales-filter-bar">
-      <label for="sr-start-date">From</label>
-      <input type="date" id="sr-start-date" />
-
-      <label for="sr-end-date">To</label>
-      <input type="date" id="sr-end-date" />
-
-      <button class="sr-filter-btn primary" id="apply-filter-btn">
-        Apply date filter
-      </button>
-
-      <button class="sr-filter-btn" id="clear-filter-btn">
-        Clear
-      </button>
-    </section>
-
-    <p class="sr-filter-hint">
-      Select a date range to generate the sales report.
-    </p>
-  `);
-
-  document.getElementById("apply-filter-btn").addEventListener("click", () => {
-    const startDate = document.getElementById("sr-start-date").value;
-    const endDate = document.getElementById("sr-end-date").value;
-
-    if (!startDate || !endDate) {
-      alert("Please choose both a start date and an end date.");
-      return;
-    }
-
-    if (startDate > endDate) {
-      alert("Start date cannot be after end date.");
-      return;
-    }
-
-    initSalesReport(startDate, endDate);
-  });
-
-  document.getElementById("clear-filter-btn").addEventListener("click", () => {
-    document.getElementById("sr-start-date").value = "";
-    document.getElementById("sr-end-date").value = "";
-
-    renderPrompt();
-  });
-}
-
-function injectSalesReportStyles() {
-  if (document.getElementById("sr-styles")) {
-    return;
-  }
-
-  const style = document.createElement("style");
-  style.id = "sr-styles";
-  style.textContent = SALES_REPORT_STYLES;
-  document.head.appendChild(style);
 }
 
 async function initSalesReport(startDate = null, endDate = null) {
@@ -642,6 +579,8 @@ async function initSalesReport(startDate = null, endDate = null) {
   if (!container) {
     return;
   }
+
+  createSalesFilterUI();
 
   if (!startDate || !endDate) {
     renderPrompt();
@@ -656,14 +595,20 @@ async function initSalesReport(startDate = null, endDate = null) {
     const orders = await loadAnalyticsData(startDate, endDate);
     const vendorMap = buildVendorMap(orders);
 
+    SALES_REPORT_STATE.allOrders = orders;
+    SALES_REPORT_STATE.vendorMap = vendorMap;
+
+    window.salesReportFilteredData = orders;
+    window.salesReportVendorMap = vendorMap;
+
     renderSalesReport(vendorMap);
   } catch (error) {
     console.error("Sales report failed to load:", error);
 
     container.innerHTML = `
-      <section class="sr-error">
-        <section class="sr-error-title">Failed to load sales data</section>
-        <section>Please check your connection and try again.</section>
+      <section class="sr-state-card error">
+        <h3>Failed to Load Sales Data</h3>
+        <p>Please check your connection and try again.</p>
       </section>
     `;
   }
@@ -672,7 +617,20 @@ async function initSalesReport(startDate = null, endDate = null) {
 window.initSalesReport = initSalesReport;
 
 document.addEventListener("DOMContentLoaded", () => {
-  injectSalesReportStyles();
   createSalesFilterUI();
   renderPrompt();
 });
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    formatZAR,
+    getInitials,
+    formatDate,
+    loadAnalyticsData,
+    buildVendorMap,
+    getTopVendor,
+    sortVendors,
+    renderSalesReport,
+    initSalesReport
+  };
+}

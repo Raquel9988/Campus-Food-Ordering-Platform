@@ -1,152 +1,342 @@
-.export-intro {
-  font-size: 13.5px;
-  color: #6b7280;
-  margin-bottom: 20px;
-  line-height: 1.6;
-}
 
-.export-groups {
+
+/* ── Main panel ──────────────────────────────────────────────────────────── */
+.export-panel {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 1.25rem;
+  animation: exportFadeIn 0.3s ease-out;
+}
+
+.export-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.export-panel-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.export-panel-heading h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.export-panel-heading p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.export-panel-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+/* ── Summary cards ───────────────────────────────────────────────────────── */
+.export-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.export-summary-card {
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.export-summary-card.featured {
+  border-color: #bbf7d0;
+  background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 72%);
+}
+
+.export-summary-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.export-summary-value {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.export-summary-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+/* ── Export cards ────────────────────────────────────────────────────────── */
+.export-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(230px, 1fr));
+  gap: 1rem;
 }
 
 .export-group {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 18px;
-  background: #f9fafb;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.15rem;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  flex-wrap: wrap;
-  transition: box-shadow 0.2s ease;
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .export-group:hover {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.export-group-top {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.export-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #f1f5f9;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.export-icon.sales {
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.export-icon.peak {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.export-icon.custom {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .export-group-label {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13.5px;
-  font-weight: 700;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.export-group-label h4 {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 800;
   color: #111827;
-  flex: 1;
+}
+
+.export-group-label p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #6b7280;
+  line-height: 1.5;
 }
 
 .export-group-note {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #9ca3af;
-  margin-left: 4px;
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e5e7eb;
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
 .export-group-btns {
   display: flex;
-  gap: 10px;
+  gap: 0.65rem;
   flex-wrap: wrap;
+  margin-top: auto;
 }
 
 .export-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 9px 16px;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  padding: 0.7rem 1rem;
   border: none;
-  border-radius: 11px;
+  border-radius: 12px;
   font-family: "Inter", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 0.88rem;
+  font-weight: 800;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   white-space: nowrap;
 }
 
 .export-btn--csv {
-  background: linear-gradient(135deg, #166534, #22c55e);
+  background: #111827;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
 }
 
 .export-btn--csv:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.35);
-}
-
-.export-btn--csv:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+  background: #1f2937;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.18);
 }
 
 .export-btn--pdf {
-  background: #1e3a5f;
+  background: #1d4ed8;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.25);
 }
 
 .export-btn--pdf:hover {
   background: #1e40af;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(30, 64, 175, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(37, 99, 235, 0.22);
 }
 
-.export-btn--pdf:active {
+.export-btn:focus {
+  outline: 3px solid rgba(37, 99, 235, 0.25);
+  outline-offset: 2px;
+}
+
+.export-btn:active {
   transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.25);
+  box-shadow: none;
 }
 
+/* ── Export message ──────────────────────────────────────────────────────── */
 .export-message {
-  margin-top: 16px;
-  padding: 11px 16px;
-  border-radius: 11px;
-  font-size: 13px;
-  font-weight: 600;
+  display: none;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
   line-height: 1.5;
+  border: 1px solid transparent;
 }
 
 .export-message--success {
+  display: block;
   background: #ecfdf5;
   color: #166534;
-  border: 1px solid #bbf7d0;
+  border-color: #bbf7d0;
 }
 
 .export-message--error {
+  display: block;
   background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-color: #fecaca;
 }
 
-@media (max-width: 600px) {
-  .export-group {
-    flex-direction: column;
-    align-items: flex-start;
+.export-message--info {
+  display: block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+/* ── Help note ───────────────────────────────────────────────────────────── */
+.export-help-card {
+  padding: 1rem;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.export-help-card h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.export-help-card p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* ── Animation ───────────────────────────────────────────────────────────── */
+@keyframes exportFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 
-  .export-group-label {
-    flex-wrap: wrap;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .export-groups {
+    grid-template-columns: repeat(2, minmax(230px, 1fr));
+  }
+
+  .export-summary-grid {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .export-panel-header {
+    flex-direction: column;
+  }
+
+  .export-groups,
+  .export-summary-grid {
+    grid-template-columns: 1fr;
   }
 
   .export-group-btns {
-    width: 100%;
+    flex-direction: column;
   }
 
   .export-btn {
     width: 100%;
-    justify-content: center;
-  }
-
-  .export-group-btns .export-btn {
-    flex: 1;
   }
 }
 
+/* ── Print styles ────────────────────────────────────────────────────────── */
 @media print {
   #export-section {
     display: none;

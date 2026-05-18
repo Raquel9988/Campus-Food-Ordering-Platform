@@ -2,6 +2,7 @@
   const API_URL = "https://campus-food-ordering.pages.dev/api/analytics";
 
   const ORDER_STATUSES = ["received", "preparing", "ready", "complete"];
+  const PAYMENT_STATUSES = ["paid", "pending", "failed"];
 
   let allOrders = [];
   let cachedVendors = [];
@@ -20,6 +21,31 @@
       .replaceAll("'", "&#039;");
   }
 
+  function formatLabel(value) {
+    if (!value) {
+      return "N/A";
+    }
+
+    return String(value)
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, letter => letter.toUpperCase());
+  }
+
+  function formatCurrency(value) {
+    return `R${Number(value || 0).toFixed(2)}`;
+  }
+
+  function getSelectedFilters() {
+    return {
+      vendor: document.getElementById("cv-vendor")?.value || "",
+      startDate: document.getElementById("cv-start-date")?.value || "",
+      endDate: document.getElementById("cv-end-date")?.value || "",
+      orderStatus: document.getElementById("cv-order-status")?.value || "",
+      paymentStatus: document.getElementById("cv-payment-status")?.value || "",
+      sortBy: document.getElementById("cv-sort-by")?.value || "newest"
+    };
+  }
+
   function buildFiltersHTML(vendors) {
     const vendorOptions = vendors
       .map(vendor => {
@@ -29,79 +55,251 @@
 
     const statusOptions = ORDER_STATUSES
       .map(status => {
-        const label = status.charAt(0).toUpperCase() + status.slice(1);
-        return `<option value="${escapeHtml(status)}">${escapeHtml(label)}</option>`;
+        return `<option value="${escapeHtml(status)}">${escapeHtml(formatLabel(status))}</option>`;
+      })
+      .join("");
+
+    const paymentOptions = PAYMENT_STATUSES
+      .map(status => {
+        return `<option value="${escapeHtml(status)}">${escapeHtml(formatLabel(status))}</option>`;
       })
       .join("");
 
     return `
-      <section class="cv-filters">
+      <section class="cv-panel">
 
-        <section class="cv-filter-row">
-
-          <section class="cv-filter-group">
-            <label class="cv-label" for="cv-vendor">Vendor</label>
-            <select class="cv-select" id="cv-vendor">
-              <option value="">All Vendors</option>
-              ${vendorOptions}
-            </select>
+        <header class="cv-panel-header">
+          <section class="cv-panel-heading">
+            <h3>Custom Analytics View</h3>
+            <p>
+              Filter order analytics by vendor, date, order status, and payment status.
+            </p>
           </section>
 
-          <section class="cv-filter-group">
-            <label class="cv-label" for="cv-start-date">Start Date</label>
-            <input type="date" class="cv-input" id="cv-start-date" />
+          <span class="cv-panel-tag">Admin Report</span>
+        </header>
+
+        <section class="cv-filters">
+
+          <header class="cv-filter-header">
+            <section>
+              <h4>Report Filters</h4>
+              <p>
+                Choose the values below, then apply the filters to update the report.
+              </p>
+            </section>
+          </header>
+
+          <section class="cv-filter-row">
+
+            <section class="cv-filter-group">
+              <label class="cv-label" for="cv-vendor">Vendor</label>
+              <select class="cv-select" id="cv-vendor">
+                <option value="">All Vendors</option>
+                ${vendorOptions}
+              </select>
+            </section>
+
+            <section class="cv-filter-group">
+              <label class="cv-label" for="cv-start-date">Start Date</label>
+              <input type="date" class="cv-input" id="cv-start-date" />
+            </section>
+
+            <section class="cv-filter-group">
+              <label class="cv-label" for="cv-end-date">End Date</label>
+              <input type="date" class="cv-input" id="cv-end-date" />
+            </section>
+
+            <section class="cv-filter-group">
+              <label class="cv-label" for="cv-order-status">Order Status</label>
+              <select class="cv-select" id="cv-order-status">
+                <option value="">All Statuses</option>
+                ${statusOptions}
+              </select>
+            </section>
+
+            <section class="cv-filter-group">
+              <label class="cv-label" for="cv-payment-status">Payment Status</label>
+              <select class="cv-select" id="cv-payment-status">
+                <option value="">All Payment Statuses</option>
+                ${paymentOptions}
+              </select>
+            </section>
+
+            <section class="cv-filter-group">
+              <label class="cv-label" for="cv-sort-by">Sort By</label>
+              <select class="cv-select" id="cv-sort-by">
+                <option value="newest">Newest orders first</option>
+                <option value="oldest">Oldest orders first</option>
+                <option value="highest-total">Highest total first</option>
+                <option value="lowest-total">Lowest total first</option>
+                <option value="vendor">Vendor name A-Z</option>
+              </select>
+            </section>
+
           </section>
 
-          <section class="cv-filter-group">
-            <label class="cv-label" for="cv-end-date">End Date</label>
-            <input type="date" class="cv-input" id="cv-end-date" />
-          </section>
+          <section class="cv-filter-actions">
+            <button type="button" class="cv-reset-btn" id="cv-reset-btn">
+              Reset
+            </button>
 
-          <section class="cv-filter-group">
-            <label class="cv-label" for="cv-order-status">Order Status</label>
-            <select class="cv-select" id="cv-order-status">
-              <option value="">All Statuses</option>
-              ${statusOptions}
-            </select>
-          </section>
-
-          <section class="cv-filter-group">
-            <label class="cv-label" for="cv-payment-status">Payment Status</label>
-            <select class="cv-select" id="cv-payment-status">
-              <option value="">All Payment Statuses</option>
-              <option value="paid">Paid</option>
-              <option value="pending">Pending</option>
-              <option value="failed">Failed</option>
-            </select>
+            <button type="button" class="cv-apply-btn" id="cv-apply-btn">
+              Apply Filters
+            </button>
           </section>
 
         </section>
 
-        <section class="cv-filter-actions">
-          <button class="cv-apply-btn" id="cv-apply-btn">
-            Apply Filters
-          </button>
-
-          <button class="cv-reset-btn" id="cv-reset-btn">
-            Reset
-          </button>
-        </section>
+        <section id="cv-summary-container"></section>
+        <section id="cv-active-filters-container"></section>
+        <section id="cv-table-container"></section>
 
       </section>
-
-      <section id="cv-table-container"></section>
     `;
   }
 
   function getOrderStatusClass(status) {
     const statusMap = {
-      complete: "success",
+      complete: "cv-status-complete",
       ready: "cv-status-ready",
-      preparing: "warning",
+      preparing: "cv-status-preparing",
       received: "cv-status-received"
     };
 
-    return statusMap[status] || "";
+    return statusMap[status] || "cv-status-received";
+  }
+
+  function getPaymentStatusClass(status) {
+    const statusMap = {
+      paid: "cv-payment-paid",
+      pending: "cv-payment-pending",
+      failed: "cv-payment-failed"
+    };
+
+    return statusMap[status] || "cv-payment-unknown";
+  }
+
+  function getOrderDate(order) {
+    return order.order_date || order.created_at || order.order_created_at || "";
+  }
+
+  function sortOrders(orders, sortBy) {
+    const sortedOrders = [...orders];
+
+    if (sortBy === "oldest") {
+      sortedOrders.sort((a, b) => {
+        return String(getOrderDate(a)).localeCompare(String(getOrderDate(b)));
+      });
+    } else if (sortBy === "highest-total") {
+      sortedOrders.sort((a, b) => {
+        return Number(b.order_total || 0) - Number(a.order_total || 0);
+      });
+    } else if (sortBy === "lowest-total") {
+      sortedOrders.sort((a, b) => {
+        return Number(a.order_total || 0) - Number(b.order_total || 0);
+      });
+    } else if (sortBy === "vendor") {
+      sortedOrders.sort((a, b) => {
+        return String(a.vendor_name || "").localeCompare(String(b.vendor_name || ""));
+      });
+    } else {
+      sortedOrders.sort((a, b) => {
+        return String(getOrderDate(b)).localeCompare(String(getOrderDate(a)));
+      });
+    }
+
+    return sortedOrders;
+  }
+
+  function renderSummary(orders) {
+    const container = document.getElementById("cv-summary-container");
+
+    if (!container) {
+      return;
+    }
+
+    const totalSales = orders.reduce((sum, order) => {
+      return sum + Number(order.order_total || 0);
+    }, 0);
+
+    const averageOrder = orders.length > 0 ? totalSales / orders.length : 0;
+
+    const uniqueVendors = new Set(
+      orders.map(order => order.vendor_name).filter(Boolean)
+    ).size;
+
+    const paidOrders = orders.filter(order => {
+      return String(order.payment_status || "").toLowerCase() === "paid";
+    }).length;
+
+    container.innerHTML = `
+      <section class="cv-summary-grid" aria-label="Custom view summary">
+
+        <article class="cv-summary-card featured">
+          <p class="cv-summary-label">Total Sales</p>
+          <p class="cv-summary-value">${formatCurrency(totalSales)}</p>
+          <p class="cv-summary-note">Based on the current filter</p>
+        </article>
+
+        <article class="cv-summary-card">
+          <p class="cv-summary-label">Orders Found</p>
+          <p class="cv-summary-value">${orders.length}</p>
+          <p class="cv-summary-note">Matching orders</p>
+        </article>
+
+        <article class="cv-summary-card">
+          <p class="cv-summary-label">Average Order</p>
+          <p class="cv-summary-value">${formatCurrency(averageOrder)}</p>
+          <p class="cv-summary-note">Average order value</p>
+        </article>
+
+        <article class="cv-summary-card">
+          <p class="cv-summary-label">Vendors</p>
+          <p class="cv-summary-value">${uniqueVendors}</p>
+          <p class="cv-summary-note">${paidOrders} paid order${paidOrders === 1 ? "" : "s"}</p>
+        </article>
+
+      </section>
+    `;
+  }
+
+  function renderActiveFilters(filters) {
+    const container = document.getElementById("cv-active-filters-container");
+
+    if (!container) {
+      return;
+    }
+
+    const chips = [];
+
+    if (filters.vendor) {
+      chips.push(`<span class="cv-filter-chip">Vendor: <strong>&nbsp;${escapeHtml(filters.vendor)}</strong></span>`);
+    }
+
+    if (filters.startDate) {
+      chips.push(`<span class="cv-filter-chip">From: <strong>&nbsp;${escapeHtml(filters.startDate)}</strong></span>`);
+    }
+
+    if (filters.endDate) {
+      chips.push(`<span class="cv-filter-chip">To: <strong>&nbsp;${escapeHtml(filters.endDate)}</strong></span>`);
+    }
+
+    if (filters.orderStatus) {
+      chips.push(`<span class="cv-filter-chip">Order: <strong>&nbsp;${escapeHtml(formatLabel(filters.orderStatus))}</strong></span>`);
+    }
+
+    if (filters.paymentStatus) {
+      chips.push(`<span class="cv-filter-chip">Payment: <strong>&nbsp;${escapeHtml(formatLabel(filters.paymentStatus))}</strong></span>`);
+    }
+
+    chips.push(`<span class="cv-filter-chip">Sort: <strong>&nbsp;${escapeHtml(formatLabel(filters.sortBy))}</strong></span>`);
+
+    container.innerHTML = `
+      <section class="cv-active-filters" aria-label="Active custom view filters">
+        ${chips.join("")}
+      </section>
+    `;
   }
 
   function renderTable(orders) {
@@ -111,44 +309,54 @@
       return;
     }
 
-    if (!orders || orders.length === 0) {
+    const filters = getSelectedFilters();
+    const sortedOrders = sortOrders(orders, filters.sortBy);
+
+    renderSummary(sortedOrders);
+    renderActiveFilters(filters);
+
+    if (!sortedOrders || sortedOrders.length === 0) {
       container.innerHTML = `
-        <section class="empty-state">
+        <section class="cv-state-card">
           <h3>No Results</h3>
-          <p>No orders match the selected filters.</p>
+          <p>No orders match the selected filters. Try changing or resetting the filters.</p>
         </section>
       `;
 
       return;
     }
 
-    const totalSales = orders.reduce((sum, order) => {
+    const totalSales = sortedOrders.reduce((sum, order) => {
       return sum + Number(order.order_total || 0);
     }, 0);
 
-    const rows = orders.map(order => {
-      const orderDate = escapeHtml(order.order_date || "N/A");
+    const rows = sortedOrders.map(order => {
+      const orderDate = escapeHtml(order.order_date || getOrderDate(order) || "N/A");
       const vendorName = escapeHtml(order.vendor_name || "N/A");
-      const orderStatus = escapeHtml(order.order_status || "N/A");
-      const paymentStatus = escapeHtml(order.payment_status || "N/A");
-      const orderTotal = Number(order.order_total || 0).toFixed(2);
+      const orderStatus = String(order.order_status || "N/A").toLowerCase();
+      const paymentStatus = String(order.payment_status || "N/A").toLowerCase();
+      const orderTotal = formatCurrency(order.order_total);
 
       return `
         <tr>
-          <td>${orderDate}</td>
-          <td>${vendorName}</td>
+          <td class="cv-date">${orderDate}</td>
+
+          <td class="cv-vendor">${vendorName}</td>
+
           <td>
-            <span class="status-badge ${getOrderStatusClass(order.order_status)}">
-              ${orderStatus}
+            <span class="cv-status-badge ${getOrderStatusClass(orderStatus)}">
+              ${escapeHtml(formatLabel(orderStatus))}
             </span>
           </td>
+
           <td>
-            <span class="status-badge success">
-              ${paymentStatus}
+            <span class="cv-status-badge ${getPaymentStatusClass(paymentStatus)}">
+              ${escapeHtml(formatLabel(paymentStatus))}
             </span>
           </td>
+
           <td class="cv-amount">
-            R${orderTotal}
+            ${orderTotal}
           </td>
         </tr>
       `;
@@ -156,8 +364,13 @@
 
     container.innerHTML = `
       <p class="cv-result-count">
-        <strong>${orders.length}</strong> order${orders.length !== 1 ? "s" : ""} found
-        &mdash; Total Sales: <strong>R${totalSales.toFixed(2)}</strong>
+        <span>
+          <strong>${sortedOrders.length}</strong> order${sortedOrders.length !== 1 ? "s" : ""} found
+        </span>
+
+        <span>
+          Total Sales: <strong>${formatCurrency(totalSales)}</strong>
+        </span>
       </p>
 
       <section class="cv-table-wrapper">
@@ -181,44 +394,42 @@
   }
 
   function applyFilters() {
-    const vendor = document.getElementById("cv-vendor").value;
-    const startDate = document.getElementById("cv-start-date").value;
-    const endDate = document.getElementById("cv-end-date").value;
-    const orderStatus = document.getElementById("cv-order-status").value;
-    const paymentStatus = document.getElementById("cv-payment-status").value;
+    const filters = getSelectedFilters();
 
-    if (startDate && endDate && startDate > endDate) {
+    if (filters.startDate && filters.endDate && filters.startDate > filters.endDate) {
       alert("Start date cannot be after end date.");
       return;
     }
 
     const filteredOrders = allOrders.filter(order => {
-      if (vendor && order.vendor_name !== vendor) {
+      const orderDate = getOrderDate(order);
+
+      if (filters.vendor && order.vendor_name !== filters.vendor) {
         return false;
       }
 
-      if (startDate && order.order_date < startDate) {
+      if (filters.startDate && orderDate < filters.startDate) {
         return false;
       }
 
-      if (endDate && order.order_date > endDate) {
+      if (filters.endDate && orderDate > filters.endDate) {
         return false;
       }
 
-      if (orderStatus && order.order_status !== orderStatus) {
+      if (filters.orderStatus && order.order_status !== filters.orderStatus) {
         return false;
       }
 
-      if (paymentStatus && order.payment_status !== paymentStatus) {
+      if (filters.paymentStatus && order.payment_status !== filters.paymentStatus) {
         return false;
       }
 
       return true;
     });
 
-    window.customViewFilteredData = filteredOrders;
+    window.customViewFilteredData = sortOrders(filteredOrders, filters.sortBy);
 
-    renderTable(filteredOrders);
+    renderTable(window.customViewFilteredData);
   }
 
   function resetFilters() {
@@ -227,6 +438,7 @@
     document.getElementById("cv-end-date").value = "";
     document.getElementById("cv-order-status").value = "";
     document.getElementById("cv-payment-status").value = "";
+    document.getElementById("cv-sort-by").value = "newest";
 
     applyFilters();
   }
@@ -305,9 +517,9 @@
 
       if (!result.success || !result.data || result.data.length === 0) {
         container.innerHTML = `
-          <section class="empty-state">
+          <section class="cv-state-card">
             <h3>No Analytics Data</h3>
-            <p>No paid orders are available to display.</p>
+            <p>No orders are available to display in the custom analytics view.</p>
           </section>
         `;
 
@@ -328,7 +540,10 @@
       console.error("Custom analytics view failed to load:", error);
 
       container.innerHTML = `
-        <p class="error-message">Failed to load custom analytics.</p>
+        <section class="cv-state-card error">
+          <h3>Failed to Load Custom Analytics</h3>
+          <p>The custom analytics report could not be loaded. Please try again later.</p>
+        </section>
       `;
 
       window.customViewFilteredData = [];

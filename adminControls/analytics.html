@@ -11,11 +11,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Roboto:wght@400;600;700;800&display=swap"
     rel="stylesheet"
   />
 
   <link rel="stylesheet" href="analytics.css" />
+  <link rel="stylesheet" href="sales-report.css" />
   <link rel="stylesheet" href="custom-view.css" />
   <link rel="stylesheet" href="peak-hours-report.css" />
   <link rel="stylesheet" href="export-report.css" />
@@ -30,15 +31,15 @@
       <section class="sidebar-top">
 
         <section class="brand">
-          <img src="../assets/logo.png" alt="CampusEats" class="logo-img" />
+          <img src="../assets/logo.png" alt="CampusEats logo" class="logo-img" />
 
           <section>
             <h2>CampusEats</h2>
-            <p>Analytics</p>
+            <p>Admin Analytics</p>
           </section>
         </section>
 
-        <nav class="sidebar-nav" aria-label="Analytics Navigation">
+        <nav class="sidebar-nav" aria-label="Analytics navigation">
           <a href="#sales-report-section" class="nav-item active">
             Sales Report
           </a>
@@ -68,89 +69,148 @@
 
     <main class="dashboard-main">
 
-      <section class="welcome-banner">
+      <header class="welcome-banner">
         <section>
-          <h2>Analytics Overview</h2>
+          <span class="welcome-kicker">CampusEats Admin</span>
+
+          <h1>Analytics Dashboard</h1>
+
           <p>
-            Track platform activity, vendor performance, and ordering behaviour
-            using the admin analytics dashboard.
+            Monitor platform performance, review vendor sales, identify peak ordering
+            behaviour, and export reports for submission or evidence.
           </p>
         </section>
 
         <section class="banner-badge">
-          Admin Dashboard
+          Approved Admin View
         </section>
-      </section>
+      </header>
 
-      <section class="summary-grid">
+      <section class="summary-grid" aria-label="Analytics summary">
 
-        <section class="summary-card featured-card">
-          <h3>Total Orders</h3>
-          <p class="summary-number">--</p>
-        </section>
+        <article class="summary-card featured-card">
+          <section class="summary-card-content">
+            <h3>Total Orders</h3>
+            <p class="summary-number" data-summary="total-orders">--</p>
+            <span>All analytics orders</span>
+          </section>
 
-        <section class="summary-card">
-          <h3>Total Revenue</h3>
-          <p class="summary-number">--</p>
-        </section>
+          <span class="summary-icon">🧾</span>
+        </article>
 
-        <section class="summary-card">
-          <h3>Peak Ordering Hour</h3>
-          <p class="summary-number">--</p>
-        </section>
+        <article class="summary-card">
+          <section class="summary-card-content">
+            <h3>Total Revenue</h3>
+            <p class="summary-number" data-summary="total-revenue">--</p>
+            <span>Total order value</span>
+          </section>
 
-        <section class="summary-card">
-          <h3>Active Vendors</h3>
-          <p class="summary-number">--</p>
-        </section>
+          <span class="summary-icon">💳</span>
+        </article>
+
+        <article class="summary-card">
+          <section class="summary-card-content">
+            <h3>Peak Ordering Hour</h3>
+            <p class="summary-number" data-summary="peak-hour">--</p>
+            <span>Busiest order time</span>
+          </section>
+
+          <span class="summary-icon">⏱️</span>
+        </article>
+
+        <article class="summary-card">
+          <section class="summary-card-content">
+            <h3>Active Vendors</h3>
+            <p class="summary-number" data-summary="active-vendors">--</p>
+            <span>Vendors with orders</span>
+          </section>
+
+          <span class="summary-icon">🏪</span>
+        </article>
 
       </section>
 
       <section class="reports-grid">
 
-        <section class="report-card" id="sales-report-section">
-          <h2 id="sales-report-title">Sales Per Vendor Over Time</h2>
+        <section class="report-card" id="sales-report-section" aria-labelledby="sales-report-title">
+          <header class="report-card-header">
+            <section>
+              <h2 id="sales-report-title">Sales Per Vendor Over Time</h2>
+              <p>
+                Review vendor revenue and order activity across a selected reporting period.
+              </p>
+            </section>
+
+            <span class="report-card-tag">Sales Report</span>
+          </header>
 
           <section id="sales-report-output">
             <p class="loading-message">Loading sales analytics...</p>
           </section>
         </section>
 
-      </section>
+        <section class="report-card" id="peak-hours-section" aria-labelledby="peak-hours-title">
+          <header class="report-card-header">
+            <section>
+              <h2 id="peak-hours-title">Peak Ordering Hours</h2>
+              <p>
+                Identify the busiest order times and compare ordering behaviour across the day.
+              </p>
+            </section>
 
-      <section class="report-card" id="peak-hours-section">
-        <h2 id="peak-hours-title">Peak Ordering Hours</h2>
+            <span class="report-card-tag">Order Timing</span>
+          </header>
 
-        <section id="peak-hours-output">
-          <p class="loading-message">Loading peak hours report...</p>
+          <section id="peak-hours-output">
+            <p class="loading-message">Loading peak hours report...</p>
+          </section>
         </section>
-      </section>
 
-      <section class="report-card" id="custom-view-section">
-        <h2 id="custom-view-title">Custom Analytics View</h2>
+        <section class="report-card" id="custom-view-section" aria-labelledby="custom-view-title">
+          <header class="report-card-header">
+            <section>
+              <h2 id="custom-view-title">Custom Analytics View</h2>
+              <p>
+                Apply filters to create a focused analytics view for specific reporting needs.
+              </p>
+            </section>
 
-        <section id="custom-view-output">
-          <p class="loading-message">Loading custom analytics...</p>
+            <span class="report-card-tag">Filtered View</span>
+          </header>
+
+          <section id="custom-view-output">
+            <p class="loading-message">Loading custom analytics...</p>
+          </section>
         </section>
-      </section>
 
-      <section class="report-card" id="export-section">
-        <h2 id="export-title">Export Reports</h2>
+        <section class="report-card" id="export-section" aria-labelledby="export-title">
+          <header class="report-card-header">
+            <section>
+              <h2 id="export-title">Export Reports</h2>
+              <p>
+                Download analytics reports as CSV or PDF files for evidence, review, or submission.
+              </p>
+            </section>
 
-        <section id="export-output">
-          <p class="loading-message">Loading export options...</p>
+            <span class="report-card-tag">CSV / PDF</span>
+          </header>
+
+          <section id="export-output">
+            <p class="loading-message">Loading export options...</p>
+          </section>
         </section>
+
       </section>
 
     </main>
 
   </section>
 
-  <script type="module" src="analytics.js"></script>
   <script src="sales-report.js"></script>
   <script src="peak-hours-report.js"></script>
   <script src="custom-view.js"></script>
   <script src="export-report.js"></script>
+  <script type="module" src="analytics.js"></script>
 
 </body>
 
