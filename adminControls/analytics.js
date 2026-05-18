@@ -307,9 +307,9 @@ function showDashboardReadyState(elements) {
 function showEmptyState(elements) {
   elements.salesReportOutput.innerHTML = `
     <section class="dashboard-state-message">
-      <h3>No Sales Data Available</h3>
-      <p>No sales data available.</p>
-      <p>There are currently no completed or paid orders available for the sales report.</p>
+      <h3>No Analytics Data Available</h3>
+      <p>No analytics data available.</p>
+      <p>There are currently no orders available for the sales analytics report.</p>
     </section>
   `;
 
@@ -323,8 +323,8 @@ function showEmptyState(elements) {
 
   elements.customViewOutput.innerHTML = `
     <section class="dashboard-state-message">
-      <h3>No Custom Analytics Data Available</h3>
-      <p>No custom analytics data available.</p>
+      <h3>No Custom Analytics Available</h3>
+      <p>No custom analytics available.</p>
       <p>There are currently no orders available for custom filtering or reporting.</p>
     </section>
   `;
@@ -332,7 +332,7 @@ function showEmptyState(elements) {
   elements.exportOutput.innerHTML = `
     <section class="dashboard-state-message">
       <h3>No Export Data Available</h3>
-      <p>No data available to export.</p>
+      <p>No export data available.</p>
       <p>There are currently no analytics records available for CSV or PDF export.</p>
     </section>
   `;
