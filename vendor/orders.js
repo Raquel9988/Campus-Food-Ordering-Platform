@@ -27,9 +27,88 @@ const STATUS_TRANSITIONS = {
   complete: [],
 };
 
+const VENDOR_NOTIFIED_READY_ORDERS_KEY_PREFIX =
+  "vendor_notified_ready_orders";
+
+const fallbackStorage = {
+  getItem() {
+    return null;
+  },
+  setItem() {},
+  removeItem() {},
+};
+
 dashboardBtn?.addEventListener("click", () => {
   window.location.href = "../vendor/vendor-dashboard.html";
 });
+
+function getStorage() {
+  if (typeof localStorage === "undefined") {
+    return fallbackStorage;
+  }
+
+  return localStorage;
+}
+
+function getVendorNotifiedReadyOrdersKey(vendorId) {
+  return `${VENDOR_NOTIFIED_READY_ORDERS_KEY_PREFIX}_${vendorId}`;
+}
+
+function getVendorNotifiedReadyOrderIds(vendorId) {
+  if (!vendorId) {
+    return [];
+  }
+
+  try {
+    const saved = JSON.parse(
+      getStorage().getItem(getVendorNotifiedReadyOrdersKey(vendorId)) || "[]"
+    );
+
+    return Array.isArray(saved) ? saved.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveVendorNotifiedReadyOrderIds(vendorId, orderIds) {
+  if (!vendorId) {
+    return [];
+  }
+
+  const uniqueOrderIds = [...new Set((orderIds || []).map(String))];
+
+  getStorage().setItem(
+    getVendorNotifiedReadyOrdersKey(vendorId),
+    JSON.stringify(uniqueOrderIds)
+  );
+
+  return uniqueOrderIds;
+}
+
+function addVendorNotifiedReadyOrder(vendorId, orderId) {
+  const existingOrderIds = getVendorNotifiedReadyOrderIds(vendorId);
+  const mergedOrderIds = [...new Set([...existingOrderIds, String(orderId)])];
+
+  return saveVendorNotifiedReadyOrderIds(vendorId, mergedOrderIds);
+}
+
+function removeVendorNotifiedReadyOrder(vendorId, orderId) {
+  const existingOrderIds = getVendorNotifiedReadyOrderIds(vendorId);
+
+  const updatedOrderIds = existingOrderIds.filter((savedOrderId) => {
+    return String(savedOrderId) !== String(orderId);
+  });
+
+  return saveVendorNotifiedReadyOrderIds(vendorId, updatedOrderIds);
+}
+
+function isVendorNotifiedReadyOrder(order, vendorId) {
+  if (!order || order.status !== "ready") {
+    return false;
+  }
+
+  return getVendorNotifiedReadyOrderIds(vendorId).includes(String(order.id));
+}
 
 function escapeHtml(unsafe) {
   if (!unsafe) return "";
@@ -183,8 +262,16 @@ async function fetchOrders(vendorId) {
     return [];
   }
 
+  const visibleOrders = orders.filter((order) => {
+    return !isVendorNotifiedReadyOrder(order, vendorId);
+  });
+
+  if (visibleOrders.length === 0) {
+    return [];
+  }
+
   const enrichedOrders = await Promise.all(
-    orders.map(async (order) => {
+    visibleOrders.map(async (order) => {
       const { data: orderItems, error: itemsError } = await supabase
         .from("order_items")
         .select("id, menu_item_id, quantity, price")
@@ -274,6 +361,8 @@ async function updateOrderStatus(orderId, nextStatus, currentStatus) {
     return;
   }
 
+  removeVendorNotifiedReadyOrder(currentVendorId, orderId);
+
   await loadOrders();
 }
 
@@ -313,15 +402,17 @@ async function notifyStudentForPickup(orderId, currentStatus) {
     return;
   }
 
+  addVendorNotifiedReadyOrder(currentVendorId, orderId);
+
   alert(
-    "The student has been notified that this order is ready. The order will move to Order History after the student clicks OK on their side."
+    "The student has been notified that this order is ready. The order has been removed from your active vendor list and will move to the student's Order History after they click OK on their side."
   );
 
   await loadOrders();
 }
 
 function createOrderCard(order) {
-  const card = document.createElement("div");
+  const card = document.createElement("article");
   card.className = "order-card";
 
   const statusClass = `status-${order.status}`;
@@ -341,12 +432,12 @@ function createOrderCard(order) {
     : `<li>No items found.</li>`;
 
   card.innerHTML = `
-    <div class="order-header">
+    <header class="order-header">
       <h3>Order #${escapeHtml(order.id.slice(0, 8))}</h3>
       <span class="status-badge ${statusClass}">
         ${escapeHtml(order.status)}
       </span>
-    </div>
+    </header>
 
     <section class="payment-info" aria-label="Payment information">
       <section class="payment-main">
@@ -389,7 +480,7 @@ function createOrderCard(order) {
       </section>
     </section>
 
-    <div class="order-info">
+    <section class="order-info">
       <p>
         <strong>Student:</strong>
         <span class="order-value">${escapeHtml(order.studentEmail)}</span>
@@ -399,21 +490,21 @@ function createOrderCard(order) {
         <strong>Placed:</strong>
         <span class="order-value">${formatDate(order.created_at)}</span>
       </p>
-    </div>
+    </section>
 
-    <div class="items-section">
+    <section class="items-section">
       <strong>Items:</strong>
       <ul class="items-list">
         ${itemsHtml}
       </ul>
-    </div>
+    </section>
 
-    <div class="order-total">
+    <section class="order-total">
       <span>Total:</span>
       <span class="total-amount">${formatCurrency(order.total_price)}</span>
-    </div>
+    </section>
 
-    <div class="order-actions">
+    <section class="order-actions">
       ${
         order.status === "received"
           ? `<button class="prep-btn" type="button">Start Preparing</button>`
@@ -431,7 +522,7 @@ function createOrderCard(order) {
           ? `<button class="complete-btn" type="button">Order Complete</button>`
           : ``
       }
-    </div>
+    </section>
   `;
 
   const prepBtn = card.querySelector(".prep-btn");
@@ -475,6 +566,11 @@ function renderOrders(orders) {
     return order.status === "ready";
   });
 
+  if (activeOrders.length === 0 && readyOrders.length === 0) {
+    showEmpty();
+    return;
+  }
+
   if (activeOrders.length > 0) {
     const activeTitle = document.createElement("h2");
     activeTitle.className = "section-title";
@@ -508,7 +604,11 @@ async function loadOrders() {
 
   try {
     isRefreshing = true;
-    refreshBtn.disabled = true;
+
+    if (refreshBtn) {
+      refreshBtn.disabled = true;
+    }
+
     showLoading();
 
     const orders = await fetchOrders(currentVendorId);
@@ -518,7 +618,10 @@ async function loadOrders() {
     showError(`Error loading orders: ${error.message}`);
   } finally {
     isRefreshing = false;
-    refreshBtn.disabled = false;
+
+    if (refreshBtn) {
+      refreshBtn.disabled = false;
+    }
   }
 }
 
@@ -570,6 +673,7 @@ document.addEventListener("DOMContentLoaded", initializePage);
 export {
   ACTIVE_VENDOR_STATUSES,
   STATUS_TRANSITIONS,
+  VENDOR_NOTIFIED_READY_ORDERS_KEY_PREFIX,
   escapeHtml,
   formatDate,
   formatCurrency,
@@ -577,6 +681,12 @@ export {
   showError,
   showOrders,
   showEmpty,
+  getVendorNotifiedReadyOrdersKey,
+  getVendorNotifiedReadyOrderIds,
+  saveVendorNotifiedReadyOrderIds,
+  addVendorNotifiedReadyOrder,
+  removeVendorNotifiedReadyOrder,
+  isVendorNotifiedReadyOrder,
   isValidStatusTransition,
   getApprovedVendorAuth,
   fetchOrders,

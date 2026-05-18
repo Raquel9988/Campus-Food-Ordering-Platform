@@ -208,6 +208,8 @@ beforeEach(() => {
   vi.resetModules();
   setupDom();
 
+  localStorage.clear();
+
   vi.stubGlobal("alert", vi.fn());
 
   vi.spyOn(console, "error").mockImplementation(() => {});
@@ -220,6 +222,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.resetModules();
+
+  localStorage.clear();
 
   delete globalThis.__mockSupabase;
 
@@ -290,6 +294,97 @@ describe("vendor order formatting", () => {
     expect(escapeHtml("Fish & Chips")).toBe("Fish &amp; Chips");
     expect(escapeHtml('"quoted"')).toBe("&quot;quoted&quot;");
     expect(escapeHtml("it's nice")).toBe("it&#039;s nice");
+  });
+});
+
+describe("vendor notified ready order storage", () => {
+  test("creates the correct localStorage key for notified ready orders", async () => {
+    const { getVendorNotifiedReadyOrdersKey } = await importOrdersFile();
+
+    expect(getVendorNotifiedReadyOrdersKey("vendor-1")).toBe(
+      "vendor_notified_ready_orders_vendor-1"
+    );
+  });
+
+  test("saves and reads vendor notified ready order ids", async () => {
+    const {
+      saveVendorNotifiedReadyOrderIds,
+      getVendorNotifiedReadyOrderIds,
+    } = await importOrdersFile();
+
+    saveVendorNotifiedReadyOrderIds("vendor-1", ["order-1", "order-2"]);
+
+    expect(getVendorNotifiedReadyOrderIds("vendor-1")).toEqual([
+      "order-1",
+      "order-2",
+    ]);
+  });
+
+  test("adds a notified ready order without duplicating ids", async () => {
+    const {
+      addVendorNotifiedReadyOrder,
+      getVendorNotifiedReadyOrderIds,
+    } = await importOrdersFile();
+
+    addVendorNotifiedReadyOrder("vendor-1", "order-1");
+    addVendorNotifiedReadyOrder("vendor-1", "order-1");
+    addVendorNotifiedReadyOrder("vendor-1", "order-2");
+
+    expect(getVendorNotifiedReadyOrderIds("vendor-1")).toEqual([
+      "order-1",
+      "order-2",
+    ]);
+  });
+
+  test("removes a notified ready order id", async () => {
+    const {
+      saveVendorNotifiedReadyOrderIds,
+      removeVendorNotifiedReadyOrder,
+      getVendorNotifiedReadyOrderIds,
+    } = await importOrdersFile();
+
+    saveVendorNotifiedReadyOrderIds("vendor-1", ["order-1", "order-2"]);
+
+    removeVendorNotifiedReadyOrder("vendor-1", "order-1");
+
+    expect(getVendorNotifiedReadyOrderIds("vendor-1")).toEqual(["order-2"]);
+  });
+
+  test("returns empty list when localStorage data is invalid", async () => {
+    const { getVendorNotifiedReadyOrderIds } = await importOrdersFile();
+
+    localStorage.setItem("vendor_notified_ready_orders_vendor-1", "bad-json");
+
+    expect(getVendorNotifiedReadyOrderIds("vendor-1")).toEqual([]);
+  });
+
+  test("detects a vendor notified ready order only when the order is ready", async () => {
+    const {
+      addVendorNotifiedReadyOrder,
+      isVendorNotifiedReadyOrder,
+    } = await importOrdersFile();
+
+    addVendorNotifiedReadyOrder("vendor-1", "order-1");
+
+    expect(
+      isVendorNotifiedReadyOrder(
+        {
+          id: "order-1",
+          status: "ready",
+        },
+        "vendor-1"
+      )
+    ).toBe(true);
+
+    expect(
+      isVendorNotifiedReadyOrder(
+        {
+          id: "order-1",
+          status: "received",
+        },
+        "vendor-1"
+      )
+    ).toBe(false);
   });
 });
 
@@ -518,6 +613,28 @@ describe("vendor order rendering", () => {
     expect(ordersContainer.textContent).toContain("Ready for Pickup");
     expect(ordersContainer.textContent).toContain("student3@example.com");
     expect(ordersContainer.textContent).toContain("Order Complete");
+  });
+
+  test("renderOrders shows empty state if no visible active or ready sections exist", async () => {
+    const { renderOrders } = await importOrdersFile();
+
+    renderOrders([
+      {
+        id: "order-complete",
+        status: "complete",
+        payment_provider: "PayFast",
+        transaction_id: "TX-999",
+        paid_at: "2026-05-11T10:10:00Z",
+        studentEmail: "student@example.com",
+        created_at: "2026-05-11T10:02:00Z",
+        total_price: 40,
+        items: [],
+      },
+    ]);
+
+    expect(document.getElementById("empty-state").classList.contains("hidden")).toBe(
+      false
+    );
   });
 });
 
@@ -808,6 +925,79 @@ describe("vendor orders data fetching coverage", () => {
     ]);
   });
 
+  test("fetchOrders hides ready orders that the vendor already notified", async () => {
+    localStorage.setItem(
+      "vendor_notified_ready_orders_vendor-1",
+      JSON.stringify(["order-hidden"])
+    );
+
+    const mockSupabase = createMockSupabase({
+      orders: [
+        {
+          id: "order-hidden",
+          student_id: "student-1",
+          vendor_id: "vendor-1",
+          status: "ready",
+          payment_status: "paid",
+          created_at: "2026-05-11T09:50:00Z",
+          updated_at: "2026-05-11T09:50:00Z",
+        },
+        {
+          id: "order-visible",
+          student_id: "student-1",
+          vendor_id: "vendor-1",
+          status: "ready",
+          payment_status: "paid",
+          created_at: "2026-05-11T10:00:00Z",
+          updated_at: "2026-05-11T10:00:00Z",
+        },
+      ],
+
+      orderItems: [
+        {
+          id: "item-row-1",
+          menu_item_id: "menu-1",
+          quantity: 1,
+          price: 30,
+        },
+      ],
+    });
+
+    const { fetchOrders } = await importOrdersFile(mockSupabase);
+
+    const orders = await fetchOrders("vendor-1");
+
+    expect(orders).toHaveLength(1);
+    expect(orders[0].id).toBe("order-visible");
+  });
+
+  test("fetchOrders returns empty array when all ready orders were already notified", async () => {
+    localStorage.setItem(
+      "vendor_notified_ready_orders_vendor-1",
+      JSON.stringify(["order-hidden"])
+    );
+
+    const mockSupabase = createMockSupabase({
+      orders: [
+        {
+          id: "order-hidden",
+          student_id: "student-1",
+          vendor_id: "vendor-1",
+          status: "ready",
+          payment_status: "paid",
+          created_at: "2026-05-11T09:50:00Z",
+          updated_at: "2026-05-11T09:50:00Z",
+        },
+      ],
+    });
+
+    const { fetchOrders } = await importOrdersFile(mockSupabase);
+
+    const orders = await fetchOrders("vendor-1");
+
+    expect(orders).toEqual([]);
+  });
+
   test("fetchOrders handles order item query error by returning empty items", async () => {
     const mockSupabase = createMockSupabase({
       orders: [
@@ -942,6 +1132,35 @@ describe("vendor orders update and page flow coverage", () => {
     });
 
     expect(mockSupabase.__state.orderQueries.length).toBeGreaterThanOrEqual(2);
+
+    stopAutoRefresh();
+  });
+
+  test("updateOrderStatus removes stale vendor notified ready marker after a successful normal status update", async () => {
+    localStorage.setItem(
+      "vendor_notified_ready_orders_vendor-1",
+      JSON.stringify(["order-1"])
+    );
+
+    const mockSupabase = createMockSupabase({
+      orders: [],
+      updateResult: {
+        id: "order-1",
+        status: "preparing",
+        payment_status: "paid",
+      },
+    });
+
+    const { initializePage, updateOrderStatus, stopAutoRefresh } =
+      await importOrdersFile(mockSupabase);
+
+    await initializePage();
+
+    await updateOrderStatus("order-1", "preparing", "received");
+
+    expect(
+      JSON.parse(localStorage.getItem("vendor_notified_ready_orders_vendor-1"))
+    ).toEqual([]);
 
     stopAutoRefresh();
   });
@@ -1161,9 +1380,19 @@ describe("vendor ready pickup notification flow", () => {
     stopAutoRefresh();
   });
 
-  test("notifyStudentForPickup keeps the order ready and tells the vendor the student was notified", async () => {
+  test("notifyStudentForPickup keeps the order ready, hides it from vendor list, and tells the vendor the student was notified", async () => {
     const mockSupabase = createMockSupabase({
-      orders: [],
+      orders: [
+        {
+          id: "order-1",
+          student_id: "student-1",
+          vendor_id: "vendor-1",
+          status: "ready",
+          payment_status: "paid",
+          created_at: "2026-05-11T09:50:00Z",
+          updated_at: "2026-05-11T09:50:00Z",
+        },
+      ],
       updateResult: {
         id: "order-1",
         status: "ready",
@@ -1187,8 +1416,12 @@ describe("vendor ready pickup notification flow", () => {
 
     expect(mockSupabase.__state.updatedRows[0].data.status).not.toBe("complete");
 
+    expect(
+      JSON.parse(localStorage.getItem("vendor_notified_ready_orders_vendor-1"))
+    ).toEqual(["order-1"]);
+
     expect(alert).toHaveBeenCalledWith(
-      "The student has been notified that this order is ready. The order will move to Order History after the student clicks OK on their side."
+      "The student has been notified that this order is ready. The order has been removed from your active vendor list and will move to the student's Order History after they click OK on their side."
     );
 
     expect(mockSupabase.__state.orderQueries.length).toBeGreaterThanOrEqual(2);
@@ -1217,6 +1450,10 @@ describe("vendor ready pickup notification flow", () => {
 
     expect(alert).toHaveBeenCalledWith("Failed to notify student.");
 
+    expect(localStorage.getItem("vendor_notified_ready_orders_vendor-1")).toBe(
+      null
+    );
+
     stopAutoRefresh();
   });
 
@@ -1235,6 +1472,10 @@ describe("vendor ready pickup notification flow", () => {
 
     expect(alert).toHaveBeenCalledWith(
       "Order could not be confirmed for pickup. Please refresh and try again."
+    );
+
+    expect(localStorage.getItem("vendor_notified_ready_orders_vendor-1")).toBe(
+      null
     );
 
     expect(mockSupabase.__state.orderQueries.length).toBeGreaterThanOrEqual(2);
@@ -1292,8 +1533,12 @@ describe("vendor ready pickup notification flow", () => {
 
     expect(mockSupabase.__state.updatedRows[0].data.status).not.toBe("complete");
 
+    expect(
+      JSON.parse(localStorage.getItem("vendor_notified_ready_orders_vendor-1"))
+    ).toEqual(["order-33333333"]);
+
     expect(alert).toHaveBeenCalledWith(
-      "The student has been notified that this order is ready. The order will move to Order History after the student clicks OK on their side."
+      "The student has been notified that this order is ready. The order has been removed from your active vendor list and will move to the student's Order History after they click OK on their side."
     );
 
     stopAutoRefresh();
