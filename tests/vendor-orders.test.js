@@ -14,6 +14,12 @@ function setupDom() {
   `;
 }
 
+async function flushPromises() {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 function createMockSupabase(overrides = {}) {
   const state = {
     user: {
@@ -168,6 +174,7 @@ function createMockSupabase(overrides = {}) {
           state.updatedRows.push({
             tableName,
             data,
+            filters: query.filters,
           });
 
           return query;
@@ -232,10 +239,10 @@ describe("vendor order status transitions", () => {
     expect(isValidStatusTransition("preparing", "ready")).toBe(true);
   });
 
-  test("vendor status transitions allow ready to complete", async () => {
+  test("vendor status transitions no longer allow ready to complete directly", async () => {
     const { isValidStatusTransition } = await importOrdersFile();
 
-    expect(isValidStatusTransition("ready", "complete")).toBe(true);
+    expect(isValidStatusTransition("ready", "complete")).toBe(false);
   });
 
   test("vendor status transitions prevent invalid jumps", async () => {
@@ -245,6 +252,7 @@ describe("vendor order status transitions", () => {
     expect(isValidStatusTransition("received", "complete")).toBe(false);
     expect(isValidStatusTransition("preparing", "complete")).toBe(false);
     expect(isValidStatusTransition("ready", "preparing")).toBe(false);
+    expect(isValidStatusTransition("ready", "received")).toBe(false);
   });
 
   test("vendor status transitions deny any change from complete", async () => {
@@ -346,7 +354,7 @@ describe("vendor order cards", () => {
     expect(card.textContent).not.toContain("Order Complete");
   });
 
-  test("ready order card shows Order Complete button", async () => {
+  test("ready order card shows Order Complete button for student notification", async () => {
     const { createOrderCard } = await importOrdersFile();
 
     const card = createOrderCard({
@@ -891,6 +899,24 @@ describe("vendor orders update and page flow coverage", () => {
     stopAutoRefresh();
   });
 
+  test("updateOrderStatus blocks direct ready to complete updates", async () => {
+    const mockSupabase = createMockSupabase({
+      orders: [],
+    });
+
+    const { initializePage, updateOrderStatus, stopAutoRefresh } =
+      await importOrdersFile(mockSupabase);
+
+    await initializePage();
+
+    await updateOrderStatus("order-1", "complete", "ready");
+
+    expect(alert).toHaveBeenCalledWith("Invalid status change.");
+    expect(mockSupabase.__state.updatedRows).toHaveLength(0);
+
+    stopAutoRefresh();
+  });
+
   test("updateOrderStatus updates a paid order and reloads orders", async () => {
     const mockSupabase = createMockSupabase({
       orders: [],
@@ -1102,5 +1128,174 @@ describe("vendor orders update and page flow coverage", () => {
     expect(() => {
       stopAutoRefresh();
     }).not.toThrow();
+  });
+});
+
+describe("vendor ready pickup notification flow", () => {
+  test("notifyStudentForPickup shows alert when vendor has not loaded", async () => {
+    const { notifyStudentForPickup } = await importOrdersFile();
+
+    await notifyStudentForPickup("order-1", "ready");
+
+    expect(alert).toHaveBeenCalledWith("Vendor not loaded. Please refresh the page.");
+  });
+
+  test("notifyStudentForPickup only allows ready orders", async () => {
+    const mockSupabase = createMockSupabase({
+      orders: [],
+    });
+
+    const { initializePage, notifyStudentForPickup, stopAutoRefresh } =
+      await importOrdersFile(mockSupabase);
+
+    await initializePage();
+
+    await notifyStudentForPickup("order-1", "preparing");
+
+    expect(alert).toHaveBeenCalledWith(
+      "Only ready orders can be sent to the student for pickup."
+    );
+
+    expect(mockSupabase.__state.updatedRows).toHaveLength(0);
+
+    stopAutoRefresh();
+  });
+
+  test("notifyStudentForPickup keeps the order ready and tells the vendor the student was notified", async () => {
+    const mockSupabase = createMockSupabase({
+      orders: [],
+      updateResult: {
+        id: "order-1",
+        status: "ready",
+        payment_status: "paid",
+      },
+    });
+
+    const { initializePage, notifyStudentForPickup, stopAutoRefresh } =
+      await importOrdersFile(mockSupabase);
+
+    await initializePage();
+
+    await notifyStudentForPickup("order-1", "ready");
+
+    expect(mockSupabase.__state.updatedRows[0]).toMatchObject({
+      tableName: "orders",
+      data: {
+        status: "ready",
+      },
+    });
+
+    expect(mockSupabase.__state.updatedRows[0].data.status).not.toBe("complete");
+
+    expect(alert).toHaveBeenCalledWith(
+      "The student has been notified that this order is ready. The order will move to Order History after the student clicks OK on their side."
+    );
+
+    expect(mockSupabase.__state.orderQueries.length).toBeGreaterThanOrEqual(2);
+
+    stopAutoRefresh();
+  });
+
+  test("notifyStudentForPickup shows error alert when Supabase update fails", async () => {
+    const mockSupabase = createMockSupabase({
+      orders: [],
+      updateError: {
+        message: "Notify failed",
+      },
+    });
+
+    const { initializePage, notifyStudentForPickup, stopAutoRefresh } =
+      await importOrdersFile(mockSupabase);
+
+    await initializePage();
+
+    await notifyStudentForPickup("order-1", "ready");
+
+    expect(console.error).toHaveBeenCalledWith("Notify student error:", {
+      message: "Notify failed",
+    });
+
+    expect(alert).toHaveBeenCalledWith("Failed to notify student.");
+
+    stopAutoRefresh();
+  });
+
+  test("notifyStudentForPickup shows conflict alert when no updated row is returned", async () => {
+    const mockSupabase = createMockSupabase({
+      orders: [],
+      updateResult: null,
+    });
+
+    const { initializePage, notifyStudentForPickup, stopAutoRefresh } =
+      await importOrdersFile(mockSupabase);
+
+    await initializePage();
+
+    await notifyStudentForPickup("order-1", "ready");
+
+    expect(alert).toHaveBeenCalledWith(
+      "Order could not be confirmed for pickup. Please refresh and try again."
+    );
+
+    expect(mockSupabase.__state.orderQueries.length).toBeGreaterThanOrEqual(2);
+
+    stopAutoRefresh();
+  });
+
+  test("clicking Order Complete on a ready card notifies the student instead of completing the order directly", async () => {
+    const mockSupabase = createMockSupabase({
+      orders: [],
+      updateResult: {
+        id: "order-33333333",
+        status: "ready",
+        payment_status: "paid",
+      },
+    });
+
+    const { initializePage, createOrderCard, stopAutoRefresh } =
+      await importOrdersFile(mockSupabase);
+
+    await initializePage();
+
+    const card = createOrderCard({
+      id: "order-33333333",
+      status: "ready",
+      payment_provider: "PayFast",
+      transaction_id: "TX-333",
+      paid_at: "2026-05-11T10:10:00Z",
+      studentEmail: "student3@example.com",
+      created_at: "2026-05-11T10:02:00Z",
+      total_price: 40,
+      items: [
+        {
+          name: "Pizza",
+          quantity: 1,
+          price: 40,
+        },
+      ],
+    });
+
+    const completeButton = card.querySelector(".complete-btn");
+
+    expect(completeButton).not.toBeNull();
+
+    completeButton.click();
+
+    await flushPromises();
+
+    expect(mockSupabase.__state.updatedRows[0]).toMatchObject({
+      tableName: "orders",
+      data: {
+        status: "ready",
+      },
+    });
+
+    expect(mockSupabase.__state.updatedRows[0].data.status).not.toBe("complete");
+
+    expect(alert).toHaveBeenCalledWith(
+      "The student has been notified that this order is ready. The order will move to Order History after the student clicks OK on their side."
+    );
+
+    stopAutoRefresh();
   });
 });

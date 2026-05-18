@@ -14,6 +14,9 @@ const fallbackWindow = {
     href: "",
   },
   addEventListener() {},
+  confirm() {
+    return true;
+  },
 };
 
 async function createDefaultSupabaseClient() {
@@ -58,9 +61,21 @@ export function createStudentDashboardController({
   consoleRef = console,
 }) {
   let dashboardStarted = false;
+  let activeOrdersRefreshTimer = null;
 
   function getElement(id) {
     return documentRef?.getElementById(id) || null;
+  }
+
+  function normaliseStatus(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function isPaidReadyOrder(order) {
+    return (
+      normaliseStatus(order?.payment_status) === "paid" &&
+      normaliseStatus(order?.status) === "ready"
+    );
   }
 
   function showToast(message) {
@@ -118,18 +133,76 @@ export function createStudentDashboardController({
     localStorageRef.setItem("seen_ready_orders", JSON.stringify(orderIds));
   }
 
+  function ensureActiveOrdersDot() {
+    let dot = getElement("active-orders-dot");
+
+    if (dot) {
+      return dot;
+    }
+
+    const activeOrdersButton = getElement("active-orders");
+
+    if (!activeOrdersButton || !documentRef?.createElement) {
+      return null;
+    }
+
+    dot = documentRef.createElement("span");
+    dot.id = "active-orders-dot";
+    dot.className = "notification-dot hidden";
+    dot.setAttribute("aria-label", "Ready order notification");
+    dot.setAttribute("title", "You have an order ready for pickup");
+
+    Object.assign(dot.style, {
+      position: "absolute",
+      top: "7px",
+      right: "8px",
+      width: "12px",
+      height: "12px",
+      borderRadius: "50%",
+      backgroundColor: "#dc2626",
+      border: "2px solid #ffffff",
+      boxShadow: "0 0 0 2px rgba(220, 38, 38, 0.25)",
+      display: "none",
+      zIndex: "10",
+    });
+
+    if (!activeOrdersButton.style.position) {
+      activeOrdersButton.style.position = "relative";
+    }
+
+    activeOrdersButton.appendChild(dot);
+
+    return dot;
+  }
+
   function showActiveOrdersDot() {
-    getElement("active-orders-dot")?.classList.remove("hidden");
+    const dot = ensureActiveOrdersDot();
+
+    if (!dot) {
+      return;
+    }
+
+    dot.hidden = false;
+    dot.classList.remove("hidden");
+    dot.style.display = "inline-block";
   }
 
   function hideActiveOrdersDot() {
-    getElement("active-orders-dot")?.classList.add("hidden");
+    const dot = ensureActiveOrdersDot();
+
+    if (!dot) {
+      return;
+    }
+
+    dot.hidden = true;
+    dot.classList.add("hidden");
+    dot.style.display = "none";
   }
 
   async function fetchReadyOrderIds(userId) {
     const { data, error } = await supabaseClient
       .from("orders")
-      .select("id")
+      .select("id, status, payment_status")
       .eq("student_id", userId)
       .eq("payment_status", "paid")
       .eq("status", "ready");
@@ -139,24 +212,152 @@ export function createStudentDashboardController({
       return [];
     }
 
-    return (data || []).map((order) => order.id);
+    return (data || [])
+      .filter((order) => isPaidReadyOrder(order))
+      .map((order) => order.id);
+  }
+
+  async function fetchReadyOrdersForAcknowledgement(userId) {
+    const { data: readyOrders, error } = await supabaseClient
+      .from("orders")
+      .select("id, vendor_id, status, payment_status, created_at, updated_at")
+      .eq("student_id", userId)
+      .eq("payment_status", "paid")
+      .eq("status", "ready")
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      consoleRef.error("Ready order acknowledgement fetch error:", error);
+      return [];
+    }
+
+    if (!readyOrders || readyOrders.length === 0) {
+      return [];
+    }
+
+    const enrichedOrders = await Promise.all(
+      readyOrders.map(async (order) => {
+        const vendorName = await fetchVendorName(order.vendor_id);
+        const items = await fetchOrderItemNames(order.id);
+
+        return {
+          ...order,
+          vendorName,
+          items,
+        };
+      })
+    );
+
+    return enrichedOrders;
+  }
+
+  async function fetchVendorName(vendorId) {
+    if (!vendorId) {
+      return "Unknown vendor";
+    }
+
+    const { data, error } = await supabaseClient
+      .from("vendors")
+      .select("business_name")
+      .eq("id", vendorId)
+      .maybeSingle();
+
+    if (error) {
+      consoleRef.error("Fetch vendor name error:", error);
+      return "Unknown vendor";
+    }
+
+    return data?.business_name || "Unknown vendor";
+  }
+
+  async function fetchOrderItemNames(orderId) {
+    const { data: orderItems, error } = await supabaseClient
+      .from("order_items")
+      .select("menu_item_id, quantity")
+      .eq("order_id", orderId);
+
+    if (error || !orderItems || orderItems.length === 0) {
+      return [];
+    }
+
+    const items = await Promise.all(
+      orderItems.map(async (item) => {
+        const { data: menuItem } = await supabaseClient
+          .from("menu_items")
+          .select("name")
+          .eq("id", item.menu_item_id)
+          .maybeSingle();
+
+        const name = menuItem?.name || "Unknown item";
+        const quantity = item.quantity || 1;
+
+        return `${quantity} × ${name}`;
+      })
+    );
+
+    return items;
+  }
+
+  function buildReadyOrdersMessage(readyOrders) {
+    const orderLines = readyOrders
+      .map((order, index) => {
+        const orderNumber = order.id ? order.id.slice(0, 8) : "Unknown";
+        const itemText =
+          order.items && order.items.length > 0
+            ? order.items.join(", ")
+            : "Items unavailable";
+
+        return `${index + 1}. Order #${orderNumber} from ${order.vendorName}\n   Items: ${itemText}`;
+      })
+      .join("\n\n");
+
+    return `Your order is ready for pickup.
+
+${orderLines}
+
+Please collect your order from the vendor when you are available.
+
+A confirmation email may also have been sent to your registered email address. Please check your inbox, and also check your spam or junk folder if you do not see it.
+
+Click OK once you have seen this message. The order will then move to Order History.`;
+  }
+
+  async function completeReadyOrders(userId, orderIds) {
+    if (!orderIds || orderIds.length === 0) {
+      return false;
+    }
+
+    const updates = await Promise.all(
+      orderIds.map(async (orderId) => {
+        const { data, error } = await supabaseClient
+          .from("orders")
+          .update({
+            status: "complete",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", orderId)
+          .eq("student_id", userId)
+          .eq("payment_status", "paid")
+          .eq("status", "ready")
+          .select("id, status")
+          .maybeSingle();
+
+        if (error) {
+          consoleRef.error("Complete ready order error:", error);
+          return false;
+        }
+
+        return Boolean(data);
+      })
+    );
+
+    return updates.some(Boolean);
   }
 
   async function updateActiveOrdersDot(userId) {
     const readyOrderIds = await fetchReadyOrderIds(userId);
 
-    if (readyOrderIds.length === 0) {
-      hideActiveOrdersDot();
-      return;
-    }
-
-    const seenReadyOrders = getSeenReadyOrders();
-
-    const hasUnseenReadyOrder = readyOrderIds.some((orderId) => {
-      return !seenReadyOrders.includes(orderId);
-    });
-
-    if (hasUnseenReadyOrder) {
+    if (readyOrderIds.length > 0) {
       showActiveOrdersDot();
       return;
     }
@@ -169,6 +370,41 @@ export function createStudentDashboardController({
 
     saveSeenReadyOrders(readyOrderIds);
     hideActiveOrdersDot();
+  }
+
+  async function acknowledgeReadyOrders(userId) {
+    const readyOrders = await fetchReadyOrdersForAcknowledgement(userId);
+
+    if (!readyOrders || readyOrders.length === 0) {
+      hideActiveOrdersDot();
+      windowRef.location.href = "my-orders.html?filter=active";
+      return;
+    }
+
+    showActiveOrdersDot();
+
+    const message = buildReadyOrdersMessage(readyOrders);
+    const confirmed =
+      typeof windowRef.confirm === "function" ? windowRef.confirm(message) : true;
+
+    if (!confirmed) {
+      showActiveOrdersDot();
+      return;
+    }
+
+    const readyOrderIds = readyOrders.map((order) => order.id);
+    const completed = await completeReadyOrders(userId, readyOrderIds);
+
+    if (!completed) {
+      alert("The ready order could not be moved to Order History. Please try again.");
+      await updateActiveOrdersDot(userId);
+      return;
+    }
+
+    saveSeenReadyOrders(readyOrderIds);
+    hideActiveOrdersDot();
+
+    windowRef.location.href = "my-orders.html?filter=history";
   }
 
   function subscribeToOrders(userId) {
@@ -192,25 +428,21 @@ export function createStudentDashboardController({
 
           if (
             newOrder &&
-            newOrder.payment_status === "paid" &&
-            oldOrder?.payment_status !== "paid"
+            normaliseStatus(newOrder.payment_status) === "paid" &&
+            normaliseStatus(oldOrder?.payment_status) !== "paid"
           ) {
             showToast("Payment confirmed. Your order has been received.");
           }
 
-          if (
-            newOrder &&
-            newOrder.payment_status === "paid" &&
-            newOrder.status === "ready" &&
-            oldOrder?.status !== "ready"
-          ) {
+          if (newOrder && isPaidReadyOrder(newOrder)) {
             showToast("Your order is ready for pickup.");
+            showActiveOrdersDot();
           }
 
           if (
             newOrder &&
-            newOrder.status === "complete" &&
-            oldOrder?.status !== "complete"
+            normaliseStatus(newOrder.status) === "complete" &&
+            normaliseStatus(oldOrder?.status) !== "complete"
           ) {
             showToast("Your order has moved to Order History.");
           }
@@ -219,6 +451,25 @@ export function createStudentDashboardController({
         }
       )
       .subscribe();
+  }
+
+  function startActiveOrdersRefresh(userId) {
+    if (activeOrdersRefreshTimer || typeof setInterval === "undefined") {
+      return;
+    }
+
+    activeOrdersRefreshTimer = setInterval(() => {
+      updateActiveOrdersDot(userId);
+    }, 10000);
+  }
+
+  function stopActiveOrdersRefresh() {
+    if (!activeOrdersRefreshTimer || typeof clearInterval === "undefined") {
+      return;
+    }
+
+    clearInterval(activeOrdersRefreshTimer);
+    activeOrdersRefreshTimer = null;
   }
 
   async function loadVendors() {
@@ -284,8 +535,7 @@ export function createStudentDashboardController({
 
   function setupEvents(user) {
     getElement("active-orders")?.addEventListener("click", async () => {
-      await markReadyOrdersAsSeen(user.id);
-      windowRef.location.href = "my-orders.html?filter=active";
+      await acknowledgeReadyOrders(user.id);
     });
 
     getElement("order-history")?.addEventListener("click", () => {
@@ -297,6 +547,7 @@ export function createStudentDashboardController({
     });
 
     getElement("logout")?.addEventListener("click", async () => {
+      stopActiveOrdersRefresh();
       await supabaseClient.auth.signOut();
       windowRef.location.href = "../auth/login.html";
     });
@@ -322,9 +573,13 @@ export function createStudentDashboardController({
         userInfo.textContent = `Logged in as: ${user.email}`;
       }
 
+      ensureActiveOrdersDot();
+
       await loadVendors();
       await updateActiveOrdersDot(user.id);
+
       subscribeToOrders(user.id);
+      startActiveOrdersRefresh(user.id);
       setupEvents(user);
     } catch (error) {
       consoleRef.error("Student dashboard load error:", error);
@@ -364,8 +619,14 @@ export function createStudentDashboardController({
     showActiveOrdersDot,
     hideActiveOrdersDot,
     fetchReadyOrderIds,
+    fetchReadyOrdersForAcknowledgement,
+    fetchVendorName,
+    fetchOrderItemNames,
+    buildReadyOrdersMessage,
+    completeReadyOrders,
     updateActiveOrdersDot,
     markReadyOrdersAsSeen,
+    acknowledgeReadyOrders,
     subscribeToOrders,
     loadVendors,
     setupEvents,

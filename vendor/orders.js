@@ -23,7 +23,7 @@ const ACTIVE_VENDOR_STATUSES = ["received", "preparing", "ready"];
 const STATUS_TRANSITIONS = {
   received: ["preparing"],
   preparing: ["ready"],
-  ready: ["complete"],
+  ready: [],
   complete: [],
 };
 
@@ -277,6 +277,49 @@ async function updateOrderStatus(orderId, nextStatus, currentStatus) {
   await loadOrders();
 }
 
+async function notifyStudentForPickup(orderId, currentStatus) {
+  if (!currentVendorId) {
+    alert("Vendor not loaded. Please refresh the page.");
+    return;
+  }
+
+  if (currentStatus !== "ready") {
+    alert("Only ready orders can be sent to the student for pickup.");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("orders")
+    .update({
+      status: "ready",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orderId)
+    .eq("vendor_id", currentVendorId)
+    .eq("payment_status", "paid")
+    .eq("status", "ready")
+    .select("id, status, payment_status")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Notify student error:", error);
+    alert("Failed to notify student.");
+    return;
+  }
+
+  if (!data) {
+    alert("Order could not be confirmed for pickup. Please refresh and try again.");
+    await loadOrders();
+    return;
+  }
+
+  alert(
+    "The student has been notified that this order is ready. The order will move to Order History after the student clicks OK on their side."
+  );
+
+  await loadOrders();
+}
+
 function createOrderCard(order) {
   const card = document.createElement("div");
   card.className = "order-card";
@@ -409,7 +452,7 @@ function createOrderCard(order) {
 
   if (completeBtn) {
     completeBtn.addEventListener("click", async () => {
-      await updateOrderStatus(order.id, "complete", order.status);
+      await notifyStudentForPickup(order.id, order.status);
     });
   }
 
@@ -538,6 +581,7 @@ export {
   getApprovedVendorAuth,
   fetchOrders,
   updateOrderStatus,
+  notifyStudentForPickup,
   createOrderCard,
   renderOrders,
   loadOrders,
