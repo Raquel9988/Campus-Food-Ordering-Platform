@@ -497,6 +497,12 @@ export function createStudentMenuController({
   }
 
   async function initMenu() {
+    if (menuStarted) {
+      return;
+    }
+
+    menuStarted = true;
+
     try {
       await loadVendorName();
       await loadMenu();
@@ -517,25 +523,15 @@ export function createStudentMenuController({
     }
   }
 
-  async function startMenuOnce() {
-    if (menuStarted) {
-      return;
-    }
-
-    menuStarted = true;
-    await initMenu();
-  }
-
   function setupStudentMenuPage() {
-    if (documentRef?.readyState === "loading") {
-      documentRef.addEventListener("DOMContentLoaded", startMenuOnce, {
-        once: true,
-      });
+    documentRef?.addEventListener?.("DOMContentLoaded", initMenu);
 
-      return;
+    if (
+      documentRef?.readyState === "interactive" ||
+      documentRef?.readyState === "complete"
+    ) {
+      initMenu();
     }
-
-    startMenuOnce();
   }
 
   return {
