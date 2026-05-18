@@ -305,18 +305,37 @@ function showDashboardReadyState(elements) {
 }
 
 function showEmptyState(elements) {
-  const emptyMessage = `
+  elements.salesReportOutput.innerHTML = `
     <section class="dashboard-state-message">
-      <h3>No Analytics Data Available</h3>
-      <p>No analytics data available.</p>
-      <p>There are currently no orders available for analytics reporting.</p>
+      <h3>No Sales Data Available</h3>
+      <p>No sales data available.</p>
+      <p>There are currently no completed or paid orders available for the sales report.</p>
     </section>
   `;
 
-  elements.salesReportOutput.innerHTML = emptyMessage;
-  elements.peakHoursOutput.innerHTML = emptyMessage;
-  elements.customViewOutput.innerHTML = emptyMessage;
-  elements.exportOutput.innerHTML = emptyMessage;
+  elements.peakHoursOutput.innerHTML = `
+    <section class="dashboard-state-message">
+      <h3>No Peak Hours Data Available</h3>
+      <p>No peak hours data available.</p>
+      <p>There are currently no orders available to calculate peak ordering hours.</p>
+    </section>
+  `;
+
+  elements.customViewOutput.innerHTML = `
+    <section class="dashboard-state-message">
+      <h3>No Custom Analytics Data Available</h3>
+      <p>No custom analytics data available.</p>
+      <p>There are currently no orders available for custom filtering or reporting.</p>
+    </section>
+  `;
+
+  elements.exportOutput.innerHTML = `
+    <section class="dashboard-state-message">
+      <h3>No Export Data Available</h3>
+      <p>No data available to export.</p>
+      <p>There are currently no analytics records available for CSV or PDF export.</p>
+    </section>
+  `;
 }
 
 function showErrorState(elements) {
