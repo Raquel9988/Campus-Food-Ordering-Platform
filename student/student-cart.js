@@ -67,9 +67,11 @@ function getDefaultWindow() {
 }
 
 function getDefaultFetch() {
-  return typeof fetch !== "undefined" ? fetch : async () => {
-    throw new Error("Fetch is not available.");
-  };
+  return typeof fetch !== "undefined"
+    ? fetch
+    : async () => {
+        throw new Error("Fetch is not available.");
+      };
 }
 
 /* =========================
@@ -108,7 +110,9 @@ export function isSuccessfulPaidOrder(order) {
   );
 }
 
-export function clearPendingPaymentStorage(sessionStorageRef = getDefaultSessionStorage()) {
+export function clearPendingPaymentStorage(
+  sessionStorageRef = getDefaultSessionStorage()
+) {
   sessionStorageRef.removeItem("campus_pending_order_id");
   sessionStorageRef.removeItem("campus_pending_cart_key");
 }
@@ -129,6 +133,8 @@ export function createCartController({
   confirmRef = typeof confirm !== "undefined" ? confirm : () => true,
   consoleRef = console,
 }) {
+  let cartPageStarted = false;
+
   function showToast(message) {
     const toast = documentRef?.getElementById("toast");
 
@@ -280,16 +286,17 @@ export function createCartController({
 
   async function removeItem(vendorId, menuItemId) {
     const cart = await getCart();
-    const items = cart[vendorId]?.items || [];
+    const vendorKey = String(vendorId);
+    const items = cart[vendorKey]?.items || [];
 
     const updatedItems = items.filter((item) => {
       return String(item.menuItemId) !== String(menuItemId);
     });
 
     if (updatedItems.length === 0) {
-      delete cart[vendorId];
+      delete cart[vendorKey];
     } else {
-      cart[vendorId].items = updatedItems;
+      cart[vendorKey].items = updatedItems;
     }
 
     await saveCart(cart);
@@ -297,7 +304,8 @@ export function createCartController({
 
   async function updateQuantity(vendorId, menuItemId, changeAmount) {
     const cart = await getCart();
-    const items = cart[vendorId]?.items || [];
+    const vendorKey = String(vendorId);
+    const items = cart[vendorKey]?.items || [];
 
     const item = items.find((cartItem) => {
       return String(cartItem.menuItemId) === String(menuItemId);
@@ -310,7 +318,7 @@ export function createCartController({
     item.quantity += changeAmount;
 
     if (item.quantity <= 0) {
-      await removeItem(vendorId, menuItemId);
+      await removeItem(vendorKey, menuItemId);
       return;
     }
 
@@ -345,16 +353,20 @@ export function createCartController({
       return;
     }
 
-    if (placeOrderBtn) {
-      placeOrderBtn.disabled = false;
-    }
-
     if (vendorIds.length > 1) {
+      if (placeOrderBtn) {
+        placeOrderBtn.disabled = true;
+      }
+
       showCartMessage(
         "You can only order from one vendor at a time. Please remove items from other vendors or clear your cart.",
         "error"
       );
     } else {
+      if (placeOrderBtn) {
+        placeOrderBtn.disabled = false;
+      }
+
       clearCartMessage();
     }
 
@@ -623,6 +635,12 @@ export function createCartController({
   }
 
   async function handlePageLoad() {
+    if (cartPageStarted) {
+      return;
+    }
+
+    cartPageStarted = true;
+
     const auth = await getStudentAuth();
 
     if (!auth.ok) {
@@ -652,6 +670,15 @@ export function createCartController({
       ?.addEventListener("click", handleBackClick);
 
     windowRef?.addEventListener("load", handlePageLoad);
+
+    documentRef?.addEventListener?.("DOMContentLoaded", handlePageLoad);
+
+    if (
+      documentRef?.readyState === "interactive" ||
+      documentRef?.readyState === "complete"
+    ) {
+      handlePageLoad();
+    }
   }
 
   return {
