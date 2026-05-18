@@ -43,6 +43,16 @@ export default defineConfig({
       provider: "istanbul",
       reporter: ["text", "lcov"],
       reportsDirectory: "coverage",
+
+      exclude: [
+        "tests/**",
+        "tests/mocks/**",
+        "**/*.test.js",
+        "**/*.spec.js",
+        "node_modules/**",
+        "coverage/**",
+        "vite.config.js",
+      ],
     },
   },
 
