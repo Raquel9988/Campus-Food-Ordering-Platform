@@ -308,6 +308,7 @@ function showEmptyState(elements) {
   const emptyMessage = `
     <section class="dashboard-state-message">
       <h3>No Analytics Data Available</h3>
+      <p>No analytics data available.</p>
       <p>There are currently no orders available for analytics reporting.</p>
     </section>
   `;
@@ -340,6 +341,7 @@ function showAccessDeniedState(elements) {
   const accessDeniedMessage = `
     <section class="dashboard-state-message error-message">
       <h3>Access Denied</h3>
+      <p>Access denied. Approved admins only.</p>
       <p>Only approved administrators can view the analytics dashboard.</p>
     </section>
   `;

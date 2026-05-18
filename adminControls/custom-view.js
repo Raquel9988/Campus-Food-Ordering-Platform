@@ -519,7 +519,7 @@
         container.innerHTML = `
           <section class="cv-state-card">
             <h3>No Analytics Data</h3>
-            <p>No orders are available to display in the custom analytics view.</p>
+            <p>No paid orders are available to display.</p>
           </section>
         `;
 
@@ -542,7 +542,7 @@
       container.innerHTML = `
         <section class="cv-state-card error">
           <h3>Failed to Load Custom Analytics</h3>
-          <p>The custom analytics report could not be loaded. Please try again later.</p>
+          <p>Failed to load custom analytics.</p>
         </section>
       `;
 
