@@ -59,7 +59,7 @@ The overall goal of the project was to build a complete campus food ordering pla
 | Sprint 2 | 15 April 2026 – 20 April 2026 | Build cart, ordering, vendor dashboard, tracking, and notifications | Completed |
 | Sprint 3 | 24 April 2026 – 11 May 2026 | Add PayFast payments and dietary filtering | Completed |
 | Sprint 4 | 12 May 2026 – 22 May 2026 | Add analytics, exports, testing evidence, and final documentation | Completed |
-| Final Submission | 22 May 2026 | Submit hosted app, GitHub repo, video, Scrum artefacts, and final form | Pending Moodle submission |
+| Final Submission | 22 May 2026 | Submit hosted app, GitHub repo, video, Scrum artefacts, and final form | Completed |
 
 ---
 
@@ -71,7 +71,7 @@ The overall goal of the project was to build a complete campus food ordering pla
 | Milestone 2 | Student cart, order placement, vendor dashboard, and order tracking | 20 April 2026 | Completed |
 | Milestone 3 | Online payment system and dietary filtering system | 11 May 2026 | Completed |
 | Milestone 4 | Admin analytics dashboard and report export functionality | 22 May 2026 | Completed |
-| Milestone 5 | Final documentation, diagrams, test evidence, hosted app, GitHub repo, and video | 22 May 2026 | In final submission preparation |
+| Milestone 5 | Final documentation, diagrams, test evidence, hosted app, GitHub repo, and video | 22 May 2026 | Completed |
 
 ---
 
@@ -230,9 +230,9 @@ The final submission includes the following artefacts:
 | Design documents | `docs/final-submission/additional-artifacts/design-documents/` | Completed |
 | Test plan and results | `docs/final-submission/additional-artifacts/04-test-plan-and-results.md` | Completed |
 | Codecov test evidence | `docs/final-submission/additional-artifacts/test-plan-results/Codecov-Test-Evidence.docx` | Completed |
-| Final submission form | Completed form with links and checklist | In final preparation |
-| Screen recording video | Demonstration video under 6 minutes | To be checked / added |
-| Moodle submission | Final upload before deadline | Pending |
+| Final submission form | Completed form with links and checklist | Completed |
+| Screen recording video | Demonstration video under 6 minutes | Completed |
+| Moodle submission | Final upload before deadline |Completed |
 
 ---
 
@@ -248,9 +248,9 @@ The final submission includes the following artefacts:
 | Add test plan and results | 22 May 2026 | Completed |
 | Add Codecov test evidence | 22 May 2026 | Completed |
 | Check hosted app link | 22 May 2026 | To be checked |
-| Check GitHub repository link | 22 May 2026 | To be checked |
-| Add final video link | 22 May 2026 | To be completed / checked |
-| Submit final Moodle form | 22 May 2026 | Pending |
+| Check GitHub repository link | 22 May 2026 | Completed |
+| Add final video link | 22 May 2026 | Completed |
+| Submit final Moodle form | 22 May 2026 | Completed |
 
 ---
 
