@@ -209,9 +209,9 @@ Additional automated tests were added for:
 | Design documents added | Done |
 | Test plan and results added | Done |
 | Codecov evidence added | Done |
-| Final video link | To be added to submission form |
-| Final link checks | To be completed before Moodle submission |
-| Final Moodle submission | Pending |
+| Final video link | Done |
+| Final link checks | Done |
+| Final Moodle submission | Done |
 
 ---
 
@@ -266,5 +266,3 @@ The latest Codecov evidence has also been updated to show:
 - 331 missed lines
 - 100.00% shared authentication foundation coverage
 - `tests/mocks` removed from production coverage tracking
-
-The remaining final tasks are to add the final screen-recording video link, test all public links, and complete the Moodle submission.
