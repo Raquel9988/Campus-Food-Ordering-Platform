@@ -2,7 +2,7 @@
 
 This folder contains the final submission documentation and evidence for the **Campus Food Ordering Platform**.
 
-The purpose of this folder is to organise all required final project artefacts in one place so that reviewers can easily find the Scrum documents, additional artefacts, testing evidence, diagrams, and supporting documentation.
+The purpose of this folder is to organise all required final project artefacts in one place so that reviewers can easily find the Scrum documents, evidence files, additional artefacts, testing evidence, diagrams, and supporting documentation.
 
 ---
 
@@ -19,7 +19,7 @@ The purpose of this folder is to organise all required final project artefacts i
 
 ## 2. Project Summary
 
-The **Campus Food Ordering Platform** is a web-based food ordering system for campus users.
+The **Campus Food Ordering Platform** is a web-based campus food ordering system.
 
 The platform supports three main user roles:
 
@@ -29,11 +29,11 @@ The platform supports three main user roles:
 | Vendor | Manage menu items, assign dietary tags, view paid orders, and update order statuses |
 | Admin | Approve or suspend vendors and view analytics reports |
 
-The project was developed across four Scrum sprints.
+The project was completed using Scrum across four sprints.
 
 ---
 
-## 3. Folder Structure
+## 3. Updated Folder Structure
 
 ```text
 docs/
@@ -47,12 +47,23 @@ docs/
     │   ├── 05-daily-standups.md
     │   ├── 06-sprint-review-evidence.md
     │   └── evidence/
-    │       └── Combined_Daily_Standup_and_Retrospective_Evidence.pdf
+    │       ├── Product_Backlog_Evidence.pdf
+    │       ├── Sprint_Backlogs_Evidence.pdf
+    │       ├── Sprint_Burndown_Evidence_Report.pdf
+    │       ├── Sprint_Retrospective_Reports.pdf
+    │       ├── Daily_Standup_Summaries_Evidence.pdf
+    │       └── Daily Standups/
+    │           ├── Sprint 1 Team Meetings.pdf
+    │           ├── Sprint 2 Team Meetings.pdf
+    │           ├── Sprint 3 Team Meetings.pdf
+    │           └── Sprint 4 Team Meetings.pdf
     └── additional-artifacts/
         ├── 01-project-plan.md
         ├── 02-architecture-diagram.md
         ├── 03-design-documents.md
         ├── 04-test-plan-and-results.md
+        ├── Project Plan/
+        │   └── Project_Plan_Evidence.pdf
         ├── architecture-diagram/
         │   └── campus_food_architecture_diagram.png
         ├── design-documents/
@@ -73,35 +84,58 @@ docs/
 
 The following documents provide evidence that the team followed Scrum methodology during the project.
 
-| Scrum Artefact | Location | Description |
+| Scrum Artefact | Markdown Location | Main Evidence File |
 |---|---|---|
-| Product Backlog | `scrum-methodology/01-product-backlog.md` | Prioritised list of product features and user stories |
-| Sprint Backlogs | `scrum-methodology/02-sprint-backlogs.md` | Per-sprint task lists, dependencies, story points, and statuses |
-| Sprint Burndown Charts | `scrum-methodology/03-burndown-charts.md` | Burndown tables and charts showing remaining effort over time |
-| Sprint Retrospective Reports | `scrum-methodology/04-retrospectives.md` | What went well, what could improve, blockers, and action items |
-| Daily Stand-Up Summaries | `scrum-methodology/05-daily-standups.md` | Scrum meeting summaries and progress updates across sprints |
-| Sprint Review Evidence | `scrum-methodology/06-sprint-review-evidence.md` | Short summary of sprint review and evidence locations |
-| Meeting Evidence Document | `scrum-methodology/evidence/Combined_Daily_Standup_and_Retrospective_Evidence.pdf` | Combined evidence document containing daily Scrum, sprint review, and retrospective meeting evidence |
+| Product Backlog | `scrum-methodology/01-product-backlog.md` | `scrum-methodology/evidence/Product_Backlog_Evidence.pdf` |
+| Sprint Backlogs | `scrum-methodology/02-sprint-backlogs.md` | `scrum-methodology/evidence/Sprint_Backlogs_Evidence.pdf` |
+| Sprint Burndown Charts | `scrum-methodology/03-burndown-charts.md` | `scrum-methodology/evidence/Sprint_Burndown_Evidence_Report.pdf` |
+| Sprint Retrospective Reports | `scrum-methodology/04-retrospectives.md` | `scrum-methodology/evidence/Sprint_Retrospective_Reports.pdf` |
+| Daily Stand-Up Summaries | `scrum-methodology/05-daily-standups.md` | `scrum-methodology/evidence/Daily_Standup_Summaries_Evidence.pdf` |
+| Sprint Review Evidence | `scrum-methodology/06-sprint-review-evidence.md` | `scrum-methodology/evidence/` and `scrum-methodology/evidence/Daily Standups/` |
+
+The Markdown files act as short navigation files. The detailed evidence is stored in the PDF evidence documents so that reviewers can open the supporting proof directly.
 
 ---
 
-## 5. Additional Artefacts
+## 5. Daily Stand-Up Meeting Evidence
+
+Daily stand-up and Scrum meeting evidence is stored in:
+
+```text
+docs/final-submission/scrum-methodology/evidence/Daily Standups/
+```
+
+This folder contains separate PDF evidence files for each sprint:
+
+| Sprint | Evidence File |
+|---|---|
+| Sprint 1 | `Sprint 1 Team Meetings.pdf` |
+| Sprint 2 | `Sprint 2 Team Meetings.pdf` |
+| Sprint 3 | `Sprint 3 Team Meetings.pdf` |
+| Sprint 4 | `Sprint 4 Team Meetings.pdf` |
+
+A combined summary document is also available at:
+
+```text
+docs/final-submission/scrum-methodology/evidence/Daily_Standup_Summaries_Evidence.pdf
+```
+
+---
+
+## 6. Additional Artefacts
 
 The following documents support the final project submission requirements.
 
-| Additional Artefact | Location | Description |
+| Additional Artefact | Markdown Location | Evidence / Folder |
 |---|---|---|
-| Project Plan | `additional-artifacts/01-project-plan.md` | High-level project plan with milestones and deadlines |
-| Architecture Diagram | `additional-artifacts/02-architecture-diagram.md` | Explanation and location of the architecture diagram |
-| Design Documents | `additional-artifacts/03-design-documents.md` | Summary and location of all UML/design diagrams |
-| Test Plan and Results | `additional-artifacts/04-test-plan-and-results.md` | Testing strategy, test areas, results, and Codecov evidence |
-| Architecture Diagram Folder | `additional-artifacts/architecture-diagram/` | Contains the final architecture diagram PNG |
-| Design Documents Folder | `additional-artifacts/design-documents/` | Contains the final UML and design diagrams |
-| Codecov Test Evidence | `additional-artifacts/test-plan-results/Codecov-Test-Evidence.pdf` | PDF evidence document containing Codecov screenshots and coverage results |
+| Project Plan | `additional-artifacts/01-project-plan.md` | `additional-artifacts/Project Plan/Project_Plan_Evidence.pdf` |
+| Architecture Diagram | `additional-artifacts/02-architecture-diagram.md` | `additional-artifacts/architecture-diagram/campus_food_architecture_diagram.png` |
+| Design Documents | `additional-artifacts/03-design-documents.md` | `additional-artifacts/design-documents/` |
+| Test Plan and Results | `additional-artifacts/04-test-plan-and-results.md` | `additional-artifacts/test-plan-results/Codecov-Test-Evidence.pdf` |
 
 ---
 
-## 6. Included Design Documents
+## 7. Included Design Documents
 
 The final design document folder includes the following diagrams:
 
@@ -115,11 +149,11 @@ The final design document folder includes the following diagrams:
 | UML Sequence Diagram | `additional-artifacts/design-documents/UML Sequence Diagram.png` |
 | UML State Diagram | `additional-artifacts/design-documents/UML State Diagram.png` |
 
-These diagrams support the final submission by showing the system from multiple views, including workflow, structure, deployment, user interaction, component organisation, object interactions, and state behaviour.
+These diagrams support the final submission by showing the system from multiple views, including workflow, structure, deployment, user interaction, component organisation, object interaction, and state behaviour.
 
 ---
 
-## 7. Sprint Summary
+## 8. Sprint Summary
 
 | Sprint | Main Focus | Status |
 |---|---|---|
@@ -130,18 +164,18 @@ These diagrams support the final submission by showing the system from multiple 
 
 ---
 
-## 8. Testing Evidence Summary
+## 9. Testing Evidence Summary
 
 Testing evidence is included in:
 
 ```text
-additional-artifacts/04-test-plan-and-results.md
+docs/final-submission/additional-artifacts/04-test-plan-and-results.md
 ```
 
 and:
 
 ```text
-additional-artifacts/test-plan-results/Codecov-Test-Evidence.pdf
+docs/final-submission/additional-artifacts/test-plan-results/Codecov-Test-Evidence.pdf
 ```
 
 The Codecov evidence document includes automated code coverage screenshots and coverage breakdowns for the `main` branch.
@@ -169,67 +203,48 @@ Coverage breakdown:
 
 The `tests/mocks` folder was removed from Codecov production coverage tracking because it contains testing support files, not production application logic.
 
-The updated Codecov evidence confirms that the project is above the 80% coverage target and that the strongest tested areas include:
-
-- Shared authentication logic
-- Vendor workflows
-- Backend/API logic
-- Admin analytics functionality
-- Authentication logic
-
-Additional automated tests were added for:
-
-- Analytics dashboard loading and access control
-- Peak ordering hours report
-- Sales per vendor report
-- Custom analytics filtering
-- Export reports as CSV/PDF
-- Master admin workflows
-- Shared authentication helpers
-- Shared route guards
+The updated Codecov evidence confirms that the project is above the 80% coverage target.
 
 ---
 
-## 9. Final Submission Checklist
+## 10. Final Submission Checklist
 
 | Item | Status |
 |---|---|
 | Publicly hosted application link added | Done |
 | GitHub repository link added | Done |
 | GitHub Pages preview link added | Done |
-| Product backlog added | Done |
-| Sprint backlogs added | Done |
-| Burndown charts added | Done |
-| Retrospectives added | Done |
-| Daily stand-up summaries added | Done |
+| Product backlog evidence added | Done |
+| Sprint backlog evidence added | Done |
+| Burndown chart evidence added | Done |
+| Retrospective evidence added | Done |
+| Daily stand-up evidence added | Done |
 | Sprint review evidence added | Done |
-| Combined Scrum meeting evidence added | Done |
-| Project plan added | Done |
+| Project plan evidence added | Done |
 | Architecture diagram added | Done |
 | Design documents added | Done |
-| Test plan and results added | Done |
-| Codecov evidence added | Done |
-| Final video link | Done |
-| Final link checks | Done |
-| Final Moodle submission | Done |
+| Test plan and Codecov evidence added | Done |
+| Final video link checked | Done |
+| Final link checks completed | Done |
+| Final Moodle submission prepared | Done |
 
 ---
 
-## 10. How Reviewers Should Use This Folder
+## 11. How Reviewers Should Use This Folder
 
 Reviewers should begin with this `README.md` file.
 
-Then they can open:
+Recommended review order:
 
-1. `scrum-methodology/` for all Scrum methodology artefacts.
-2. `scrum-methodology/evidence/` for the combined meeting evidence PDF.
-3. `additional-artifacts/` for the project plan, architecture diagram, design documents, and testing evidence.
-4. The hosted website link to view the live application.
-5. The GitHub repository root to review the full source code, README, branches, and commit history.
+1. Open `scrum-methodology/` to view the Scrum methodology navigation files.
+2. Open `scrum-methodology/evidence/` to view the detailed Scrum evidence PDFs.
+3. Open `additional-artifacts/` to view the project plan, architecture diagram, design documents, and testing evidence.
+4. Open the hosted website link to view the live application.
+5. Open the GitHub repository root to review the full source code, commit history, issues, project boards, and final documentation.
 
 ---
 
-## 11. Important Final Links for Submission Form
+## 12. Important Final Links for Submission Form
 
 | Submission Form Field | Link / Location |
 |---|---|
@@ -237,13 +252,19 @@ Then they can open:
 | GitHub Pages Preview | https://raquel9988.github.io/Campus-Food-Ordering-Platform/ |
 | GitHub Repository | https://github.com/Raquel9988/Campus-Food-Ordering-Platform |
 | Product Backlog | `docs/final-submission/scrum-methodology/01-product-backlog.md` |
+| Product Backlog Evidence | `docs/final-submission/scrum-methodology/evidence/Product_Backlog_Evidence.pdf` |
 | Sprint Backlogs | `docs/final-submission/scrum-methodology/02-sprint-backlogs.md` |
+| Sprint Backlog Evidence | `docs/final-submission/scrum-methodology/evidence/Sprint_Backlogs_Evidence.pdf` |
 | Sprint Burndown Charts | `docs/final-submission/scrum-methodology/03-burndown-charts.md` |
+| Sprint Burndown Evidence | `docs/final-submission/scrum-methodology/evidence/Sprint_Burndown_Evidence_Report.pdf` |
 | Sprint Retrospective Reports | `docs/final-submission/scrum-methodology/04-retrospectives.md` |
+| Sprint Retrospective Evidence | `docs/final-submission/scrum-methodology/evidence/Sprint_Retrospective_Reports.pdf` |
 | Daily Stand-Up Summaries | `docs/final-submission/scrum-methodology/05-daily-standups.md` |
+| Daily Stand-Up Evidence | `docs/final-submission/scrum-methodology/evidence/Daily_Standup_Summaries_Evidence.pdf` |
+| Sprint Team Meeting Evidence | `docs/final-submission/scrum-methodology/evidence/Daily Standups/` |
 | Sprint Review Evidence | `docs/final-submission/scrum-methodology/06-sprint-review-evidence.md` |
-| Combined Scrum Meeting Evidence | `docs/final-submission/scrum-methodology/evidence/Combined_Daily_Standup_and_Retrospective_Evidence.pdf` |
 | Project Plan | `docs/final-submission/additional-artifacts/01-project-plan.md` |
+| Project Plan Evidence | `docs/final-submission/additional-artifacts/Project Plan/Project_Plan_Evidence.pdf` |
 | Architecture Diagram | `docs/final-submission/additional-artifacts/02-architecture-diagram.md` |
 | Architecture Diagram PNG | `docs/final-submission/additional-artifacts/architecture-diagram/campus_food_architecture_diagram.png` |
 | Design Documents | `docs/final-submission/additional-artifacts/03-design-documents.md` |
@@ -253,16 +274,10 @@ Then they can open:
 
 ---
 
-## 12. Current Status
+## 13. Current Status
 
 The final submission folder has been organised and updated.
 
-All Scrum methodology artefacts, additional artefacts, diagrams, and testing evidence have been added.
+All Scrum methodology artefacts, evidence PDFs, additional artefacts, diagrams, and testing evidence have been added.
 
-The latest Codecov evidence has also been updated to show:
-
-- 83.84% overall coverage
-- 1718 of 2049 lines covered
-- 331 missed lines
-- 100.00% shared authentication foundation coverage
-- `tests/mocks` removed from production coverage tracking
+The repository should remain public so that the lecturer or marker can access the documentation and evidence directly from GitHub.
