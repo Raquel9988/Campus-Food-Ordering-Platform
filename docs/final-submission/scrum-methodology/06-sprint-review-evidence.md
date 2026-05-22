@@ -10,11 +10,13 @@ The detailed evidence has been moved into a separate evidence document so that t
 
 All sprint review and Scrum meeting evidence is stored in:
 
-`docs/final-submission/scrum-methodology/evidence/`
+`https://github.com/Raquel9988/Campus-Food-Ordering-Platform/tree/main/docs/final-submission/scrum-methodology/evidence`
 
 The main evidence document is:
 
 `docs/final-submission/scrum-methodology/evidence/Combined_Daily_Standup_and_Retrospective_Evidence.docx`
+
+
 
 This document contains the detailed meeting evidence for each sprint, including:
 
